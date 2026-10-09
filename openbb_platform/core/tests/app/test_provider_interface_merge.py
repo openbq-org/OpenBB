@@ -249,6 +249,70 @@ def test_create_field_with_choices_and_widget_config_updates_existing_choice_buc
     assert extra["fmp"]["x-widget_config"] == {"type": "selector"}
 
 
+def test_create_field_required_provider_query_param_is_not_optional_in_widget():
+    """A required provider-only query param stays optional on the route.
+
+    Other providers share the route, so the API parameter must allow null.
+    The provider's own widget input is marked ``optional: False``, so a
+    client asks for it instead of sending nothing.
+    """
+    fi = FieldInfo(annotation=str, description="d")
+    out = ProviderInterface._create_field(
+        "code", fi, provider_name="cftc", query=True, force_optional=True
+    )
+    assert out.default.default is None
+    assert out.default.json_schema_extra == {
+        "cftc": {"x-widget_config": {"optional": False}}
+    }
+
+
+def test_create_field_required_query_param_keeps_provider_widget_config():
+    """The provider's own x-widget_config keys are kept, and win on conflict."""
+    fi = FieldInfo(
+        annotation=str,
+        description="d",
+        json_schema_extra={
+            "fmp": {
+                "choices": ["a", "b"],
+                "x-widget_config": {"type": "selector", "optional": True},
+            }
+        },
+    )
+    out = ProviderInterface._create_field(
+        "symbol", fi, provider_name="fmp", query=True, force_optional=True
+    )
+    extra = out.default.json_schema_extra
+    assert extra["fmp"]["choices"] == ["a", "b"]
+    assert extra["fmp"]["x-widget_config"] == {"type": "selector", "optional": True}
+
+
+def test_extract_params_marks_only_the_requiring_provider():
+    def fields(**f):
+        return {"QueryParams": {"fields": f}}
+
+    _, extra = ProviderInterface._extract_params(
+        {
+            "openbb": fields(),
+            "a": fields(code=FieldInfo(annotation=str)),
+            "b": fields(code=FieldInfo(annotation=str, default=None)),
+        }
+    )
+    _, _, default = extra["code"]
+    assert default.default is None  # the shared route stays optional
+    assert default.json_schema_extra == {"a": {"x-widget_config": {"optional": False}}}
+
+
+def test_extract_data_required_field_gets_no_widget_config():
+    _, extra = ProviderInterface._extract_data(
+        {
+            "openbb": {"Data": {"fields": {}}},
+            "a": {"Data": {"fields": {"value": FieldInfo(annotation=float)}}},
+        }
+    )
+    _, _, default = extra["value"]
+    assert not default.json_schema_extra
+
+
 def test_get_annotated_union_handles_annotated_data_and_discriminator_callable(
     fake_registry,
 ):

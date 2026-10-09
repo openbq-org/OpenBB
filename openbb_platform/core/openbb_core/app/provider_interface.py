@@ -323,6 +323,14 @@ class ProviderInterface(metaclass=SingletonMeta):
             if force_optional:
                 annotation = Optional[annotation]  # type: ignore  # noqa
                 default = None
+                # The route is shared by providers, so it stays optional; this
+                # provider's widget still marks the input required.
+                if query:
+                    widget = choices.setdefault(provider_name, {})
+                    widget["x-widget_config"] = {
+                        "optional": False,
+                        **(widget.get("x-widget_config") or {}),
+                    }
             else:
                 default = ...
         else:
