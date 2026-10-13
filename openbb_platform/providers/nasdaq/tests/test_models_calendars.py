@@ -163,6 +163,26 @@ class TestCalendarSplits:
 
         assert rows == []
 
+    def test_keeps_a_row_whose_ratio_has_no_two_parts(self):
+        """A percentage stock dividend ('5%') keeps its row and published ratio."""
+        query = NasdaqCalendarSplitsFetcher.transform_query(WINDOW)
+        rows = NasdaqCalendarSplitsFetcher.transform_data(
+            query,
+            [
+                {"symbol": "AAA", "executionDate": "07/24/2026", "ratio": "1 : 10"},
+                {"symbol": "BBB", "executionDate": "07/24/2026", "ratio": "1-for-10"},
+                {"symbol": "CCC", "executionDate": "07/24/2026", "ratio": "5%"},
+            ],
+        )
+
+        assert [
+            (r.symbol, r.numerator, r.denominator, r.ratio_display) for r in rows
+        ] == [
+            ("AAA", 1.0, 10.0, "1 : 10"),
+            ("BBB", None, None, "1-for-10"),
+            ("CCC", None, None, "5%"),
+        ]
+
     @pytest.mark.parametrize(
         ("ratio", "expected"),
         [
