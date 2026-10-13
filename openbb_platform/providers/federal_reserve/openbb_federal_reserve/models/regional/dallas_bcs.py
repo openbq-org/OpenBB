@@ -82,15 +82,25 @@ class FederalReserveDallasBankingFetcher(
         **kwargs: Any,
     ) -> list[FederalReserveDallasBankingData]:
         """Decode every index, then pivot indicator-horizon to wide rows."""
+        from io import BytesIO
+
+        from pandas import ExcelFile
+
         from openbb_federal_reserve.utils.dallas_survey import (
             BANKING_INDICATORS,
             parse_keyed_survey,
         )
         from openbb_federal_reserve.utils.workbook import pivot_wide
 
+        # The workbook's sheet was renamed upstream: old name, new name, then the only sheet.
+        sheets = ExcelFile(BytesIO(data[0]["_raw"])).sheet_names
+        sheet = next(
+            (s for s in ("CSV_BCS_Index_Results", "BCS_Index_Results") if s in sheets),
+            sheets[0] if len(sheets) == 1 else "CSV_BCS_Index_Results",
+        )
         records = parse_keyed_survey(
             data[0]["_raw"],
-            "CSV_BCS_Index_Results",
+            sheet,
             BANKING_INDICATORS,
             start_date=query.start_date,
             end_date=query.end_date,

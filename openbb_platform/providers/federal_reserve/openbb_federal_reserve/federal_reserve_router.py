@@ -92,7 +92,7 @@ async def fomc_documents_download(params: Annotated[dict, Body()]) -> list:
 
     from openbb_core.provider.utils.helpers import make_request
 
-    urls = params.get("url", [])
+    urls = params.get("url") or []
     results: list = []
 
     for url in urls:
@@ -266,7 +266,7 @@ async def regional_publications_download(params: Annotated[dict, Body()]) -> lis
     from openbb_federal_reserve.utils import fedinprint
 
     results: list = []
-    for url in params.get("url", []):
+    for url in params.get("url") or []:
         try:
             target = url
             if "fedinprint.org/item/" in url:

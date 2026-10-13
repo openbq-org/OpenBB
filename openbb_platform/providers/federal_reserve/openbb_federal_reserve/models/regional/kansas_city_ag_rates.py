@@ -11,14 +11,8 @@ from openbb_core.provider.utils.errors import EmptyDataError
 from pydantic import Field
 
 _FILES = {
-    "variable": (
-        "https://www.kansascityfed.org/Ag%20Credit/documents/7622"
-        "/variableinterestrates.xlsx"
-    ),
-    "fixed": (
-        "https://www.kansascityfed.org/Ag%20Credit/documents/7621"
-        "/fixedinterestrates.xlsx"
-    ),
+    "variable": 7622,
+    "fixed": 7621,
 }
 
 _SHEETS = {
@@ -100,12 +94,13 @@ class FederalReserveKansasCityAgRatesFetcher(
             seconds_until_next_release,
         )
         from openbb_federal_reserve.utils.kansas_city import fetch_kansas_city
+        from openbb_federal_reserve.utils.kansas_city_ag import resolve_kc_ag_url
 
-        url = _FILES[query.rate_type]
+        document_id = _FILES[query.rate_type]
         content = cached(
             ("kansas_city_ag_rates", query.rate_type),
             lambda: seconds_until_next_release("quarterly"),
-            lambda: fetch_kansas_city(url),
+            lambda: fetch_kansas_city(resolve_kc_ag_url(document_id)),
         )
         if not content:
             raise EmptyDataError("The request was returned empty.")

@@ -10,20 +10,14 @@ from openbb_core.provider.utils.descriptions import QUERY_DESCRIPTIONS
 from openbb_core.provider.utils.errors import EmptyDataError
 from pydantic import Field
 
-_HISTORICAL_URL = (
-    "https://www.kansascityfed.org/Ag%20Finance%20Book/documents/7228"
-    "/CommercialBankCallReportDataHistoricalData.xlsx"
-)
-_TABLES_URL = (
-    "https://www.kansascityfed.org/Ag%20Finance%20Book/documents/7889"
-    "/CommercialBankCallReportDataTables.xlsx"
-)
+_HISTORICAL_DOCUMENT = 7228
+_TABLES_DOCUMENT = 7889
 
 _SOURCES = {
-    "historical": (_HISTORICAL_URL, None),
-    "farm_debt_all_banks": (_TABLES_URL, "A"),
-    "farm_debt_ag_banks": (_TABLES_URL, "B"),
-    "ag_bank_performance": (_TABLES_URL, "C"),
+    "historical": (_HISTORICAL_DOCUMENT, None),
+    "farm_debt_all_banks": (_TABLES_DOCUMENT, "A"),
+    "farm_debt_ag_banks": (_TABLES_DOCUMENT, "B"),
+    "ag_bank_performance": (_TABLES_DOCUMENT, "C"),
 }
 
 
@@ -92,12 +86,13 @@ class FederalReserveKansasCityAgFinanceFetcher(
             seconds_until_next_release,
         )
         from openbb_federal_reserve.utils.kansas_city import fetch_kansas_city
+        from openbb_federal_reserve.utils.kansas_city_ag import resolve_kc_ag_url
 
-        url = _SOURCES[query.table][0]
+        document_id = _SOURCES[query.table][0]
         content = cached(
             ("kansas_city_ag_finance", query.table),
             lambda: seconds_until_next_release("quarterly"),
-            lambda: fetch_kansas_city(url),
+            lambda: fetch_kansas_city(resolve_kc_ag_url(document_id)),
         )
         if not content:
             raise EmptyDataError("The request was returned empty.")
