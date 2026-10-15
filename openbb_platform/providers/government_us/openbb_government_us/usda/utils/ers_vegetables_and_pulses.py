@@ -9,7 +9,7 @@ PRODUCT_PAGE = (
     "data-products/vegetables-and-pulses-data/vegetables-and-pulses-yearbook-tables"
 )
 DATA_ZIP = "/media/5018/vegetables-and-pulses-machine-readable-data.zip"
-CSV_MEMBER = "Vegetables_Pulses.csv"
+CSV_MEMBERS = ("vegetables-pulses-data.csv", "Vegetables_Pulses.csv")
 
 DEFAULT_TABLE = "Table33_Potatoes"
 
@@ -239,5 +239,10 @@ async def afetch_table(table: str, **kwargs) -> list[dict]:
 
     content = await afetch_ers_file(DATA_ZIP, product=PRODUCT_PAGE)
     with zipfile.ZipFile(BytesIO(content)) as archive:
-        raw = archive.read(CSV_MEMBER)
+        names = {name.lower(): name for name in archive.namelist()}
+        member = next(
+            (names[m.lower()] for m in CSV_MEMBERS if m.lower() in names),
+            CSV_MEMBERS[0],
+        )
+        raw = archive.read(member)
     return parse_rows(raw.decode("utf-8-sig", errors="replace"), table)

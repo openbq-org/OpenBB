@@ -15,7 +15,7 @@ from openbb_government_us.usda.models.vegetables_and_pulses import (
 )
 from openbb_government_us.usda.utils import ers_vegetables_and_pulses
 from openbb_government_us.usda.utils.ers_vegetables_and_pulses import (
-    CSV_MEMBER,
+    CSV_MEMBERS,
     DATA_ZIP,
     DEFAULT_TABLE,
     PRODUCT_PAGE,
@@ -71,7 +71,7 @@ class TestErsVegetablesAndPulsesUtils:
         assert len(TABLE_LABELS) == 81
         assert DEFAULT_TABLE in TABLE_LABELS
         assert DATA_ZIP == "/media/5018/vegetables-and-pulses-machine-readable-data.zip"
-        assert CSV_MEMBER == "Vegetables_Pulses.csv"
+        assert CSV_MEMBERS == ("vegetables-pulses-data.csv", "Vegetables_Pulses.csv")
         assert PRODUCT_PAGE.endswith("vegetables-and-pulses-yearbook-tables")
         assert all(label for label in TABLE_LABELS.values())
 
@@ -137,12 +137,15 @@ class TestErsVegetablesAndPulsesUtils:
         assert records[0]["geographical_level"] is None
         assert records[0]["value"] == 50.0
 
-    def test_afetch_table(self, monkeypatch):
-        """afetch_table fetches the zip through the ERS cache and reads the member."""
+    @pytest.mark.parametrize(
+        "member", ["vegetables-pulses-data.csv", "Vegetables_Pulses.csv"]
+    )
+    def test_afetch_table(self, monkeypatch, member):
+        """afetch_table reads the renamed member, or the old one."""
         calls = []
         buffer = BytesIO()
         with zipfile.ZipFile(buffer, "w") as archive:
-            archive.writestr(CSV_MEMBER, SAMPLE_CSV)
+            archive.writestr(member, SAMPLE_CSV)
             archive.writestr("readme.txt", "notes")
         content = buffer.getvalue()
 

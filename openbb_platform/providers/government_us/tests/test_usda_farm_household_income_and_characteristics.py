@@ -194,6 +194,17 @@ class TestErsFarmHouseholdIncomeAndCharacteristicsUtils:
             "2026F",
         ]
 
+    def test_parse_year_preliminary_suffix(self):
+        """A preliminary year such as 2025P parses and sorts like a forecast."""
+        assert parse_year("2025P") == 2025
+        assert year_sort_key("2025P") == (2025, True)
+        assert sorted(["2026F", "2025P", "2025", "2024"], key=year_sort_key) == [
+            "2024",
+            "2025",
+            "2025P",
+            "2026F",
+        ]
+
     def test_parse_table_year_shape(self):
         """A time-series table yields item/column/value records with the year."""
         records = parse_table(YEAR_CSV, "finances_2021_26f")

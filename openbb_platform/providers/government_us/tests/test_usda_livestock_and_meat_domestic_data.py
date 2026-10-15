@@ -118,7 +118,7 @@ class TestErsLivestockAndMeatDomesticDataUtils:
         meatstats = [
             key
             for key, config in LIVESTOCK_AND_MEAT_FILES.items()
-            if config["member"] == "MeatStats.csv"
+            if config["member"] == ("Meat-Statistics.csv", "MeatStats.csv")
         ]
         assert len(meatstats) == 4
         for config in LIVESTOCK_AND_MEAT_FILES.values():
@@ -233,12 +233,13 @@ class TestErsLivestockAndMeatDomesticDataUtils:
         assert marketing["period_sort"] == 2
         assert any(r["column"].startswith("OK City ") for r in records)
 
-    def test_afetch_table(self, monkeypatch):
-        """afetch_table fetches the zip once and reads the requested member."""
+    @pytest.mark.parametrize("member", ["Meat-Supply-Disappearance.csv", "MeatSD.csv"])
+    def test_afetch_table(self, monkeypatch, member):
+        """afetch_table reads the renamed member, or the old one."""
         calls = []
         buffer = BytesIO()
         with zipfile.ZipFile(buffer, "w") as archive:
-            archive.writestr(f"{ZIP_DIR}/MeatSD.csv", MEATSD_CSV)
+            archive.writestr(f"{ZIP_DIR}/{member}", MEATSD_CSV)
             archive.writestr(f"{ZIP_DIR}/_Read_Me.txt", "readme")
         content = buffer.getvalue()
 
