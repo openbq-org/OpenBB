@@ -6,6 +6,7 @@ from pathlib import Path
 
 from openbb_core.app.router import Router
 
+from openbb_tmx import CHARTING_INSTALLED
 from openbb_tmx.routers.calendar import router as calendar_router
 from openbb_tmx.routers.currency import router as currency_router
 from openbb_tmx.routers.derivatives import router as derivatives_router
@@ -59,4 +60,22 @@ _APPS_JSON = Path(__file__).parent / "assets" / "apps.json"
 @router.api_router.get("/apps.json", include_in_schema=False)
 async def tmx_apps() -> list:
     """Serve the bundled TMX dashboard template."""
-    return json.loads(_APPS_JSON.read_text(encoding="utf-8"))
+    apps = json.loads(_APPS_JSON.read_text(encoding="utf-8"))
+    if not CHARTING_INSTALLED:
+        chart_ids = {
+            f"tmx_derivatives_options_{name}_custom_obb"
+            for name in ("term_structure", "stats", "smile", "surface")
+        }
+        for app in apps:
+            for tab in app.get("tabs", {}).values():
+                tab["layout"] = [
+                    widget
+                    for widget in tab.get("layout", [])
+                    if widget.get("i") not in chart_ids
+                ]
+            for group in app.get("groups", []):
+                if "widgetIds" in group:
+                    group["widgetIds"] = [
+                        wid for wid in group["widgetIds"] if wid not in chart_ids
+                    ]
+    return apps
