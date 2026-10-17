@@ -12,110 +12,646 @@ interactions:
     uri: https://api.stlouisfed.org/fred/release/series?api_key=MOCK_API_KEY&file_type=json&offset=0&order_by=observation_end&release_id=72&search_type=release&sort_order=desc
   response:
     body:
-      string: !!binary |
-        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
-        /wAA
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","order_by":"observation_end","sort_order":"desc","count":78,"offset":0,"limit":1000,"seriess":[{"id":"DTP10J27","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.375 Treasury Inflation-Indexed Note, Due 1\/15\/2027","observation_start":"2017-01-20","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:37-05","popularity":3,"group_popularity":3,"notes":"Treasury Inflation-Protected
+        Securities, or TIPS, are securities whose principal is tied to the Consumer
+        Price Index (CPI). The principal increases with inflation and decreases with
+        deflation. When the security matures, the U.S. Treasury pays the original
+        or adjusted principal, whichever is greater. \n\nAverages of business days.
+        Yield to maturity on accrued principal. \n\nCalculated from data provided
+        by the Wall Street Journal. \n\nCopyright, 2016, Haver Analytics. Reprinted
+        with permission."},{"id":"DTP10J28","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.5% Treasury Inflation-Indexed Note, Due 1\/15\/2028","observation_start":"2018-01-19","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:32-05","popularity":50,"group_popularity":50,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10J29","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.875% Treasury Inflation-Indexed Note, Due 1\/15\/2029","observation_start":"2019-01-18","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:37-05","popularity":5,"group_popularity":5,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10J30","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.125% Treasury Inflation-Indexed Bond, Due 01\/15\/2030","observation_start":"2020-02-20","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:37-05","popularity":31,"group_popularity":31,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10L27","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.375% Treasury Inflation-Indexed Note, Due 7\/15\/2027","observation_start":"2017-07-21","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:34-05","popularity":13,"group_popularity":13,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10L28","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.75% Treasury Inflation-Indexed Note, Due 7\/15\/2028","observation_start":"2018-07-20","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:35-05","popularity":9,"group_popularity":9},{"id":"DTP10L29","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.25% Treasury Inflation-Indexed Note, Due 7\/15\/2029","observation_start":"2019-07-30","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:36-05","popularity":9,"group_popularity":9,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP20J27","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"20-Year
+        2-3\/8% Treasury Inflation-Indexed Bond, Due 1\/15\/2027","observation_start":"2010-01-04","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:34-05","popularity":12,"group_popularity":12,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP20J28","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"20-Year
+        1-3\/4% Treasury Inflation-Indexed Bond, Due 1\/15\/2028","observation_start":"2010-01-04","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:36-05","popularity":2,"group_popularity":2,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP20J29","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"20-Year
+        2-1\/2% Treasury Inflation-Indexed Bond, Due 1\/15\/2029","observation_start":"2010-01-04","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:35-05","popularity":22,"group_popularity":22,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP30A28","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        3-5\/8% Treasury Inflation-Indexed Bond, Due 4\/15\/2028","observation_start":"1998-04-13","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:38-05","popularity":23,"group_popularity":23,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP30A29","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        3-7\/8% Treasury Inflation-Indexed Bond, Due 4\/15\/2029","observation_start":"1999-04-09","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:33-05","popularity":11,"group_popularity":11,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP30F40","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        2-1\/8% Treasury Inflation-Indexed Bond, Due 2\/15\/2040","observation_start":"2010-02-23","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:36-05","popularity":16,"group_popularity":16,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP30F41","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        2-1\/8% Treasury Inflation-Indexed Bond, Due 2\/15\/2041","observation_start":"2011-02-23","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:35-05","popularity":5,"group_popularity":5,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP30F42","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        0-3\/4% Treasury Inflation-Indexed Bond, Due 2\/15\/2042","observation_start":"2012-03-30","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:35-05","popularity":5,"group_popularity":5,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP30F43","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        0-5\/8% Treasury Inflation-Indexed Bond, Due 2\/15\/2043","observation_start":"2013-03-11","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:38-05","popularity":8,"group_popularity":8,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP30F44","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        1-3\/8% Treasury Inflation-Indexed Note, Due 2\/15\/2044","observation_start":"2014-04-10","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:38-05","popularity":9,"group_popularity":9,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP30F45","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        0-3\/4% Treasury Inflation-Indexed Bond, Due 2\/15\/2045","observation_start":"2015-03-05","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:37-05","popularity":7,"group_popularity":7,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP30F46","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        1.0% Treasury Inflation-Indexed Bond, Due 2\/15\/2046","observation_start":"2016-03-03","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:39-05","popularity":8,"group_popularity":8,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP30F47","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        0.875% Treasury Inflation-Indexed Bond, Due 2\/15\/2047","observation_start":"2018-02-20","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:38-05","popularity":6,"group_popularity":6,"notes":"Treasury Inflation-Protected
+        Securities, or TIPS, are securities whose principal is tied to the Consumer
+        Price Index (CPI). The principal increases with inflation and decreases with
+        deflation. When the security matures, the U.S. Treasury pays the original
+        or adjusted principal, whichever is greater.\r\n\r\nAverages of business days.
+        Yield to maturity on accrued principal.\r\n\r\nCalculated from data provided
+        by the Wall Street Journal.\r\n\r\nCopyright, 2016, Haver Analytics. Reprinted
+        with permission."},{"id":"DTP30F48","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        1.0% Treasury Inflation-Indexed Bond, Due 2\/15\/2048","observation_start":"2018-02-22","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:39-05","popularity":10,"group_popularity":10,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP30F49","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        1.0% Treasury Inflation-Indexed Bond, Due 2\/15\/2049","observation_start":"2019-05-07","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:36-05","popularity":3,"group_popularity":3,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP30F50","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-Year
+        0.250% Treasury Inflation-Indexed Bond, Due 02\/15\/2050","observation_start":"2020-02-25","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:39-05","popularity":33,"group_popularity":33,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP3HA32","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"30-1\/2-Year
+        3-3\/8% Treasury Inflation-Indexed Bond, Due 4\/15\/2032","observation_start":"2001-10-15","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:39-05","popularity":9,"group_popularity":9,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10L26","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0-1\/8% Treasury Inflation-Indexed Note, Due 7\/15\/2026 (DISCONTINUED)","observation_start":"2016-08-01","observation_end":"2026-07-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-07-14
+        20:13:15-05","popularity":6,"group_popularity":6,"notes":"Treasury Inflation-Protected
+        Securities, or TIPS, are securities whose principal is tied to the Consumer
+        Price Index (CPI). The principal increases with inflation and decreases with
+        deflation. When the security matures, the U.S. Treasury pays the original
+        or adjusted principal, whichever is greater.\n\nAverages of business days.
+        Yield to maturity on accrued principal.\n\nCalculated from data provided by
+        the Wall Street Journal.\n\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10J26","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.625% Treasury Inflation-Indexed Note, Due 1\/15\/2026 (DISCONTINUED)","observation_start":"2016-03-03","observation_end":"2026-01-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-01-14
+        20:06:31-06","popularity":7,"group_popularity":7,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP20J26","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"20-Year
+        2% Treasury Inflation-Indexed Bond, Due 1\/15\/2026 (DISCONTINUED)","observation_start":"2010-01-04","observation_end":"2026-01-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-01-14
+        20:06:38-06","popularity":8,"group_popularity":8,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10L25","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.375% Treasury Inflation-Indexed Note, Due 07\/15\/2025 (DISCONTINUED)","observation_start":"2015-07-31","observation_end":"2025-07-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2025-07-14
+        20:06:45-05","popularity":4,"group_popularity":4,"notes":"Yield to maturity
+        on accrued principal. \r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater. \r\n \r\nCopyright, 2016, Haver Analytics. Reprinted
+        with permission."},{"id":"DTP5A25","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        0.125% Treasury Inflation-Indexed Bond, Due 4\/15\/2025 (DISCONTINUED)","observation_start":"2020-06-30","observation_end":"2025-04-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2025-04-15
+        06:03:07-05","popularity":14,"group_popularity":14,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10J25","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0-1\/4% Treasury Inflation-Indexed Note, Due 1\/15\/2025 (DISCONTINUED)","observation_start":"2015-03-11","observation_end":"2025-01-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2025-01-15
+        06:02:05-06","popularity":2,"group_popularity":2,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP20J25","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"20-Year
+        2-3\/8% Treasury Inflation-Indexed Bond, Due 1\/15\/2025 (DISCONTINUED)","observation_start":"2004-07-28","observation_end":"2025-01-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2025-01-15
+        06:03:05-06","popularity":6,"group_popularity":6,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP5C24","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        0.125% Treasury Inflation-Indexed Bond, Due 10\/15\/2024 (DISCONTINUED)","observation_start":"2020-02-20","observation_end":"2024-10-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2024-10-15
+        06:03:09-05","popularity":2,"group_popularity":2,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10L24","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0-1\/8% Treasury Inflation-Indexed Note, Due 7\/15\/2024 (DISCONTINUED)","observation_start":"2014-07-25","observation_end":"2024-07-12","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2024-07-15
+        06:02:07-05","popularity":1,"group_popularity":1,"notes":"Treasury Inflation-Protected
+        Securities, or TIPS, are securities whose principal is tied to the Consumer
+        Price Index (CPI). The principal increases with inflation and decreases with
+        deflation. When the security matures, the U.S. Treasury pays the original
+        or adjusted principal, whichever is greater.\n\nAverages of business days.
+        Yield to maturity on accrued principal.\n\nCalculated from data provided by
+        the Wall Street Journal.\n\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP5A24","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        0.500% Treasury Inflation-Indexed Note, Due 4\/15\/2024 (DISCONTINUED)","observation_start":"2019-04-30","observation_end":"2024-04-12","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2024-04-15
+        06:03:04-05","popularity":3,"group_popularity":3,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10J24","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0-5\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2024 (DISCONTINUED)","observation_start":"2014-01-31","observation_end":"2024-01-12","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2024-01-15
+        06:02:06-06","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10L23","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0-3\/8% Treasury Inflation-Indexed Note, Due 7\/15\/2023 (DISCONTINUED)","observation_start":"2013-07-22","observation_end":"2023-07-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2023-07-17
+        06:02:06-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP5A23","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        0.625% Treasury Inflation-Indexed Note, Due 4\/15\/2023 (DISCONTINUED)","observation_start":"2018-04-20","observation_end":"2023-04-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2023-04-17
+        06:03:03-05","popularity":2,"group_popularity":2,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10J23","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0-1\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2023 (DISCONTINUED)","observation_start":"2013-01-25","observation_end":"2023-01-13","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2023-01-16
+        06:02:03-06","popularity":1,"group_popularity":1,"notes":"Treasury Inflation-Protected
+        Securities, or TIPS, are securities whose principal is tied to the Consumer
+        Price Index (CPI). The principal increases with inflation and decreases with
+        deflation. When the security matures, the U.S. Treasury pays the original
+        or adjusted principal, whichever is greater.\r\n\r\nAverages of business days.
+        Yield to maturity on accrued principal.\r\n\r\nCalculated from data provided
+        by the Wall Street Journal.\r\n\r\nCopyright, 2016, Haver Analytics. Reprinted
+        with permission."},{"id":"DTP10L22","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0-1\/8% Treasury Inflation-Indexed Note, Due 7\/15\/2022 (DISCONTINUED)","observation_start":"2012-07-20","observation_end":"2022-07-13","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2022-07-14
+        06:03:10-05","popularity":1,"group_popularity":1,"notes":"Treasury Inflation-Protected
+        Securities, or TIPS, are securities whose principal is tied to the Consumer
+        Price Index (CPI). The principal increases with inflation and decreases with
+        deflation. When the security matures, the U.S. Treasury pays the original
+        or adjusted principal, whichever is greater.\r\n\r\nAverages of business days.
+        Yield to maturity on accrued principal.\r\n\r\nCalculated from data provided
+        by the Wall Street Journal.\r\n\r\nCopyright, 2016, Haver Analytics. Reprinted
+        with permission."},{"id":"DTP5A22","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        0-1\/8% Treasury Inflation-Indexed Note, Due 4\/15\/2022 (DISCONTINUED)","observation_start":"2017-04-28","observation_end":"2022-04-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2022-04-15
+        09:40:05-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10J22","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0-1\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2022 (DISCONTINUED)","observation_start":"2012-01-20","observation_end":"2022-01-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2022-01-18
+        09:35:06-06","popularity":1,"group_popularity":1,"notes":"Treasury Inflation-Protected
+        Securities, or TIPS, are securities whose principal is tied to the Consumer
+        Price Index (CPI). The principal increases with inflation and decreases with
+        deflation. When the security matures, the U.S. Treasury pays the original
+        or adjusted principal, whichever is greater.\r\n\r\nAverages of business days.
+        Yield to maturity on accrued principal.\r\n\r\nCalculated from data provided
+        by the Wall Street Journal.\r\n\r\nCopyright, 2016, Haver Analytics. Reprinted
+        with permission."},{"id":"DTP10L21","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0-5\/8% Treasury Inflation-Indexed Note, Due 7\/15\/2021 (DISCONTINUED)","observation_start":"2011-07-22","observation_end":"2021-07-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2021-07-16
+        14:15:22-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP5A21","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        Treasury Inflation-Indexed Note, Due 4\/15\/2021 (DISCONTINUED)","observation_start":"2016-05-02","observation_end":"2021-04-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2021-04-15
+        06:02:23-05","popularity":1,"group_popularity":1},{"id":"DTP10J21","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        1-1\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2021 (DISCONTINUED)","observation_start":"2011-01-25","observation_end":"2021-01-13","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2021-01-14
+        06:02:02-06","popularity":1,"group_popularity":2,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10L20","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        1-1\/4% Treasury Inflation-Indexed Note, Due 7\/15\/2020 (DISCONTINUED)","observation_start":"2010-07-09","observation_end":"2020-07-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2020-07-16
+        06:02:04-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP5A20","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        0-1\/8% Treasury Inflation-Indexed Note, Due 4\/15\/2020 (DISCONTINUED)","observation_start":"2015-04-30","observation_end":"2020-04-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2020-04-15
+        06:02:07-05","popularity":1,"group_popularity":1,"notes":"Copyright, 2016,
+        Haver Analytics. Reprinted with permission."},{"id":"DTP10J20","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        1-3\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2020 (DISCONTINUED)","observation_start":"2010-01-13","observation_end":"2020-01-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2020-01-16
+        06:02:03-06","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10L19","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        1-7\/8% Treasury Inflation-Indexed Note, Due 7\/15\/2019 (DISCONTINUED)","observation_start":"2009-07-08","observation_end":"2019-07-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2019-07-16
+        06:02:03-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP5A19","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        0-1\/8% Treasury Inflation-Indexed Note, Due 4\/15\/2019 (DISCONTINUED)","observation_start":"2014-04-25","observation_end":"2019-04-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2019-04-16
+        06:02:02-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10J19","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        2-1\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2019 (DISCONTINUED)","observation_start":"2009-01-08","observation_end":"2019-01-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2019-01-16
+        06:01:03-06","popularity":1,"group_popularity":2,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10L18","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        1-3\/8% Treasury Inflation-Indexed Note, Due 7\/15\/2018 (DISCONTINUED)","observation_start":"2008-07-21","observation_end":"2018-07-11","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2018-07-12
+        06:11:03-05","popularity":2,"group_popularity":3,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP5A18","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        0-1\/8% Treasury Inflation-Indexed Note, Due 4\/15\/2018 (DISCONTINUED)","observation_start":"2013-04-24","observation_end":"2018-04-13","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2018-04-16
+        06:01:05-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10J18","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        1-5\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2018 (DISCONTINUED)","observation_start":"2008-01-14","observation_end":"2018-01-12","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2018-01-16
+        06:01:03-06","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\r\nTreasury Inflation-Protected Securities, or TIPS,
+        are securities whose principal is tied to the Consumer Price Index (CPI).
+        The principal increases with inflation and decreases with deflation. When
+        the security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\r\nCopyright, 2016, Haver Analytics. Reprinted with
+        permission."},{"id":"DTP10L17","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        2-5\/8% Treasury Inflation-Indexed Note, Due 7\/15\/2017 (DISCONTINUED)","observation_start":"2007-07-13","observation_end":"2017-07-13","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2017-07-14
+        06:11:06-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP5A17","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        0-1\/8% Treasury Inflation-Indexed Note, Due 4\/15\/2017 (DISCONTINUED)","observation_start":"2012-04-23","observation_end":"2017-04-12","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2017-04-13
+        06:11:03-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10J17","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        2-3\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2017 (DISCONTINUED)","observation_start":"2007-01-16","observation_end":"2017-01-13","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2017-01-17
+        14:21:01-06","popularity":5,"group_popularity":6,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10L16","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        2-1\/2% Treasury Inflation-Indexed Note, Due 7\/15\/2016 (DISCONTINUED)","observation_start":"2006-07-14","observation_end":"2016-07-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2016-07-18
+        06:06:07-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nData prior to August 2, 2006, were provided by the
+        New York Times.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP5A16","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        0-1\/8% Treasury Inflation-Indexed Note, Due 4\/15\/2016 (DISCONTINUED)","observation_start":"2011-04-25","observation_end":"2016-04-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2016-04-18
+        06:06:09-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10J16","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        2% Treasury Inflation-Indexed Note, Due 1\/15\/2016 (DISCONTINUED)","observation_start":"2006-01-13","observation_end":"2016-01-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2016-01-19
+        06:16:02-06","popularity":1,"group_popularity":2,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10L15","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        1-7\/8% Treasury Inflation-Indexed Note, Due 7\/15\/2015 (DISCONTINUED)","observation_start":"2005-07-22","observation_end":"2015-07-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2015-07-16
+        08:01:34-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP5A15","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        0-1\/2% Treasury Inflation-Indexed Note, Due 4\/15\/2015 (DISCONTINUED)","observation_start":"2010-04-27","observation_end":"2015-04-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2015-04-16
+        06:11:02-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10J15","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        1-5\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2015 (DISCONTINUED)","observation_start":"2005-01-19","observation_end":"2015-01-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2015-01-16
+        06:11:12-06","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10L14","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        2% Treasury Inflation-Indexed Note, Due 7\/15\/2014 (DISCONTINUED)","observation_start":"2004-07-15","observation_end":"2014-07-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2014-07-16
+        08:37:20-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP5A14","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        1-1\/4% Treasury Inflation-Indexed Note, Due 4\/15\/2014 (DISCONTINUED)","observation_start":"2009-04-30","observation_end":"2014-04-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2014-04-16
+        06:11:02-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10J14","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        2% Treasury Inflation-Indexed Note, Due 1\/15\/2014 (DISCONTINUED)","observation_start":"2004-01-12","observation_end":"2014-01-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2014-01-16
+        06:01:03-06","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10L13","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        1-7\/8% Treasury Inflation-Indexed Note, Due 7\/15\/2013 (DISCONTINUED)","observation_start":"2003-07-17","observation_end":"2013-07-12","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2013-07-15
+        06:03:33-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP5A13","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        5\/8% Treasury Inflation-Indexed Note, Due 4\/15\/2013 (DISCONTINUED)","observation_start":"2008-04-30","observation_end":"2013-04-12","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2013-04-15
+        06:04:02-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10L12","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        3% Treasury Inflation-Indexed Note, Due 7\/15\/2012 (DISCONTINUED)","observation_start":"2002-08-01","observation_end":"2012-07-13","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2012-07-16
+        06:02:52-05","popularity":1,"group_popularity":2,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP5A12","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        2% Treasury Inflation-Indexed Note, Due 4\/15\/2012 (DISCONTINUED)","observation_start":"2007-04-30","observation_end":"2012-04-13","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2012-04-16
+        06:03:30-05","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10J12","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        3-3\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2012 (DISCONTINUED)","observation_start":"2002-01-10","observation_end":"2012-01-13","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2012-01-17
+        09:01:44-06","popularity":1,"group_popularity":1,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP5A11","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        2-3\/8% Treasury Inflation-Indexed Note, Due 4\/15\/2011 (DISCONTINUED)","observation_start":"2006-04-26","observation_end":"2011-04-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2011-04-15
+        09:01:20-05","popularity":3,"group_popularity":6,"notes":"Yield to maturity
+        on accrued principal.\nTreasury Inflation-Protected Securities, or TIPS, are
+        securities whose principal is tied to the Consumer Price Index (CPI). The
+        principal increases with inflation and decreases with deflation. When the
+        security matures, the U.S. Treasury pays the original or adjusted principal,
+        whichever is greater.\nCopyright, 2016, Haver Analytics. Reprinted with permission."},{"id":"DTP10J11","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        3-1\/2% Treasury Inflation-Indexed Note, Due 1\/15\/2011 (DISCONTINUED)","observation_start":"2001-01-11","observation_end":"2011-01-14","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2011-01-18
+        08:35:04-06","popularity":1,"group_popularity":1,"notes":"Copyright, 2016,
+        Haver Analytics. Reprinted with permission."},{"id":"DTP5A10","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        Treasury Inflation-Indexed Note, Due 4\/15\/2010 (DISCONTINUED)","observation_start":"2004-10-27","observation_end":"2010-04-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2010-04-16
+        10:05:34-05","popularity":1,"group_popularity":2,"notes":"Copyright, 2016,
+        Haver Analytics. Reprinted with permission."},{"id":"DTP10J10","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        4-1\/4% Treasury Inflation-Indexed Note, Due 1\/15\/2010 (DISCONTINUED)","observation_start":"2000-01-18","observation_end":"2010-01-13","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2010-01-14
+        09:48:39-06","popularity":1,"group_popularity":1,"notes":"Copyright, 2016,
+        Haver Analytics. Reprinted with permission."},{"id":"DTP10J09","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        3-7\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2009 (DISCONTINUED)","observation_start":"1999-01-07","observation_end":"2009-01-13","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2009-01-14
+        08:20:26-06","popularity":1,"group_popularity":2,"notes":"Copyright, 2016,
+        Haver Analytics. Reprinted with permission."},{"id":"DTP10J08","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        3-5\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2008 (DISCONTINUED)","observation_start":"1998-01-13","observation_end":"2008-01-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2008-01-16
+        11:27:07-06","popularity":2,"group_popularity":3,"notes":"Copyright, 2016,
+        Haver Analytics. Reprinted with permission."},{"id":"DTP10J07","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        3-3\/8% Treasury Inflation-Indexed Note, Due 1\/15\/2007 (DISCONTINUED)","observation_start":"1997-01-29","observation_end":"2007-01-11","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2007-01-12
+        09:18:25-06","popularity":3,"group_popularity":4,"notes":"Copyright, 2016,
+        Haver Analytics. Reprinted with permission."},{"id":"DTP5L02","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"5-Year
+        Treasury Inflation-Indexed Note, Due 7\/15\/2002 (DISCONTINUED)","observation_start":"1997-07-10","observation_end":"2002-02-15","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2002-12-10
+        12:24:11-06","popularity":1,"group_popularity":2,"notes":"Copyright, 2016,
+        Haver Analytics. Reprinted with permission."}]}'
     headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
       Cache-Control:
       - max-age=0, no-cache
       Connection:
       - keep-alive
-      Content-Encoding:
-      - gzip
       Content-Length:
-      - '4848'
+      - '3346'
       Content-Type:
       - application/json; charset=UTF-8
       Date:
-      - Wed, 16 Oct 2024 18:17:12 GMT
+      - Mon, 12 Oct 2026 02:13:11 GMT
       Expires:
-      - Wed, 16 Oct 2024 18:17:12 GMT
+      - Mon, 12 Oct 2026 02:13:11 GMT
       Last-Modified:
-      - Wed, 16 Oct 2024 18:09:07 GMT
+      - Mon, 12 Oct 2026 02:13:11 GMT
       Pragma:
       - no-cache
       Server:
@@ -124,6 +660,8 @@ interactions:
       - max-age=86400
       Vary:
       - Accept-Encoding
+      X-location:
+      - cfs
     status:
       code: 200
       message: OK
@@ -137,31 +675,27 @@ interactions:
       Connection:
       - keep-alive
     method: GET
-    uri: https://api.stlouisfed.org/fred/series/observations?aggregation_method=eop&api_key=MOCK_API_KEY&file_type=json&limit=100000&observation_end=2024-07-17&observation_start=2024-07-17&series_id=DTP5A25
+    uri: https://api.stlouisfed.org/fred/series/observations?aggregation_method=eop&api_key=MOCK_API_KEY&file_type=json&limit=100000&observation_end=2024-07-17&observation_start=2024-07-17&series_id=DTP10L29
   response:
     body:
-      string: !!binary |
-        H4sIAAAAAAAEA6pWKkpNzCnJzE2NLy5JLCpRslIyMjAy0TU00DU0U9JByKbmpaDL5ScVpxaVJZZk
-        5uehajYw1zU0V9JRQlaApB8mXZqXWVKsZKWUk5kHUlxaUlBaEl9SWZCqZGWoo5SWmZMK5SllFeeD
-        lRSlpBbFJ1UqWaEYnZJYkqqko1ScX1QSnw9SomSllFicrKSjlJxfmlcCNi0/La04tUTJykBHKScz
-        NxMkaAACKI4sVrKKpiRAwA6BBiDMk4CVJeaUpipZKZnoGZibKdXG1gIArUBCaHIBAAA=
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","observation_start":"2024-07-17","observation_end":"2024-07-17","units":"lin","output_type":1,"file_type":"json","order_by":"observation_date","sort_order":"asc","count":1,"offset":0,"limit":100000,"observations":[{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","date":"2024-07-17","value":"1.737"}]}'
     headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
       Cache-Control:
       - max-age=0, no-cache
       Connection:
       - keep-alive
-      Content-Encoding:
-      - gzip
       Content-Length:
-      - '221'
+      - '189'
       Content-Type:
       - application/json; charset=UTF-8
       Date:
-      - Wed, 16 Oct 2024 18:17:12 GMT
+      - Mon, 12 Oct 2026 02:13:11 GMT
       Expires:
-      - Wed, 16 Oct 2024 18:17:12 GMT
+      - Mon, 12 Oct 2026 02:13:11 GMT
       Last-Modified:
-      - Wed, 16 Oct 2024 11:03:07 GMT
+      - Sat, 10 Oct 2026 01:11:36 GMT
       Pragma:
       - no-cache
       Server:
@@ -170,6 +704,8 @@ interactions:
       - max-age=86400
       Vary:
       - Accept-Encoding
+      X-location:
+      - cfs
     status:
       code: 200
       message: OK
@@ -183,38 +719,27 @@ interactions:
       Connection:
       - keep-alive
     method: GET
-    uri: https://api.stlouisfed.org/fred/series?api_key=MOCK_API_KEY&file_type=json&series_id=DTP5A25
+    uri: https://api.stlouisfed.org/fred/series/observations?aggregation_method=eop&api_key=MOCK_API_KEY&file_type=json&limit=100000&observation_end=2024-07-17&observation_start=2024-07-17&series_id=DTP10J28
   response:
     body:
-      string: !!binary |
-        H4sIAAAAAAAEA6pWKkpNzCnJzE2NLy5JLCpRslIyMjAy0TU00DU0U9JByKbmpaDLFacWZaYWFytZ
-        RVcrZYJkXUICTB2NTJG1kWxoSWZJTqqSlZKpbmRqYpGCgZ6hkamqQkhRamJxaVGlgmdeWk5iSWZ+
-        nq5nXkpqRWqKglN+XoqOgktpqoJJjL6haYy+kQHYCflJxalFZWC1yF4z0DUw0zU2UNJRQlaA5juQ
-        F9KKUgtLU/OSK5WslFwSM3MqlXSU4GLxxRn54MByUdJRKs3LLClWslIKSC1KTs0rgYnA1agq6SgV
-        pyYW5+cl5sQnpmSVFpfkgtRZKfnllygEQ2VyKhUcwXKpKdjVw83zC3ZU0lHKSSwuiS8tSEksSQWF
-        PSLWFAzMrAyMrQzMdQ1A/ijILyjNSSzKLKlUsjI21FHKyy9JBbk2MjM1J0WhJF8hN7GkFCStkJ+n
-        kJicXFSamqJQUJSZl5xZkJijF1MUk4cl9AOK8ktSk0tSUxSCU5NB2jNTi3UU8osUQjwDgnUUEotS
-        FYrhEgrlGfnFqQhDFTKLFUoyU8G2l2SkKjjn5xWX5qYWKQQUZSanKoBjVkHDOcBTU08hJANFY14y
-        KCWkFiuUZ5ZkKGTCUoNCYl6KQkoqimRKKjSp6CmEZ6TmKYBsgrqpEuJpkJNBoqF6wXoKcE8WJFYW
-        gxXnF2WmZ+Yl5oC8BYk25JDRUSjPyEzOSC1LLVLILFZIL0pNLEktAoeXc35BZVFmekaJjoKRgaGZ
-        joJHIkiVY15iTmVJZnKxnkJQKiiEQcEH9gdgBalFuZnFxZn5eXpKtbG1AAb0xviVAwAA
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","observation_start":"2024-07-17","observation_end":"2024-07-17","units":"lin","output_type":1,"file_type":"json","order_by":"observation_date","sort_order":"asc","count":1,"offset":0,"limit":100000,"observations":[{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","date":"2024-07-17","value":"1.962"}]}'
     headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
       Cache-Control:
       - max-age=0, no-cache
       Connection:
       - keep-alive
-      Content-Encoding:
-      - gzip
       Content-Length:
-      - '621'
+      - '190'
       Content-Type:
       - application/json; charset=UTF-8
       Date:
-      - Wed, 16 Oct 2024 18:17:12 GMT
+      - Mon, 12 Oct 2026 02:13:11 GMT
       Expires:
-      - Wed, 16 Oct 2024 18:17:12 GMT
+      - Mon, 12 Oct 2026 02:13:11 GMT
       Last-Modified:
-      - Wed, 16 Oct 2024 11:03:07 GMT
+      - Sat, 10 Oct 2026 01:11:32 GMT
       Pragma:
       - no-cache
       Server:
@@ -223,6 +748,588 @@ interactions:
       - max-age=86400
       Vary:
       - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series/observations?aggregation_method=eop&api_key=MOCK_API_KEY&file_type=json&limit=100000&observation_end=2024-07-17&observation_start=2024-07-17&series_id=DTP10L27
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","observation_start":"2024-07-17","observation_end":"2024-07-17","units":"lin","output_type":1,"file_type":"json","order_by":"observation_date","sort_order":"asc","count":1,"offset":0,"limit":100000,"observations":[{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","date":"2024-07-17","value":"1.906"}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '189'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:34 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series/observations?aggregation_method=eop&api_key=MOCK_API_KEY&file_type=json&limit=100000&observation_end=2024-07-17&observation_start=2024-07-17&series_id=DTP10J27
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","observation_start":"2024-07-17","observation_end":"2024-07-17","units":"lin","output_type":1,"file_type":"json","order_by":"observation_date","sort_order":"asc","count":1,"offset":0,"limit":100000,"observations":[{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","date":"2024-07-17","value":"2.179"}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '189'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:37 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series/observations?aggregation_method=eop&api_key=MOCK_API_KEY&file_type=json&limit=100000&observation_end=2024-07-17&observation_start=2024-07-17&series_id=DTP10J29
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","observation_start":"2024-07-17","observation_end":"2024-07-17","units":"lin","output_type":1,"file_type":"json","order_by":"observation_date","sort_order":"asc","count":1,"offset":0,"limit":100000,"observations":[{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","date":"2024-07-17","value":"1.845"}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '190'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:37 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series/observations?aggregation_method=eop&api_key=MOCK_API_KEY&file_type=json&limit=100000&observation_end=2024-07-17&observation_start=2024-07-17&series_id=DTP10J30
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","observation_start":"2024-07-17","observation_end":"2024-07-17","units":"lin","output_type":1,"file_type":"json","order_by":"observation_date","sort_order":"asc","count":1,"offset":0,"limit":100000,"observations":[{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","date":"2024-07-17","value":"1.785"}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '190'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:37 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series/observations?aggregation_method=eop&api_key=MOCK_API_KEY&file_type=json&limit=100000&observation_end=2024-07-17&observation_start=2024-07-17&series_id=DTP10L28
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","observation_start":"2024-07-17","observation_end":"2024-07-17","units":"lin","output_type":1,"file_type":"json","order_by":"observation_date","sort_order":"asc","count":1,"offset":0,"limit":100000,"observations":[{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","date":"2024-07-17","value":"1.793"}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '190'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:35 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series?api_key=MOCK_API_KEY&file_type=json&series_id=DTP10J29
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","seriess":[{"id":"DTP10J29","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.875% Treasury Inflation-Indexed Note, Due 1\/15\/2029","observation_start":"2019-01-18","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:37-05","popularity":5,"notes":"Yield to maturity on accrued principal.\r\nTreasury
+        Inflation-Protected Securities, or TIPS, are securities whose principal is
+        tied to the Consumer Price Index (CPI). The principal increases with inflation
+        and decreases with deflation. When the security matures, the U.S. Treasury
+        pays the original or adjusted principal, whichever is greater.\r\nCopyright,
+        2016, Haver Analytics. Reprinted with permission."}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '493'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:37 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series?api_key=MOCK_API_KEY&file_type=json&series_id=DTP10L27
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-09","realtime_end":"2026-10-09","seriess":[{"id":"DTP10L27","realtime_start":"2026-10-09","realtime_end":"2026-10-09","title":"10-Year
+        0.375% Treasury Inflation-Indexed Note, Due 7\/15\/2027","observation_start":"2017-07-21","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:34-05","popularity":13,"notes":"Yield to maturity on accrued principal.\r\nTreasury
+        Inflation-Protected Securities, or TIPS, are securities whose principal is
+        tied to the Consumer Price Index (CPI). The principal increases with inflation
+        and decreases with deflation. When the security matures, the U.S. Treasury
+        pays the original or adjusted principal, whichever is greater.\r\nCopyright,
+        2016, Haver Analytics. Reprinted with permission."}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '492'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:34 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series?api_key=MOCK_API_KEY&file_type=json&series_id=DTP10L29
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","seriess":[{"id":"DTP10L29","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.25% Treasury Inflation-Indexed Note, Due 7\/15\/2029","observation_start":"2019-07-30","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:36-05","popularity":9,"notes":"Yield to maturity on accrued principal.\r\nTreasury
+        Inflation-Protected Securities, or TIPS, are securities whose principal is
+        tied to the Consumer Price Index (CPI). The principal increases with inflation
+        and decreases with deflation. When the security matures, the U.S. Treasury
+        pays the original or adjusted principal, whichever is greater.\r\nCopyright,
+        2016, Haver Analytics. Reprinted with permission."}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '492'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:36 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series?api_key=MOCK_API_KEY&file_type=json&series_id=DTP10J30
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","seriess":[{"id":"DTP10J30","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.125% Treasury Inflation-Indexed Bond, Due 01\/15\/2030","observation_start":"2020-02-20","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:37-05","popularity":31,"notes":"Yield to maturity on accrued principal.\r\nTreasury
+        Inflation-Protected Securities, or TIPS, are securities whose principal is
+        tied to the Consumer Price Index (CPI). The principal increases with inflation
+        and decreases with deflation. When the security matures, the U.S. Treasury
+        pays the original or adjusted principal, whichever is greater.\r\nCopyright,
+        2016, Haver Analytics. Reprinted with permission."}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '493'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:37 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series?api_key=MOCK_API_KEY&file_type=json&series_id=DTP10J28
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-09","realtime_end":"2026-10-09","seriess":[{"id":"DTP10J28","realtime_start":"2026-10-09","realtime_end":"2026-10-09","title":"10-Year
+        0.5% Treasury Inflation-Indexed Note, Due 1\/15\/2028","observation_start":"2018-01-19","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:32-05","popularity":50,"notes":"Yield to maturity on accrued principal.\r\nTreasury
+        Inflation-Protected Securities, or TIPS, are securities whose principal is
+        tied to the Consumer Price Index (CPI). The principal increases with inflation
+        and decreases with deflation. When the security matures, the U.S. Treasury
+        pays the original or adjusted principal, whichever is greater.\r\nCopyright,
+        2016, Haver Analytics. Reprinted with permission."}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '489'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:32 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series?api_key=MOCK_API_KEY&file_type=json&series_id=DTP10J27
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-11","realtime_end":"2026-10-11","seriess":[{"id":"DTP10J27","realtime_start":"2026-10-11","realtime_end":"2026-10-11","title":"10-Year
+        0.375 Treasury Inflation-Indexed Note, Due 1\/15\/2027","observation_start":"2017-01-20","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:37-05","popularity":3,"notes":"Treasury Inflation-Protected Securities,
+        or TIPS, are securities whose principal is tied to the Consumer Price Index
+        (CPI). The principal increases with inflation and decreases with deflation.
+        When the security matures, the U.S. Treasury pays the original or adjusted
+        principal, whichever is greater. \n\nAverages of business days. Yield to maturity
+        on accrued principal. \n\nCalculated from data provided by the Wall Street
+        Journal. \n\nCopyright, 2016, Haver Analytics. Reprinted with permission."}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '541'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:37 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://api.stlouisfed.org/fred/series?api_key=MOCK_API_KEY&file_type=json&series_id=DTP10L28
+  response:
+    body:
+      string: '{"realtime_start":"2026-10-09","realtime_end":"2026-10-09","seriess":[{"id":"DTP10L28","realtime_start":"2026-10-09","realtime_end":"2026-10-09","title":"10-Year
+        0.75% Treasury Inflation-Indexed Note, Due 7\/15\/2028","observation_start":"2018-07-20","observation_end":"2026-10-09","frequency":"Daily","frequency_short":"D","units":"Percent","units_short":"%","seasonal_adjustment":"Not
+        Seasonally Adjusted","seasonal_adjustment_short":"NSA","last_updated":"2026-10-09
+        20:11:35-05","popularity":9}]}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=93600
+      Cache-Control:
+      - max-age=0, no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '278'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Expires:
+      - Mon, 12 Oct 2026 02:13:12 GMT
+      Last-Modified:
+      - Sat, 10 Oct 2026 01:11:35 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=86400
+      Vary:
+      - Accept-Encoding
+      X-location:
+      - cfs
     status:
       code: 200
       message: OK

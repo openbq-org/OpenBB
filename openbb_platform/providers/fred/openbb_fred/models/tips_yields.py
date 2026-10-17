@@ -28,11 +28,11 @@ SERIES_PERCENT_COLUMN: dict[str, Any] = {
 class FredTipsYieldsQueryParams(UseCacheQueryParams, TipsYieldsQueryParams):
     """FRED TIPS Yields Query."""
 
-    maturity: Literal["5", "10", "20", "30"] | None = Field(
+    maturity: Literal["10", "20", "30"] | None = Field(
         default=None,
-        description="The maturity of the security in years - 5, 10, 20, 30 - defaults to all."
+        description="The maturity of the security in years - 10, 20, 30 - defaults to all."
         + " Note that the maturity is the tenor of the security, not the time to maturity.",
-        json_schema_extra={"choices": ["5", "10", "20", "30"]},
+        json_schema_extra={"choices": ["10", "20", "30"]},
     )
     frequency: (
         Literal[
