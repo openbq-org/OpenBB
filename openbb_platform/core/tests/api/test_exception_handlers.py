@@ -1,7 +1,7 @@
 """Tests for openbb_core.api.exception_handlers."""
 
 import json
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi.exceptions import ResponseValidationError
@@ -12,9 +12,10 @@ from openbb_core.app.model.abstract.error import OpenBBError
 from openbb_core.provider.utils.errors import EmptyDataError, UnauthorizedError
 
 
-def _make_request(query_params: dict | None = None) -> MagicMock:
+def _make_request(query_params: dict | None = None, body: bytes = b"") -> MagicMock:
     req = MagicMock()
     req.query_params = query_params or {}
+    req.body = AsyncMock(return_value=body)
     return req
 
 
@@ -91,10 +92,50 @@ async def test_validation_handler_query_params_routed_to_query_loc(monkeypatch):
     except ValidationError as ve:
         err = ve
 
-    req = _make_request({"symbol": ""})  # ensure all_in_query short-circuit works
+    req = _make_request({"symbol": ""})
     # Force `error.title` to contain "QueryParams"; pydantic provides title via model name.
     resp = await ExceptionHandlers.validation(req, err)
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_validation_handler_missing_query_param_returns_422(monkeypatch):
+    monkeypatch.setattr(
+        "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
+    )
+
+    class SearchQueryParams(BaseModel):
+        category: str
+
+    with pytest.raises(ValidationError) as exc_info:
+        SearchQueryParams()  # type: ignore[call-arg]
+
+    response = await ExceptionHandlers.validation(_make_request(), exc_info.value)
+
+    assert response.status_code == 422
+    detail = json.loads(response.body)["detail"]
+    assert detail[0]["loc"] == ["query", "category"]
+
+
+@pytest.mark.asyncio
+async def test_validation_query_params_model_bound_to_body_is_not_query_scoped(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
+    )
+
+    class SearchQueryParams(BaseModel):
+        category: str
+
+    with pytest.raises(ValidationError) as exc_info:
+        SearchQueryParams()  # type: ignore[call-arg]
+
+    response = await ExceptionHandlers.validation(
+        _make_request(body=b"{}"), exc_info.value
+    )
+
+    assert response.status_code == 500
 
 
 @pytest.mark.asyncio
