@@ -41,7 +41,15 @@ def basemodel_to_df(
 
     if "is_multiindex" in df.columns:
         col_names = ast.literal_eval(df.multiindex_names.unique()[0])
-        df = df.set_index(col_names)
+        # Unnamed levels are stored under the column names assigned by reset_index,
+        # so set the index from those and restore the original level names after.
+        if "multiindex_columns" in df.columns:
+            index_cols = ast.literal_eval(df.multiindex_columns.unique()[0])
+            df = df.set_index(index_cols)
+            df.index.names = col_names
+            df = df.drop(["multiindex_columns"], axis=1)
+        else:
+            df = df.set_index(col_names)
         df = df.drop(["is_multiindex", "multiindex_names"], axis=1)
 
     # If the date column contains dates only, convert them to a date to avoid encoding time data.
@@ -90,8 +98,10 @@ def df_to_basemodel(
     # Check if df has multiindex.  If so, add the index names to the df and a boolean column
     if isinstance(df.index, MultiIndex):
         df["is_multiindex"] = True
-        df["multiindex_names"] = str(df.index.names)
+        df["multiindex_names"] = str(list(df.index.names))
+        n_levels = df.index.nlevels
         df = df.reset_index()
+        df["multiindex_columns"] = str(list(df.columns[:n_levels]))
 
     # Converting to JSON will add T00:00:00.000 to all dates with no time element unless we format it as a string first.
     if "date" in df.columns:

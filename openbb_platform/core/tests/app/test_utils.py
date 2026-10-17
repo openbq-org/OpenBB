@@ -75,6 +75,24 @@ def test_basemodel_to_multiindex_df():
     assert isinstance(df.index, pd.MultiIndex)
 
 
+@pytest.mark.parametrize(
+    "names",
+    [["x", "y"], [None, None], ["x", None], [None, "y"]],
+)
+def test_multiindex_round_trip(names):
+    """Test that a MultiIndex survives a df -> basemodel -> df round trip."""
+    original = df_multiindex.copy()
+    original.index.names = names
+
+    result = basemodel_to_df(df_to_basemodel(original))
+
+    assert isinstance(result.index, pd.MultiIndex)
+    assert list(result.index.names) == names
+    assert result.index.tolist() == original.index.tolist()
+    assert list(result.columns) == ["z"]
+    assert result["z"].tolist() == original["z"].tolist()
+
+
 def test_get_target_column():
     """Test the get_target_column helper."""
     target = get_target_column(df, "x")
