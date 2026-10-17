@@ -160,6 +160,22 @@ class TestCalculateCones:
 
 
 class TestCalculateFibLevels:
+    def test_snaps_missing_start_date_to_nearest(self):
+        """Resolve a missing start date against itself when choosing the endpoint."""
+        index = pd.bdate_range("2024-01-01", periods=60)
+        data = pd.DataFrame({"close": np.linspace(100, 160, 60)}, index=index)
+        start_date = pd.Timestamp("2024-01-06")  # Saturday, not in the index.
+        end_date = index[-1]
+
+        with pytest.warns(UserWarning, match="Start date not in data"):
+            _, min_date, max_date, min_pr, max_pr, _ = calculate_fib_levels(
+                data, "close", start_date=start_date, end_date=end_date
+            )
+
+        assert min_date == pd.Timestamp("2024-01-05")
+        assert max_date == end_date
+        assert max_pr > min_pr
+
     def test_default_branch(self, ohlcv_df):
         result = calculate_fib_levels(ohlcv_df, "close")
         assert result is not None

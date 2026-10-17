@@ -555,7 +555,9 @@ def calculate_fib_levels(
 
     if start_date and end_date:
         if start_date not in data.index:
-            date0 = data.index[data.index.get_indexer([end_date], method="nearest")[0]]
+            date0 = data.index[
+                data.index.get_indexer([start_date], method="nearest")[0]
+            ]
             warn(f"Start date not in data.  Using nearest: {date0}")
         else:
             date0 = start_date
