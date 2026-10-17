@@ -1004,7 +1004,7 @@ COUNTRY_PORTFOLIOS_URLS = {
 
 COUNTRY_PORTFOLIO_FILES = {
     "Austria": "Austria.Dat",
-    "Australia": "Australia.Dat",
+    "Australia": "Austrlia.Dat",
     "Belgium": "Belgium.Dat",
     "Canada": "Canada.Dat",
     "Denmark": "Denmark.Dat",
