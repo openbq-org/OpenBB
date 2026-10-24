@@ -35,6 +35,20 @@ def _decode(text: str) -> Any:
         return text
 
 
+def _decode_jsonp(text: str) -> Any:
+    """Return JSON or JSONP as a decoded document"""
+    import re
+
+    body = _decode(text)
+
+    if not isinstance(body, str):
+        return body
+
+    match = re.fullmatch(r"\s*[A-Za-z_$][\w.$]*\((.*)\)\s*;?\s*", text, re.DOTALL)
+
+    return _decode(match.group(1)) if match else body
+
+
 async def collect_pages(
     fetch_page: PageFetcher,
     page_limit: int,
@@ -558,7 +572,12 @@ class MarketDataSession:
         OpenBBError
             If the session was rejected or the response is not readable.
         """
-        body = _decode(await self._get("getids.jsp", {"symbol": ",".join(symbols)}))
+        body = _decode_jsonp(
+            await self._get(
+                "getids.jsp",
+                {"symbol": ",".join(symbols), "cb": "finraLookup"},
+            )
+        )
 
         if not isinstance(body, dict):
             raise OpenBBError("The FINRA security lookup was not readable.")

@@ -178,8 +178,8 @@ class TestList:
         ]
 
         assert [call["params"] for call in lookups] == [
-            {"symbol": "22:NEWCO"},
-            {"symbol": "126:SPY"},
+            {"symbol": "22:NEWCO", "cb": "finraLookup"},
+            {"symbol": "126:SPY", "cb": "finraLookup"},
         ]
 
     def test_nothing_to_look_up(self, asset, monkeypatch):
@@ -237,7 +237,10 @@ class TestLookups:
         classes, session = self._classify(fake_session, response, ["ACP$A"])
 
         assert set(classes) == {"ACP$A"}
-        assert session.calls[1]["params"] == {"symbol": "126:ACPpA"}
+        assert session.calls[1]["params"] == {
+            "symbol": "126:ACPpA",
+            "cb": "finraLookup",
+        }
 
     def test_fallback_keeps_only_us_markets(self, fake_session, response):
         """A symbol missed on its market is kept from any market only if it is US."""

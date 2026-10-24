@@ -388,13 +388,16 @@ class TestMarketDataSession:
 
     def test_lookup(self, fake_session, response):
         """Lookup records are returned."""
-        body = '{"errorCode": "0", "Records": [{"Ticker": "AAPL"}]}'
+        body = 'finraLookup({"errorCode": "0", "Records": [{"Ticker": "AAPL"}]})'
         result, session = self._call(
             fake_session, response, response(200, body), "lookup", ["AAPL", "MSFT"]
         )
 
         assert result == [{"Ticker": "AAPL"}]
-        assert session.calls[1]["params"] == {"symbol": "AAPL,MSFT"}
+        assert session.calls[1]["params"] == {
+            "symbol": "AAPL,MSFT",
+            "cb": "finraLookup",
+        }
 
     def test_lookup_unreadable(self, fake_session, response):
         """A lookup body that is not JSON raises."""
