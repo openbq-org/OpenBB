@@ -537,6 +537,49 @@ async def test_static_command_runner_command():
     assert result.provider == "mock_provider"
 
 
+@pytest.mark.asyncio
+async def test_static_command_runner_command_deadline(monkeypatch):
+    """A command past its provider's deadline is cancelled with a TimeoutError."""
+    import asyncio
+    import time
+
+    from openbb_core.app import command_runner
+
+    monkeypatch.setattr(command_runner, "_COMMAND_TIMEOUTS", {"": 60, "slow": 0.2})
+    cancelled = []
+
+    async def sleeper(**_):
+        try:
+            await asyncio.sleep(60)
+        except asyncio.CancelledError:
+            cancelled.append(True)
+            raise
+
+    started = time.monotonic()
+    with pytest.raises(TimeoutError, match="slow provider did not answer within 0.2"):
+        await StaticCommandRunner._command(
+            sleeper, {"provider_choices": SimpleNamespace(provider="slow")}
+        )
+    assert time.monotonic() - started < 5
+    assert cancelled == [True]
+
+
+@pytest.mark.asyncio
+async def test_static_command_runner_command_own_timeout_passes_through(monkeypatch):
+    """A command's own TimeoutError is not relabelled as the deadline."""
+    from openbb_core.app import command_runner
+
+    monkeypatch.setattr(command_runner, "_COMMAND_TIMEOUTS", {"": 60})
+
+    async def upstream_timeout(**_):
+        raise TimeoutError("EIA timed out")
+
+    with pytest.raises(TimeoutError, match="^EIA timed out$"):
+        await StaticCommandRunner._command(
+            upstream_timeout, {"provider_choices": SimpleNamespace(provider="eia")}
+        )
+
+
 def test_extension_immutable_preserves_original_and_does_not_set_extension_modified(
     monkeypatch,
 ):

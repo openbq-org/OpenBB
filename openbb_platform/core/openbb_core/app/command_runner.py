@@ -1,5 +1,6 @@
 """Command runner module."""
 
+import asyncio
 from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import asdict, is_dataclass
@@ -236,6 +237,10 @@ class ParametersBuilder:
         return kwargs
 
 
+# Read once, so a bad value stops the server at startup.
+_COMMAND_TIMEOUTS = Env().COMMAND_TIMEOUTS
+
+
 class StaticCommandRunner:
     """Static Command Runner."""
 
@@ -247,7 +252,22 @@ class StaticCommandRunner:
         show_warnings: bool = True,
     ) -> OBBject:
         """Run a command and return the output."""
-        obbject = await maybe_coroutine(func, **kwargs)
+        provider = getattr(kwargs.get("provider_choices"), "provider", None)
+        key = provider or func.__module__.split(".")[0].removeprefix("openbb_")
+        timeout = _COMMAND_TIMEOUTS.get(key, _COMMAND_TIMEOUTS.get(""))
+        if timeout is None:
+            obbject = await maybe_coroutine(func, **kwargs)
+        else:
+            # Past the deadline the command is cancelled at its next await.
+            task = asyncio.ensure_future(maybe_coroutine(func, **kwargs))
+            try:
+                obbject = await asyncio.wait_for(task, timeout)
+            except asyncio.TimeoutError:
+                if not task.cancelled():  # the command's own timeout
+                    raise
+                raise TimeoutError(
+                    f"The {key} provider did not answer within {timeout:g} seconds."
+                ) from None
         if isinstance(obbject, (OBBject, OBBStream)):
             obbject.provider = getattr(
                 kwargs.get("provider_choices"),
