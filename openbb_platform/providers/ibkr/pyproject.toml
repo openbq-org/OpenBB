@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "ibkr"
+version = "0.0.1"
+description = ""
+authors = ["Ryan Thomas <ryanthomas624@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "openbb_ibkr" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4"
+openbb-core = { version = "^1.4.8" }
+ib_insync = "^0.9.86"
+
+[tool.poetry.group.dev.dependencies]
+openbb-devtools = { version = "^1.0.0" }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."openbb_core_extension"]
+openbb_ibkr = "openbb_ibkr.router:router"
+
+[tool.poetry.plugins."openbb_provider_extension"]
+openbb_ibkr = "openbb_ibkr.provider:provider"
