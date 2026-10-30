@@ -93,6 +93,26 @@ class TestYangZhang(_VolatilityShared):
         with pytest.warns(UserWarning, match="Window must be at least 2"):
             self.__class__.func(ohlcv_df, window=1)
 
+    def test_overnight_moves_only_count_once(self):
+        # Prices move only between sessions (no intraday range), so the
+        # open-to-close and Rogers-Satchell terms are zero and the estimate
+        # reduces to the overnight (close-to-open) volatility.
+        gaps = np.array([0.0, 0.01, -0.02, 0.015, -0.005, 0.02, -0.01, 0.005])
+        price = 100 * np.exp(np.cumsum(gaps))
+        df = pd.DataFrame(
+            {"open": price, "high": price, "low": price, "close": price},
+            index=pd.date_range("2021-01-01", periods=len(price), freq="D"),
+        )
+        window = 5
+        log_oc = np.log(df["open"] / df["close"].shift(1))
+        expected = np.sqrt(
+            (log_oc**2).rolling(window).sum() / (window - 1) * 252
+        ).dropna()
+
+        result = yang_zhang(df, window=window)
+
+        pd.testing.assert_series_equal(result, expected, check_names=False)
+
 
 class TestClenowMomentum:
     def test_returns_r2_coef_predictions(self, ohlcv_df):
