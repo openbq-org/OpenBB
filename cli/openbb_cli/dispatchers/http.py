@@ -49,6 +49,10 @@ def _help_for_provider(text: str | None, provider: str) -> str | None:
     return "\n".join(kept) if kept else None
 
 
+# Wire delimiter per spec ``list_style``; ``multi`` (repeated key) needs none.
+_LIST_DELIMITERS = {"csv": ",", "space": " ", "pipe": "|"}
+
+
 def _slim_param(p: dict[str, Any]) -> dict[str, Any]:
     """Strip empty / falsy fields from a normalized parameter entry."""
     out: dict[str, Any] = {
@@ -58,6 +62,8 @@ def _slim_param(p: dict[str, Any]) -> dict[str, Any]:
     }
     if p.get("is_list"):
         out["is_list"] = True
+        if p.get("list_style"):
+            out["list_style"] = p["list_style"]
     if p.get("json_arg"):
         out["json_arg"] = True
     if p.get("required"):
@@ -743,16 +749,20 @@ class HttpDispatcher:
         """Split dispatch params into ``(query, body, headers)`` by spec ``in`` tag."""
         cmd_spec = (self._spec_doc.get("commands") or {}).get(command) or {}
         locations: dict[str, tuple[str, str]] = {}
+        delimiters: dict[str, str] = {}
         for p in command_parameters(cmd_spec):
             if isinstance(p, dict) and p.get("name"):
                 spec_name = p["name"]
                 loc = p.get("in", "query")
+                delimiter = _LIST_DELIMITERS.get(p.get("list_style", "multi"))
                 for key in {
                     spec_name,
                     spec_name.replace("-", "_"),
                     spec_name.replace("_", "-"),
                 }:
                     locations[key] = (loc, spec_name)
+                    if p.get("is_list") and delimiter:
+                        delimiters[key] = delimiter
         query: dict[str, Any] = {}
         body: dict[str, Any] = {}
         headers: dict[str, Any] = {}
@@ -764,7 +774,10 @@ class HttpDispatcher:
             elif loc == "body":
                 body[name] = value
             else:
-                query[name] = value
+                out_value = value
+                if name in delimiters and isinstance(value, (list, tuple)):
+                    out_value = delimiters[name].join(str(v) for v in value)
+                query[name] = out_value
         return query, body, headers
 
     async def _invoke_auth_hook(
@@ -1095,7 +1108,7 @@ def http_dispatcher_from_spec(
         api_prefix=spec_doc.get("api_prefix", "/api/v1"),
         command_methods=methods,
         command_url_paths=url_paths,
-        headers=headers,
+        headers={**(spec_doc.get("headers") or {}), **(headers or {})} or None,
         query_params=query_params,
         spec_doc=spec_doc,
         auth_hook=auth_hook,

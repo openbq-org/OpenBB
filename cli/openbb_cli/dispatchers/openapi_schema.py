@@ -119,8 +119,8 @@ def deref_parameter(spec: dict[str, Any], param: dict[str, Any]) -> dict[str, An
         seen.add(ref)
         param = resolve_ref(spec, ref) or {}
     schema = param.get("schema")
-    if isinstance(schema, dict) and "$ref" in schema:
-        param = {**param, "schema": resolve_ref(spec, schema["$ref"]) or schema}
+    if isinstance(schema, dict):
+        param = {**param, "schema": deref_schema(spec, schema)}
     return param
 
 
@@ -346,27 +346,54 @@ def _deref_response(spec: dict[str, Any], response: dict[str, Any]) -> dict[str,
     return response
 
 
+def _accepted_content_types(accept: str | None) -> list[str]:
+    """Media types from an ``Accept`` header value, in the order given."""
+    return [
+        part.split(";")[0].strip().lower()
+        for part in (accept or "").split(",")
+        if part.split(";")[0].strip()
+    ]
+
+
 def extract_response_schema(
-    spec: dict[str, Any], operation: dict[str, Any]
+    spec: dict[str, Any], operation: dict[str, Any], accept: str | None = None
 ) -> dict[str, Any] | None:
-    """Pull the primary success-response JSON schema for an operation."""
+    """Pull the primary success-response JSON schema for an operation.
+
+    When ``accept`` (an ``Accept`` header sent with every request) names a
+    media type the response declares, that schema is used, since it is the
+    shape the server will actually return.
+    """
     responses = operation.get("responses") or {}
     response: dict[str, Any] | None = None
-    for key in _SUCCESS_PRIORITY:
+    # Success responses only. ``default`` is the catch-all for *errors* whenever
+    # the operation declares any explicit status code, so it only counts when it
+    # is the operation's sole response; a 4xx/5xx schema is never a row model.
+    success = [
+        k
+        for k in responses
+        if str(k).upper() in _SUCCESS_PRIORITY[:-1] or str(k).startswith("2")
+    ]
+    candidates = sorted(
+        success,
+        key=lambda k: (
+            _SUCCESS_PRIORITY.index(str(k).upper())
+            if str(k).upper() in _SUCCESS_PRIORITY
+            else len(_SUCCESS_PRIORITY)
+        ),
+    )
+    if not candidates and set(responses) == {"default"}:
+        candidates = ["default"]
+    for key in candidates:
         candidate = responses.get(key)
         if isinstance(candidate, dict):
             response = _deref_response(spec, candidate)
             break
     if response is None:
-        for value in responses.values():
-            if isinstance(value, dict):
-                response = _deref_response(spec, value)
-                break
-    if response is None:
         return None
     content = response.get("content") or {}
     media: dict[str, Any] | None = None
-    for ct in _JSON_CONTENT_TYPES:
+    for ct in [*_accepted_content_types(accept), *_JSON_CONTENT_TYPES]:
         candidate = content.get(ct)
         if isinstance(candidate, dict):
             media = candidate
@@ -438,8 +465,9 @@ def extract_response_schemas(
 
 def _resolve_schema(schema: dict[str, Any]) -> tuple[type, list[Any], bool]:
     """Resolve an OpenAPI parameter schema to ``(py_type, choices, is_list)``."""
-    if "anyOf" in schema:
-        non_null = [s for s in schema["anyOf"] if s.get("type") != "null"]
+    combinator = "anyOf" if "anyOf" in schema else "oneOf" if "oneOf" in schema else ""
+    if combinator:
+        non_null = [s for s in schema[combinator] if s.get("type") != "null"]
         if not non_null:
             return (str, [], False)
         if len(non_null) == 1:
@@ -660,6 +688,9 @@ def _strip_placeholders(segment: str) -> str:
         if j < 0:
             break
         out = out[:i] + out[j + 1 :]
+    # A segment made only of placeholders and punctuation (``{x},{y}``) is not a name.
+    if not any(ch.isalnum() for ch in out):
+        return ""
     return out.strip(".")
 
 

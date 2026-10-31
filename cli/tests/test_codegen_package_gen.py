@@ -495,3 +495,229 @@ def test_build_root_router_imports_stream_and_post_processing_functions():
     assert router.source.index("_shape_rows") < router.source.index(
         'router = Router(prefix="")'
     )
+
+
+def test_spec_headers_are_baked_into_requests_and_not_surfaced_as_params():
+    from openbb_cli.dispatchers.spec import build_spec_document
+
+    openapi = {
+        "openapi": "3.0.0",
+        "paths": {
+            "/things": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "User-Agent",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        },
+                        {"name": "q", "in": "query", "schema": {"type": "string"}},
+                    ],
+                    "responses": {"200": {"description": "ok"}},
+                }
+            }
+        },
+    }
+    doc = build_spec_document(
+        openapi,
+        base_url="https://x.test",
+        headers={"user-agent": "me@example.com"},
+    )
+    assert doc["headers"] == {"user-agent": "me@example.com"}
+    names = [p["name"] for p in doc["commands"]["things"]["parameters"]]
+    assert names == ["q"]
+
+    from openbb_cli.codegen.fetcher_gen import (
+        FetcherCommandSpec,
+        generate_fetcher_module,
+    )
+
+    fetcher = generate_fetcher_module(
+        FetcherCommandSpec(
+            name="things",
+            cmd_spec=doc["commands"]["things"],
+            base_url=doc["base_url"],
+            api_prefix=doc["api_prefix"],
+            provider_name="x",
+            headers=doc["headers"],
+        )
+    )
+    assert (
+        "_headers: dict[str, str] = {'user-agent': 'me@example.com'}" in fetcher.source
+    )
+
+
+def test_credential_headers_stay_params_for_credentials_mapping():
+    from openbb_cli.dispatchers.spec import build_spec_document
+
+    openapi = {
+        "openapi": "3.0.0",
+        "paths": {
+            "/things": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "User-Agent",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        },
+                        {
+                            "name": "API-Key",
+                            "in": "header",
+                            "schema": {"type": "string"},
+                        },
+                    ],
+                    "responses": {"200": {"description": "ok"}},
+                }
+            }
+        },
+    }
+    doc = build_spec_document(
+        openapi,
+        base_url="https://x.test",
+        headers={"User-Agent": "ua", "API-Key": "secret"},
+    )
+    assert doc["headers"] == {"User-Agent": "ua"}
+    names = [p["name"] for p in doc["commands"]["things"]["parameters"]]
+    assert names == ["API-Key"]
+
+
+def _list_doc(**param_extra):
+    from openbb_cli.dispatchers.spec import build_spec_document
+
+    openapi = {
+        "openapi": "3.0.0",
+        "paths": {
+            "/things": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "area",
+                            "in": "query",
+                            "schema": {"type": "array", "items": {"type": "string"}},
+                            **param_extra,
+                        }
+                    ],
+                    "responses": {"200": {"description": "ok"}},
+                }
+            }
+        },
+    }
+    return build_spec_document(openapi, base_url="https://x.test")
+
+
+def test_list_style_recorded_from_openapi_style_and_explode():
+    assert _list_doc()["commands"]["things"]["parameters"][0]["list_style"] == "multi"
+    csv = _list_doc(style="form", explode=False)
+    assert csv["commands"]["things"]["parameters"][0]["list_style"] == "csv"
+    pipe = _list_doc(style="pipeDelimited")
+    assert pipe["commands"]["things"]["parameters"][0]["list_style"] == "pipe"
+
+
+def test_list_query_param_codegen_uses_multiple_items_and_wire_style():
+    from openbb_cli.codegen.fetcher_gen import (
+        FetcherCommandSpec,
+        generate_fetcher_module,
+    )
+
+    for extra, expect in (
+        ({"style": "form", "explode": False}, "_query_dict['area'] = ','.join(_items)"),
+        ({}, "_query_dict['area'] = _items"),
+    ):
+        doc = _list_doc(**extra)
+        src = generate_fetcher_module(
+            FetcherCommandSpec(
+                name="things",
+                cmd_spec=doc["commands"]["things"],
+                base_url=doc["base_url"],
+                api_prefix=doc["api_prefix"],
+                provider_name="x",
+            )
+        ).source
+        assert "area: str | None" in src
+        assert (
+            "__json_schema_extra__ = {'area': {'multiple_items_allowed': True}}" in src
+        )
+        assert "def _join_multiple_items" in src
+        assert expect in src
+        compile(src, "gen", "exec")
+
+
+def test_http_dispatcher_joins_csv_lists_and_repeats_multi():
+    from openbb_cli.dispatchers.http import http_dispatcher_from_spec
+
+    for extra, expected in (
+        ({"style": "form", "explode": False}, "CA,NY"),
+        ({}, ["CA", "NY"]),
+    ):
+        d = http_dispatcher_from_spec(_list_doc(**extra))
+        query, _, _ = d._partition_params("things", {"area": ["CA", "NY"]})
+        assert query["area"] == expected
+
+
+def test_root_router_module_never_collides_with_a_namespace_router():
+    import ast
+
+    spec = {
+        "version": 5,
+        "base_url": "https://x.test",
+        "api_prefix": "",
+        "commands": {
+            "congress": {
+                "url_path": "/congress",
+                "method": "get",
+                "parameters": [],
+                "response_schema": {"type": "object"},
+            },
+            "congress.list": {
+                "url_path": "/congress/list",
+                "method": "get",
+                "parameters": [],
+                "response_schema": {"type": "object"},
+            },
+        },
+    }
+    import tempfile
+    from pathlib import Path
+
+    with tempfile.TemporaryDirectory() as tmp:
+        pkgs = pkg.generate_packages(
+            spec, output_root=Path(tmp), provider_name="congress"
+        )
+        routers = pkgs.packages[0].routers.routers
+        names = [r.module_name for r in routers]
+        assert len(names) == len(set(names))
+        root = next(r for r in routers if r.entry_point_name == "congress")
+        ns = next(r for r in routers if r.entry_point_name is None)
+        assert root.module_name != ns.module_name
+        # the root imports the namespace router, never itself
+        assert f"routers.{root.module_name} import" not in root.source
+        for r in routers:
+            ast.parse(r.source)
+
+
+def test_duplicate_router_modules_are_rejected_at_generation_time():
+    import pytest
+
+    from openbb_cli.codegen.package_gen import _assert_unique_router_modules
+    from openbb_cli.codegen.router_gen import GeneratedRouter
+
+    with pytest.raises(ValueError, match="collision"):
+        _assert_unique_router_modules(
+            [GeneratedRouter("a_b", None, ""), GeneratedRouter("A_B", None, "")]
+        )
+
+
+def test_router_import_cycles_are_rejected():
+    import pytest
+
+    from openbb_cli.codegen.package_gen import _assert_unique_router_modules
+    from openbb_cli.codegen.router_gen import GeneratedRouter
+
+    a = GeneratedRouter("a", None, "from p.routers.b import router as _b_router\n")
+    b = GeneratedRouter("b", None, "from p.routers.a import router as _a_router\n")
+    with pytest.raises(ValueError, match="Circular router import"):
+        _assert_unique_router_modules([a, b])
+    selfref = GeneratedRouter("c", None, "from p.routers.c import router\n")
+    with pytest.raises(ValueError, match="Circular router import"):
+        _assert_unique_router_modules([selfref])

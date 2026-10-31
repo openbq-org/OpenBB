@@ -791,7 +791,7 @@ class MethodDefinition:
                 qp_model := MethodDefinition.query_params_model(param.annotation)
             ) is not None:
                 for field_name, field in qp_model.model_fields.items():
-                    field_anno = field.annotation
+                    field_anno: Any = field.annotation
                     new_type = MethodDefinition.get_expanded_type(
                         field_name, None, field_anno
                     )
@@ -807,7 +807,7 @@ class MethodDefinition:
                     if field.is_required():
                         field_default: Any = Parameter.empty
                     elif field.default_factory is not None:
-                        field_default = field.default_factory()
+                        field_default = field.get_default(call_default_factory=True)
                     else:
                         field_default = field.default
                     formatted[field_name] = Parameter(

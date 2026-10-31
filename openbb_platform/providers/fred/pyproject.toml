@@ -83,6 +83,13 @@ exclude = ["tests", "integration"]
 [tool.ty.rules]
 unresolved-import = "warn"
 
+[[tool.ty.overrides]]
+include = ["openbb_fred/models/**"]
+
+[tool.ty.overrides.rules]
+invalid-attribute-override = "ignore"
+invalid-mutable-override = "ignore"
+
 [tool.coverage.run]
 branch = true
 source = ["openbb_fred"]

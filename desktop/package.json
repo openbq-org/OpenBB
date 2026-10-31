@@ -74,6 +74,7 @@
     "seroval": ">=1.4.1",
     "minimatch": ">10.2.1",
     "flatted": ">=3.4.2",
-    "picomatch": "^4.0.4"
+    "picomatch": "^4.0.4",
+    "postcss-selector-parser": "^7.1.6"
   }
 }

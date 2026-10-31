@@ -90,6 +90,13 @@ exclude = ["tests", "integration"]
 [tool.ty.rules]
 unresolved-import = "ignore"
 
+[[tool.ty.overrides]]
+include = ["openbb_sec/models/**"]
+
+[tool.ty.overrides.rules]
+invalid-attribute-override = "ignore"
+invalid-mutable-override = "ignore"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"

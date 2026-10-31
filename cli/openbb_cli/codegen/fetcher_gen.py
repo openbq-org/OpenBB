@@ -15,8 +15,8 @@ from openbb_cli.codegen.pydantic_gen import (
     class_name_from,
     consolidate_imports,
     generate_class,
+    query_field_name,
     render_function_docstring,
-    safe_field_name,
 )
 
 _PATH_TEMPLATE_RE = re.compile(r"\{([^}]+)\}")
@@ -45,6 +45,7 @@ class FetcherCommandSpec:
     base_url: str
     api_prefix: str
     provider_name: str
+    headers: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -123,6 +124,37 @@ def _module_name_from_command(name: str) -> str:
     return safe.lower()
 
 
+_COORDINATE_NAME_RE = re.compile(r"(^|[^a-z])(lat|lon|lng|latitude|longitude)", re.I)
+
+
+def _is_coordinate_name(name: str) -> bool:
+    """Whether a path parameter is a decimal coordinate (never an integer id)."""
+    return bool(_COORDINATE_NAME_RE.search(name))
+
+
+def _mark_null_empty(node: Any) -> Any:
+    """Flag every object schema so its generated class treats ``''`` as null.
+
+    The marker is a vendor extension read by ``generate_class``; nested object
+    schemas are visited too, so nested classes get the same behavior.
+    """
+    if isinstance(node, list):
+        return [_mark_null_empty(n) for n in node]
+    if not isinstance(node, dict):
+        return node
+    out = {
+        k: (
+            v
+            if k in ("enum", "const", "default", "example", "examples")
+            else _mark_null_empty(v)
+        )
+        for k, v in node.items()
+    }
+    if out.get("type") == "object" or "properties" in out:
+        out["x-null-empty"] = True
+    return out
+
+
 def _path_template_keys(url_path: str) -> list[str]:
     """Extract ``{placeholder}`` names from a URL template, in declaration order."""
     return [m.group(1) for m in _PATH_TEMPLATE_RE.finditer(url_path)]
@@ -163,16 +195,30 @@ def _query_params_schema(
         for key in ("type", "default", "choices"):
             if key in raw and raw[key] is not None:
                 prop_schema[key] = raw[key]
-        if raw.get("in") == "path" and prop_schema.get("type") == "number":
+        if (
+            raw.get("in") == "path"
+            and prop_schema.get("type") == "number"
+            and not _is_coordinate_name(name)
+        ):
             prop_schema["type"] = "integer"
         if description:
             prop_schema["description"] = description
-        if raw.get("is_list"):
+        if raw.get("is_list") and raw.get("in", "query") == "query":
+            # Platform convention: a ``str`` field flagged ``multiple_items_allowed``
+            # (comma-separated over REST, list-or-str in Python).
+            prop_schema = {"type": "string", "x-multiple-items": True}
+            if description:
+                prop_schema["description"] = description
+            if raw.get("choices"):
+                prop_schema["x-choices"] = list(raw["choices"])
+            if raw.get("default") is not None:
+                prop_schema["default"] = raw["default"]
+        elif raw.get("is_list"):
             inner = {"type": prop_schema.get("type", "string")}
             prop_schema = {"type": "array", "items": inner}
             if description:
                 prop_schema["description"] = description
-        if raw.get("choices"):
+        if raw.get("choices") and "x-multiple-items" not in prop_schema:
             prop_schema["enum"] = list(raw["choices"])
         properties[name] = prop_schema
         if raw.get("required"):
@@ -242,11 +288,39 @@ def _data_schema(cmd_spec: dict[str, Any]) -> dict[str, Any]:
             if inner.get("type") == "array" and isinstance(inner.get("items"), dict):
                 inner = inner["items"]
             if isinstance(inner.get("oneOf"), list):
+                merged = _merge_object_variants(inner)
                 concrete = [c for c in inner["oneOf"] if isinstance(c, dict)]
-                if concrete:
+                if merged is not None:
+                    inner = merged
+                elif concrete:
                     inner = concrete[0]
             return inner
     return _unwrap_schema_envelopes(response)
+
+
+def _with_body_field(schema: dict[str, Any]) -> dict[str, Any]:
+    """Give a schema-less row a ``value`` field for the raw body.
+
+    A text or PDF response has no row schema; the fetcher puts the body in
+    ``value``. Declaring it keeps the row from being a field-less model, which
+    the platform's ``to_df`` cannot tabulate.
+    """
+    structured = (
+        schema.get("properties")
+        or schema.get("additionalProperties")
+        or any(schema.get(k) for k in ("anyOf", "oneOf", "allOf", "items"))
+        or schema.get("type") not in (None, "object")
+    )
+    if structured:
+        return schema
+    return {
+        "type": "object",
+        "properties": {
+            "value": {
+                "description": "Response body; the API defines no response schema."
+            }
+        },
+    }
 
 
 def _unwrap_schema_envelopes(schema: Any) -> dict[str, Any]:
@@ -256,18 +330,132 @@ def _unwrap_schema_envelopes(schema: Any) -> dict[str, Any]:
     typed: dict[str, Any] = schema
     if typed.get("type") == "array":
         return _unwrap_schema_envelopes(typed.get("items"))
+    choice_rows = _wrapper_choice_rows(typed)
+    if choice_rows is not None:
+        return _final_row_schema(choice_rows)
+    merged = _merge_object_variants(typed)
+    if merged is not None:
+        return _unwrap_schema_envelopes(merged)
     combinator_target = _first_non_null_combinator_variant(typed)
     if combinator_target is not None:
         return _unwrap_schema_envelopes(combinator_target)
     if _is_scalar_schema(typed):
         return _wrap_scalar_as_value(typed)
+    return _unwrap_object_schema(typed)
+
+
+def _unwrap_object_schema(typed: dict[str, Any]) -> dict[str, Any]:
+    """Resolve the row schema for an object schema that has ``properties``."""
     props = typed.get("properties")
     if not isinstance(props, dict) or not props:
         return typed
+    if _response_shape(typed)[1] in ("list", "map"):
+        # The chosen array's items (or a map's entries) *are* the rows: never
+        # look for another envelope inside a row (an alert with one array of
+        # records among its fields is still an alert, not that array).
+        row = _envelope_inner_schema(typed, props)
+        return typed if row is None else _final_row_schema(row)
     inner = _envelope_inner_schema(typed, props)
     if inner is not None:
         return _unwrap_schema_envelopes(inner)
     return typed
+
+
+def _merge_prop_schemas(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
+    """Combine one property's schema from two variants of a union."""
+    if a == b:
+        return a
+    if a.get("type") == "array" and b.get("type") == "array":
+        ia, ib = a.get("items"), b.get("items")
+        if isinstance(ia, dict) and isinstance(ib, dict):
+            return {**a, "items": _merge_prop_schemas(ia, ib)}
+    if (
+        isinstance(a.get("enum"), list)
+        and isinstance(b.get("enum"), list)
+        and a.get("type") == b.get("type")
+    ):
+        merged = {
+            **a,
+            "enum": [*a["enum"], *[e for e in b["enum"] if e not in a["enum"]]],
+        }
+        return merged
+
+    # An enum in one variant and the plain type in another: the plain type admits both.
+    def strip(s):
+        return {
+            k: v for k, v in s.items() if k not in ("enum", "example", "description")
+        }
+
+    if strip(a) == strip(b):
+        return {k: v for k, v in a.items() if k != "enum"}
+    variants: list[dict[str, Any]] = []
+    for s in (a, b):
+        for v in s.get("anyOf") or [s]:
+            if v not in variants:
+                variants.append(v)
+    return {"anyOf": variants}
+
+
+def _wrapper_choice_rows(schema: dict[str, Any]) -> dict[str, Any] | None:
+    """Row schema of a ``oneOf`` whose variants each wrap one container.
+
+    ``{si: {...}}`` | ``{wi: {...}}`` | ``{fs: {...}}`` means "the response is
+    whichever of these keys is present", so each variant's single property is
+    unwrapped like any envelope and the rows are the union of what they yield.
+    Only containers (arrays or objects) count; a one-field *row* is not a wrapper.
+    """
+    for comb in ("oneOf", "anyOf"):
+        variants = schema.get(comb)
+        if not isinstance(variants, list) or len(variants) < 2:
+            continue
+        rows: list[dict[str, Any]] = []
+        for v in variants:
+            props = v.get("properties") if isinstance(v, dict) else None
+            if not isinstance(props, dict) or len(props) != 1:
+                break
+            only = next(iter(props.values()))
+            if not (
+                isinstance(only, dict)
+                and (_is_array_schema(only) or only.get("properties"))
+            ):
+                break
+            rows.append(_unwrap_schema_envelopes(only))
+        else:
+            return {"anyOf": rows}
+    return None
+
+
+def _merge_object_variants(schema: dict[str, Any]) -> dict[str, Any] | None:
+    """Merge a ``oneOf`` / ``anyOf`` of object shapes into one object schema.
+
+    The union means "any of these shapes", so the row type carries every
+    variant's fields; a field is required only if all variants require it, and
+    a property declared differently across variants takes the union of them.
+    Returns ``None`` unless the union is made only of two or more objects.
+    """
+    for comb in ("oneOf", "anyOf"):
+        variants = schema.get(comb)
+        if not isinstance(variants, list):
+            continue
+        objs = [v for v in variants if isinstance(v, dict) and v.get("type") != "null"]
+        if len(objs) < 2 or not all(v.get("properties") for v in objs):
+            continue
+        props: dict[str, Any] = {}
+        for v in objs:
+            for name, prop in v["properties"].items():
+                props[name] = (
+                    _merge_prop_schemas(props[name], prop)
+                    if name in props
+                    and isinstance(prop, dict)
+                    and isinstance(props[name], dict)
+                    else props.get(name, prop)
+                )
+        required = set.intersection(*(set(v.get("required") or []) for v in objs))
+        out: dict[str, Any] = {"type": "object", "properties": props}
+        if required:
+            out["required"] = sorted(required)
+        return out
+    return None
 
 
 def _first_non_null_combinator_variant(schema: dict[str, Any]) -> dict[str, Any] | None:
@@ -282,34 +470,158 @@ def _first_non_null_combinator_variant(schema: dict[str, Any]) -> dict[str, Any]
     return None
 
 
+_LD_KEYS = frozenset({"@context", "@id", "@type", "@vocab", "@version"})
+
+
+def _is_array_schema(schema: Any) -> bool:
+    """Whether a property schema describes an array (directly or via a union)."""
+    if not isinstance(schema, dict):
+        return False
+    if schema.get("type") == "array" or "items" in schema:
+        return True
+    return any(
+        _is_array_schema(v)
+        for comb in ("anyOf", "oneOf")
+        for v in schema.get(comb) or []
+    )
+
+
+def _array_items(schema: dict[str, Any]) -> dict[str, Any] | None:
+    """Return the ``items`` schema of an array property (unwrapping unions)."""
+    if isinstance(schema.get("items"), dict):
+        return cast(dict[str, Any], schema["items"])
+    for comb in ("anyOf", "oneOf"):
+        for variant in schema.get(comb) or []:
+            if _is_array_schema(variant):
+                return _array_items(variant)
+    return None
+
+
+def _is_map_schema(schema: Any) -> bool:
+    """Whether a property is a free-form ``{key: value}`` map."""
+    return (
+        isinstance(schema, dict)
+        and schema.get("type") == "object"
+        and not schema.get("properties")
+        and bool(schema.get("additionalProperties"))
+    )
+
+
+def _has_record_items(schema: dict[str, Any]) -> bool:
+    """Whether an array property's items are objects (records), per the schema."""
+    items = _array_items(schema)
+    return isinstance(items, dict) and not _is_scalar_schema(items)
+
+
+def _response_shape(response: Any) -> tuple[str | None, str | None]:
+    """Decide how a response object maps to rows, from the response schema alone.
+
+    Returns ``(key, kind)``: ``"list"`` when one property is the data array (the
+    only array, or the only one whose items are objects; every other property
+    is metadata), ``"map"`` when the only property is a free-form
+    ``{key: value}`` map (one row per entry), ``"single"`` when the object is
+    itself the row, else ``(None, None)``. The data model and the generated
+    ``unpack_response`` call both use this, so they cannot disagree.
+    """
+    if not isinstance(response, dict) or response.get("type") == "array":
+        return None, None
+    props = response.get("properties")
+    if not isinstance(props, dict) or not props or "results" in props:
+        return None, None
+    if _first_non_null_combinator_variant(response) is not None:
+        return None, None
+    eff = {k: v for k, v in props.items() if k not in _LD_KEYS}
+    arrays = [k for k, v in eff.items() if _is_array_schema(v)]
+    if len(eff) > 1:
+        # Beside other fields an array of scalars is a field of the row
+        # (``securityTypes``), not the rows; it only is the rows when it stands alone.
+        arrays = [k for k in arrays if _has_record_items(eff[k])]
+    if len(arrays) > 1:
+        # e.g. ``@graph`` (station objects) beside ``observationStations`` (the
+        # same stations as URL strings): the schema's item types say which.
+        arrays = [k for k in arrays if _has_record_items(eff[k])]
+    if len(arrays) == 1:
+        return arrays[0], "list"
+    if len(eff) == 1 and _is_map_schema(next(iter(eff.values()))):
+        return next(iter(eff)), "map"
+    if _single_prop_inner_schema(props) is not None:
+        return None, None  # a one-property wrapper object: unwrapped by the model too
+    return None, "single"
+
+
 def _envelope_inner_schema(
-    typed: dict[str, Any],  # noqa: ARG001
-    props: dict[str, Any],
+    typed: dict[str, Any],
+    props: dict[str, Any],  # noqa: ARG001
 ) -> dict[str, Any] | None:
     """Resolve the inner row schema when ``typed`` is a recognized envelope."""
+    key, kind = _response_shape(typed)
+    if key is None or kind is None:
+        return _single_prop_inner_schema(props)
+    value = props[key]
+    if kind == "map":
+        extra = value.get("additionalProperties")
+        extra = extra if isinstance(extra, dict) else {}
+        variants = [
+            v
+            for v in extra.get("anyOf") or [extra]
+            if isinstance(v, dict) and v.get("type") != "null"
+        ]
+        inner = variants[0] if variants else {}
+        row_props: dict[str, Any] = {"key": {"type": "string"}}
+        if inner.get("properties"):
+            row_props.update(inner["properties"])
+        else:
+            row_props["value"] = inner
+        return {"type": "object", "properties": row_props}
+    items = _array_items(value)
+    if isinstance(items, dict) and not _is_scalar_schema(items):
+        return items
+    if isinstance(items, dict):
+        return _wrap_scalar_as_value(items)
+    return None
+
+
+def _single_prop_inner_schema(props: dict[str, Any]) -> dict[str, Any] | None:
+    """Inner schema of a one-property envelope that is not an array or map."""
     if len(props) == 1:
         only_value = next(iter(props.values()))
         if isinstance(only_value, dict):
             only_dict = cast(dict[str, Any], only_value)
-            if only_dict.get("type") == "array":
-                items = only_dict.get("items")
-                return cast(dict[str, Any], items) if isinstance(items, dict) else None
+            if _is_array_schema(only_dict):
+                items = _array_items(only_dict)
+                return items if isinstance(items, dict) else None
             if (
                 only_dict.get("properties")
                 or only_dict.get("oneOf")
                 or only_dict.get("anyOf")
             ):
                 return only_dict
-    array_keys = [
-        k for k, v in props.items() if isinstance(v, dict) and v.get("type") == "array"
-    ]
-    # Only resolve as an envelope if there is exactly one list of all dicts,
-    # or if the list is the only element present.
-    if len(array_keys) == 1:
-        items = props[array_keys[0]].get("items")
-        if isinstance(items, dict) and not _is_scalar_schema(items):
-            return cast(dict[str, Any], items)
     return None
+
+
+def _unpack_hint(cmd_spec: dict[str, Any]) -> str:
+    """Extra ``unpack_response`` arguments derived from the response schema."""
+    key, kind = _response_shape(cmd_spec.get("response_schema"))
+    if kind is None:
+        return ""
+    if kind == "single":
+        return ', kind="single"'
+    return f", rows_key={key!r}, kind={kind!r}"
+
+
+def _final_row_schema(row: dict[str, Any] | None) -> dict[str, Any]:
+    """Resolve the row schema without unwrapping it any further."""
+    if not isinstance(row, dict):
+        return {}
+    if _is_scalar_schema(row):
+        return _wrap_scalar_as_value(row)
+    merged = _merge_object_variants(row)
+    if merged is not None:
+        return merged
+    variant = _first_non_null_combinator_variant(row)
+    if variant is not None:
+        return _final_row_schema(variant)
+    return row
 
 
 def _is_scalar_schema(schema: dict[str, Any]) -> bool:
@@ -379,13 +691,13 @@ def _query_dict_construction(
         The Python source for the ``query_dict`` assignment.
     """
     body_props = (cmd_spec.get("request_body_schema") or {}).get("properties") or {}
-    excluded = set(path_params) | set(body_props)
+    excluded = {query_field_name(n) for n in (*path_params, *body_props)}
     range_params = [
         p
         for p in (cmd_spec.get("parameters") or [])
         if isinstance(p, dict) and p.get("_socrata_op") in {"date_min", "date_max"}
     ]
-    excluded.update(p["name"] for p in range_params)
+    excluded.update(query_field_name(p["name"]) for p in range_params)
     if excluded:
         excluded_literal = (
             "{" + ", ".join(repr(name) for name in sorted(excluded)) + "}"
@@ -422,6 +734,15 @@ def _query_dict_construction(
             lines.append(
                 f"        _query_dict.setdefault('$order', {date_column!r} + ' DESC')"
             )
+    for param in filter_user_params(cmd_spec.get("parameters") or []):
+        if (
+            isinstance(param, dict)
+            and param.get("is_list")
+            and param.get("in", "query") == "query"
+        ):
+            lines.extend(
+                _list_param_lines(param["name"], param.get("list_style") or "multi")
+            )
     rename_pairs: list[tuple[str, str]] = []
     for param in cmd_spec.get("parameters") or []:
         if not isinstance(param, dict):
@@ -439,6 +760,28 @@ def _query_dict_construction(
     return "\n".join(lines)
 
 
+_LIST_DELIMITERS = {"csv": ",", "space": " ", "pipe": "|"}
+
+
+def _list_param_lines(wire_name: str, style: str) -> list[str]:
+    """Emit lines turning the model's comma-joined string into the wire format.
+
+    ``multi`` becomes a list (``get_querystring`` repeats the key); the other
+    styles are re-joined with the delimiter the upstream API expects.
+    """
+    key = repr(wire_name)
+    lines = [
+        f"        if isinstance(_query_dict.get({key}), str):",
+        f"            _items = [i.strip() for i in _query_dict[{key}].split(',') if i.strip()]",
+    ]
+    if style == "multi":
+        lines.append(f"            _query_dict[{key}] = _items")
+    else:
+        delimiter = _LIST_DELIMITERS.get(style, ",")
+        lines.append(f"            _query_dict[{key}] = {delimiter!r}.join(_items)")
+    return lines
+
+
 def _socrata_where_clause_lines(range_params: list[dict[str, Any]]) -> list[str]:
     """Compose runtime lines that fold Socrata range params into ``$where``."""
     field_lookups: list[str] = []
@@ -446,7 +789,7 @@ def _socrata_where_clause_lines(range_params: list[dict[str, Any]]) -> list[str]
         wire_name = param["name"]
         column = param["_socrata_column"]
         op = ">=" if param["_socrata_op"] == "date_min" else "<="
-        py_field, _ = safe_field_name(wire_name)
+        py_field = query_field_name(wire_name)
         var = f"_range_{py_field}"
         field_lookups.append(
             f"        {var} = getattr(query, {py_field!r}, None)\n"
@@ -467,7 +810,9 @@ def _socrata_where_clause_lines(range_params: list[dict[str, Any]]) -> list[str]
     return out
 
 
-def _header_dict_construction(creds: dict[str, dict[str, str]]) -> str:
+def _header_dict_construction(
+    creds: dict[str, dict[str, str]], fixed: dict[str, str] | None = None
+) -> str:
     """Compose the ``_headers = {...}`` block for credential headers.
 
     Parameters
@@ -480,7 +825,7 @@ def _header_dict_construction(creds: dict[str, dict[str, str]]) -> str:
     str
         Python source for the headers dict.
     """
-    lines = ["        _headers: dict[str, str] = {}"]
+    lines = [f"        _headers: dict[str, str] = {dict(fixed or {})!r}"]
     for canonical, info in creds.items():
         if info["in"] != "header":
             continue
@@ -547,7 +892,7 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
     fetcher_class = f"{model_name}Fetcher"
 
     qp_schema = _query_params_schema(spec.cmd_spec, spec.provider_name)
-    data_schema = _data_schema(spec.cmd_spec) or {"type": "object"}
+    data_schema = _with_body_field(_data_schema(spec.cmd_spec) or {"type": "object"})
 
     qp_generated = generate_class(
         qp_schema,
@@ -556,7 +901,7 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
         docstring=f"Query parameters for {spec.name}.",
     )
     data_generated = generate_class(
-        data_schema,
+        _mark_null_empty(data_schema),
         class_name=data_class,
         base_class="Data",
         docstring=f"Response row for {spec.name}.",
@@ -566,6 +911,7 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
     path_params = _path_template_keys(spec.cmd_spec.get("url_path") or "")
 
     imports = {
+        "import base64",
         "from typing import Any",
         "from openbb_core.app.model.abstract.error import OpenBBError",
         "from openbb_core.provider.abstract.annotated_result import AnnotatedResult",
@@ -591,7 +937,7 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
     query_block = _query_dict_construction(
         spec.cmd_spec, creds, path_params, spec.provider_name
     )
-    header_block = _header_dict_construction(creds)
+    header_block = _header_dict_construction(creds, spec.headers)
     cookie_block = _cookie_dict_construction(creds)
 
     if _command_is_streaming(spec.cmd_spec):
@@ -621,6 +967,7 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
             is_streaming=True,
         )
 
+    hint = _unpack_hint(spec.cmd_spec)
     source = _render_fetcher_source(
         spec=spec,
         qp_class=qp_class,
@@ -642,6 +989,10 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
         imports=consolidate_imports(imports),
         column_metadata=_column_metadata_from_data_schema(data_schema),
     )
+    if hint:
+        source = source.replace(
+            "unpack_response(_payload)", f"unpack_response(_payload{hint})"
+        )
 
     return GeneratedFetcher(
         module_name=module_name,
@@ -1065,7 +1416,9 @@ def _aextract_body(
     """
     lines: list[str] = list(cred_lines)
     if has_path_params:
-        sub_args = ", ".join(f"{p}=getattr(query, {p!r})" for p in path_params)
+        sub_args = ", ".join(
+            f"{p}=getattr(query, {query_field_name(p)!r})" for p in path_params
+        )
         lines.append(f"        _path = {url_path_template!r}.format({sub_args})")
     else:
         lines.append(f"        _path = {url_path_template!r}")
@@ -1084,7 +1437,7 @@ def _aextract_body(
         body_literal = (
             "{"
             + ", ".join(
-                f"{name!r}: getattr(query, {safe_field_name(name)[0]!r}, None)"
+                f"{name!r}: getattr(query, {query_field_name(name)!r}, None)"
                 for name in body_field_names
             )
             + "}"
@@ -1103,7 +1456,20 @@ def _aextract_body(
     lines.append(
         "                _ct = (_resp.headers.get('Content-Type') or '').lower()"
     )
-    lines.append("                _text = await _resp.text()")
+    lines.append("                _raw = await _resp.read()")
+    lines.append(
+        "                _textual = not _ct or any("
+        "_t in _ct for _t in ('json', 'text', 'xml', 'csv', 'javascript', 'yaml'))"
+    )
+    lines.append("                if _resp.status < 400 and not _textual:")
+    lines.append(
+        "                    return {'rows': [{'value': "
+        "base64.b64encode(_raw).decode('ascii')}], "
+        "'metadata': {'content_type': _ct, 'encoding': 'base64'}}"
+    )
+    lines.append(
+        "                _text = _raw.decode(_resp.get_encoding() or 'utf-8', errors='replace')"
+    )
     lines.append("                if _resp.status >= 400:")
     lines.append(
         "                    raise OpenBBError("
@@ -1121,8 +1487,8 @@ def _aextract_body(
     )
     lines.append("                else:")
     lines.append(
-        "                    return {'rows': [{'content': _text, "
-        "'content_type': _ct}], 'metadata': {}}"
+        "                    return {'rows': [{'value': _text}], "
+        "'metadata': {'content_type': _ct}}"
     )
     lines.append("        _rows, _metadata = unpack_response(_payload)")
     lines.append("        return {'rows': _rows, 'metadata': _metadata}")

@@ -454,7 +454,9 @@ def _generate_spec(
         source_url = server_url.rstrip("/") + openapi_path
     else:
         source_url = server_url.rstrip("/") + "/openapi.json"
-    spec_doc = build_spec_document(openapi, base_url=server_url, source_url=source_url)
+    spec_doc = build_spec_document(
+        openapi, base_url=server_url, source_url=source_url, headers=headers
+    )
     if not spec_doc["commands"]:
         sys.stderr.write(
             f"generated 0 commands from {source_url} — the document exposes no "

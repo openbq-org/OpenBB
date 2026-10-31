@@ -1125,17 +1125,25 @@ def test_deref_response_resolves_ref():
 # --- extract_response_schema branches ---
 
 
-def test_extract_response_schema_falls_back_to_first_status():
-    """If no preferred status (200/2XX/201/default) matches, use the first response."""
+def test_extract_response_schema_never_uses_an_error_response():
+    """4xx/5xx schemas are not row models, and ``default`` is an error catch-all."""
     from openbb_cli.dispatchers.openapi_schema import extract_response_schema
 
-    op = {
-        "responses": {
-            "418": {"content": {"application/json": {"schema": {"type": "object"}}}}
-        }
+    err = {"content": {"application/json": {"schema": {"type": "object"}}}}
+    assert extract_response_schema({}, {"responses": {"418": err}}) is None
+    # a redirect-only operation: ``default`` is the error, not the data
+    assert (
+        extract_response_schema({}, {"responses": {"301": {}, "default": err}}) is None
+    )
+    # ``default`` is the success response only when it is the sole response
+    assert extract_response_schema({}, {"responses": {"default": err}}) == {
+        "type": "object"
     }
-    schema = extract_response_schema({}, op)
-    assert schema == {"type": "object"}
+    # any other 2xx beats ``default``
+    ok = {"content": {"application/json": {"schema": {"type": "array"}}}}
+    assert extract_response_schema({}, {"responses": {"default": err, "206": ok}}) == {
+        "type": "array"
+    }
 
 
 def test_extract_response_schema_falls_back_to_first_content_type():
@@ -2487,3 +2495,13 @@ def test_fetch_openapi_raises_generic_error_when_response_has_no_parse_error(
     monkeypatch.setattr(openapi_schema.httpx, "get", lambda *a, **k: _Resp())
     with pytest.raises(ValueError, match="Could not load an OpenAPI document"):
         openapi_schema.fetch_openapi("http://h", path="/custom.json")
+
+
+def test_url_to_command_drops_placeholder_only_segments():
+    from openbb_cli.dispatchers.openapi_schema import url_to_command
+
+    assert (
+        url_to_command("/gridpoints/{wfo}/{x},{y}/forecast", api_prefix="")
+        == "gridpoints.forecast"
+    )
+    assert url_to_command("/points/{latitude},{longitude}", api_prefix="") == "points"

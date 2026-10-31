@@ -1554,3 +1554,37 @@ def test_build_command_spec_ignores_malformed_path_item_parameters():
     }
     out = build_command_spec(openapi)
     assert [p["name"] for p in out["x"]["parameters"]] == ["kept"]
+
+
+def test_description_stating_a_delimited_list_makes_the_param_an_array():
+    from openbb_cli.dispatchers.spec import _normalize_parameter
+
+    def norm(desc, **extra):
+        return _normalize_parameter(
+            {
+                "name": "op",
+                "in": "query",
+                "description": desc,
+                "schema": {"type": "string", "enum": ["Repo", "Reverse Repo"]},
+                **extra,
+            }
+        )
+
+    got = norm("The operation types (comma-delimited) by which to filter.")
+    assert got["is_list"] is True and got["list_style"] == "csv"
+    assert got["choices"] == ["Repo", "Reverse Repo"]
+    assert norm("Pipe separated list of ids.")["list_style"] == "pipe"
+    assert not norm("Values are not comma-delimited.")["is_list"]
+    assert not norm("A single value.")["is_list"]
+    # an explicit array schema keeps its own style
+    arr = _normalize_parameter(
+        {
+            "name": "x",
+            "in": "query",
+            "description": "comma-delimited",
+            "style": "form",
+            "explode": True,
+            "schema": {"type": "array", "items": {"type": "string"}},
+        }
+    )
+    assert arr["list_style"] == "multi"

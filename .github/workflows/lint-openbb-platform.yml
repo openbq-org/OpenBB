@@ -6,15 +6,6 @@ env:
 on:
   pull_request:
     types: [opened, synchronize, edited]
-    paths:
-      - 'openbb_platform/**'
-      - '!openbb_platform/api/**'
-      - '!openbb_platform/extensions/**'
-      - '!openbb_platform/providers/**'
-      - '!openbb_platform/obbject_extensions/**'
-      - '.github/workflows/lint-openbb-platform.yml'
-      - '.github/codeql/**'
-      - '.github/workflows/codeql.yml'
   merge_group:
     types: [checks_requested]
 
@@ -23,8 +14,46 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      platform: ${{ steps.filter.outputs.platform }}
+    steps:
+      - name: Check for shared platform changes
+        id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Path filtering lives here instead of `on.pull_request.paths`: a workflow
+          # skipped by a trigger filter never reports its checks, which leaves the
+          # required "General Code Linting" and "Markdown Linting" checks pending
+          # forever. Jobs skipped by a job-level `if:` report success instead.
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "platform=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          gh api --paginate "repos/${REPO}/pulls/${PR_NUMBER}/files" --jq '.[].filename' > changed_files.txt
+          if awk '
+            /^\.github\/(workflows\/(lint-openbb-platform|codeql)\.yml$|codeql\/)/ { found = 1 }
+            /^openbb_platform\// && !/^openbb_platform\/(api|extensions|providers|obbject_extensions)\// { found = 1 }
+            END { exit !found }
+          ' changed_files.txt; then
+            echo "platform=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "platform=false" >> "$GITHUB_OUTPUT"
+          fi
+
   code-linting:
     name: General Code Linting
+    needs: changes
+    # Fail closed: run unless change detection explicitly found nothing relevant.
+    if: ${{ !cancelled() && needs.changes.outputs.platform != 'false' }}
     runs-on: ubuntu-latest
     env:
       UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
@@ -122,6 +151,8 @@ jobs:
 
   markdown-link-check:
     name: Markdown Linting
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.platform != 'false' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -136,6 +167,8 @@ jobs:
 
   json-yaml-validate:
     name: JSON Check
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.platform != 'false' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

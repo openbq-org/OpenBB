@@ -79,6 +79,18 @@ exclude = ["tests", "integration"]
 [tool.ty.rules]
 unresolved-import = "warn"
 
+# The models extend the platform's standard models by overriding their fields:
+# a query parameter narrowed to a ``Literal`` (core derives the parameter's choices
+# from it), or a field the provider may leave empty. ty treats both as unsound
+# overrides of a mutable attribute. The check is off for the model modules, where
+# that is how a provider is written, and stays on everywhere else.
+[[tool.ty.overrides]]
+include = ["openbb_cboe/models/**"]
+
+[tool.ty.overrides.rules]
+invalid-attribute-override = "ignore"
+invalid-mutable-override = "ignore"
+
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError", "@overload"]
 

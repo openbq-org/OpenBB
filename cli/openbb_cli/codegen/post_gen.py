@@ -42,6 +42,7 @@ class PostCommandSpec:
     base_url: str
     api_prefix: str
     provider_name: str
+    headers: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -539,6 +540,7 @@ def generate_post_command_module(spec: PostCommandSpec) -> GeneratedPostCommand:
         cred_lines=cred_lines,
         data_class=data_class,
         params=params,
+        fixed_headers=spec.headers,
     )
 
     imports = {
@@ -628,6 +630,7 @@ def _render_body_block(
     cred_lines: list[str],
     data_class: str,
     params: list[tuple[str, str, str | None, bool, Any]],
+    fixed_headers: dict[str, str] | None = None,
 ) -> str:
     """Render the function body for a POST command.
 
@@ -651,6 +654,8 @@ def _render_body_block(
         Name of the response Data class.
     params : list of tuple
         Function parameters.
+    fixed_headers : dict, optional
+        Headers sent with every request (from ``--header`` at spec generation).
 
     Returns
     -------
@@ -703,7 +708,7 @@ def _render_body_block(
         f'    _url = f"{base_url}{{_path}}" + ("?" + _query_string if _query_string else "")'
     )
 
-    lines.append("    _headers: dict[str, str] = {}")
+    lines.append(f"    _headers: dict[str, str] = {dict(fixed_headers or {})!r}")
     for canonical, info in creds.items():
         if info["in"] != "header":
             continue

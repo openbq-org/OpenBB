@@ -568,6 +568,55 @@ def test_get_international_portfolio_data_index_missing_in_zip(monkeypatch):
         helpers.get_international_portfolio_data(index="all")
 
 
+# The members of F-F_International_Countries.zip and its _Wout_Div twin.
+_COUNTRY_ZIP_MEMBERS = {
+    "Austria.Dat",
+    "Austrlia.Dat",
+    "Belgium.Dat",
+    "Canada.Dat",
+    "Denmark.Dat",
+    "Finland.Dat",
+    "France.Dat",
+    "Germany.Dat",
+    "HongKong.Dat",
+    "Ireland.Dat",
+    "Italy.Dat",
+    "Japan.Dat",
+    "Malaysia.Dat",
+    "Nethrlnd.Dat",
+    "NewZland.Dat",
+    "Norway.Dat",
+    "Singapor.Dat",
+    "Spain.Dat",
+    "Sweden.Dat",
+    "Swtzrlnd.Dat",
+    "UK.Dat",
+}
+
+
+def test_every_country_maps_to_a_zip_member():
+    """Each country names a member of the archive; Australia's is Austrlia.Dat."""
+    missing = {
+        country: member
+        for country, member in helpers.COUNTRY_PORTFOLIO_FILES.items()
+        if member not in _COUNTRY_ZIP_MEMBERS
+    }
+    assert missing == {}
+
+
+def test_get_international_portfolio_data_australia(monkeypatch):
+    """Australia reads the archive's eight-character member name."""
+    monkeypatch.setattr(
+        helpers,
+        "download_international_portfolios",
+        lambda url: _IntlResponse(_make_zip("Austrlia.Dat", b"australia data")),
+    )
+
+    result = helpers.get_international_portfolio_data(country="australia")
+
+    assert result == "australia data"
+
+
 def test_get_international_portfolio_data_unresolved_country_index(monkeypatch):
     monkeypatch.setitem(helpers.COUNTRY_PORTFOLIO_FILES, "Japan", None)
     monkeypatch.setattr(

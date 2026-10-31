@@ -147,9 +147,9 @@ def test_query_params_schema_handles_list_param_with_choices():
     }
     out = fg._query_params_schema(cmd, provider_name="fmp")
     tickers = out["properties"]["tickers"]
-    assert tickers["type"] == "array"
-    assert tickers["items"] == {"type": "string"}
-    assert tickers["enum"] == ["AAPL", "MSFT"]
+    assert tickers["type"] == "string"
+    assert tickers["x-multiple-items"] is True
+    assert tickers["x-choices"] == ["AAPL", "MSFT"]
     assert tickers["description"] == "Tickers."
 
 
@@ -245,7 +245,7 @@ def test_data_schema_descends_into_obbject_anyof_array_items():
     }
 
 
-def test_data_schema_descends_into_oneof_inside_results():
+def test_data_schema_merges_oneof_variants_inside_results():
     response = {
         "properties": {
             "results": {
@@ -260,7 +260,7 @@ def test_data_schema_descends_into_oneof_inside_results():
         }
     }
     out = fg._data_schema({"response_schema": response})
-    assert out["properties"] == {"a": {"type": "string"}}
+    assert out["properties"] == {"a": {"type": "string"}, "b": {"type": "integer"}}
 
 
 def test_data_schema_returns_top_level_for_multi_field_non_obbject_response():
@@ -389,11 +389,12 @@ def test_data_schema_top_level_array_of_scalars_unwraps_to_value_field():
     }
 
 
-def test_data_schema_descends_into_single_array_among_scalar_siblings():
-    """Multi-property row with exactly one array property → descend into
-    the array's items, mirroring runtime ``unpack_response`` behavior
-    (single array among scalar siblings = the data, siblings = metadata).
-    The auction-shaped wrapper dissolves to the inner ``details`` shape.
+def test_data_schema_does_not_unwrap_inside_a_row():
+    """Envelopes are unwrapped down to the rows, and no further.
+
+    ``ambs -> auctions`` are single-property wrappers; the auctions are the
+    rows (that is what ``unpack_response`` returns), so a row that happens to
+    hold one array of records (``details``) keeps all of its own fields.
     """
     response = {
         "type": "object",
@@ -422,14 +423,43 @@ def test_data_schema_descends_into_single_array_among_scalar_siblings():
         },
     }
     out = fg._data_schema({"response_schema": response})
-    # Descended ambs → auctions (single-property envelopes) → auction items
-    # (multi-property with one array sibling ``details``) → details items.
-    assert "flag" in out.get("properties", {})
-    assert "auctionStatus" not in out.get("properties", {})
+    assert set(out["properties"]) == {
+        "auctionStatus",
+        "operationId",
+        "operationDate",
+        "details",
+    }
 
 
-def test_data_schema_descends_oneOf_to_first_concrete_variant():
-    """Top-level ``oneOf`` (after envelope strip) selects the first dict variant."""
+def test_row_with_several_arrays_is_not_unwrapped_into_one_of_them():
+    """An alert has ``affectedZones`` (strings) and ``references`` (records): it is the row."""
+    alert = {
+        "type": "object",
+        "properties": {
+            "id": {"type": "string"},
+            "affectedZones": {"type": "array", "items": {"type": "string"}},
+            "references": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {"identifier": {"type": "string"}},
+                },
+            },
+        },
+    }
+    response = {
+        "type": "object",
+        "properties": {
+            "@graph": {"type": "array", "items": alert},
+            "title": {"type": "string"},
+        },
+    }
+    out = fg._data_schema({"response_schema": response})
+    assert set(out["properties"]) == {"id", "affectedZones", "references"}
+
+
+def test_data_schema_merges_oneOf_variants_after_envelope_strip():
+    """A ``oneOf`` of object shapes models every variant, not just the first."""
     response = {
         "type": "object",
         "properties": {
@@ -445,7 +475,7 @@ def test_data_schema_descends_oneOf_to_first_concrete_variant():
         },
     }
     out = fg._data_schema({"response_schema": response})
-    assert out.get("properties") == {"a": {"type": "string"}}
+    assert out.get("properties") == {"a": {"type": "string"}, "b": {"type": "integer"}}
 
 
 def test_unwrap_schema_envelopes_returns_empty_for_non_dict_input():
@@ -1096,3 +1126,222 @@ def test_generate_fetcher_module_required_cookie_reaches_the_request():
     assert "_cookies['xero-session'] = _cred_xero_session" in src
     assert "cookies=_cookies" in src
     ast.parse(src)
+
+
+def test_query_field_name_snake_cases_with_wire_alias():
+    from openbb_cli.codegen.pydantic_gen import generate_class, query_field_name
+
+    assert query_field_name("zoneId") == "zone_id"
+    assert query_field_name("User-Agent") == "user_agent"
+    assert query_field_name("HTTPStatus") == "http_status"
+    src = generate_class(
+        {
+            "type": "object",
+            "properties": {"zoneId": {"type": "string"}},
+            "required": ["zoneId"],
+        },
+        class_name="Q",
+        base_class="QueryParams",
+    ).source
+    assert "zone_id: str = Field(" in src and "zoneId" in src
+
+
+def test_response_shape_is_decided_by_the_schema_only():
+    arr = {
+        "type": "array",
+        "items": {"type": "object", "properties": {"a": {"type": "string"}}},
+    }
+    # exactly one array property -> its items are the rows, whatever the siblings
+    env = {
+        "properties": {
+            "@context": {"anyOf": [{"type": "array"}, {"type": "object"}]},
+            "title": {"type": "string"},
+            "features": arr,
+        }
+    }
+    assert fg._response_shape(env) == ("features", "list")
+    # items declared without ``type: array`` still count as an array
+    assert fg._response_shape({"properties": {"x": {"items": {"type": "object"}}}}) == (
+        "x",
+        "list",
+    )
+    # two arrays: ambiguous, so the object itself is the row
+    two = {"properties": {"a": arr, "b": arr, "c": {"type": "string"}}}
+    assert fg._response_shape(two) == (None, "single")
+    assert 'kind="single"' in fg._unpack_hint({"response_schema": two})
+    assert (
+        fg._unpack_hint({"response_schema": env})
+        == ", rows_key='features', kind='list'"
+    )
+
+
+def test_unpack_response_follows_schema_hint_and_keeps_everything():
+    from openbb_cli.dispatchers._unpack import unpack_response
+
+    payload = {
+        "@context": ["u"],
+        "title": "t",
+        "features": [{"id": 1}],
+        "other": [{"z": 1}],
+    }
+    rows, meta = unpack_response(payload, rows_key="features", kind="list")
+    assert rows == [{"id": 1}]
+    assert meta == {"@context": ["u"], "title": "t", "other": [{"z": 1}]}
+    rows, meta = unpack_response(payload, kind="single")
+    assert rows == [payload] and meta == {}
+    # GeoJSON features are returned as the schema defines them: untouched
+    feat = {
+        "type": "FeatureCollection",
+        "features": [{"type": "Feature", "properties": {"a": 1}}],
+    }
+    assert (
+        unpack_response(feat, rows_key="features", kind="list")[0] == feat["features"]
+    )
+
+
+def test_response_shape_uses_item_types_to_pick_among_arrays_and_unpacks_maps():
+    obj = {"type": "object", "properties": {"id": {"type": "string"}}}
+    graph = {"type": "array", "items": obj}
+    urls = {"type": "array", "items": {"type": "string"}}
+    # station list: objects in ``@graph``, the same stations as URLs beside it
+    assert fg._response_shape(
+        {"properties": {"@graph": graph, "observationStations": urls}}
+    ) == ("@graph", "list")
+    # two arrays of objects stay ambiguous: the object is the row (an observation)
+    assert fg._response_shape(
+        {"properties": {"a": graph, "b": graph, "t": {"type": "string"}}}
+    ) == (None, "single")
+    # a lone free-form map unpacks to key/value rows
+    mapped = {
+        "properties": {
+            "@context": {"type": "array"},
+            "locations": {"type": "object", "additionalProperties": {"type": "string"}},
+        }
+    }
+    assert fg._response_shape(mapped) == ("locations", "map")
+    row = fg._unwrap_schema_envelopes(mapped)
+    assert set(row["properties"]) == {"key", "value"}
+
+    from openbb_cli.dispatchers._unpack import unpack_response
+
+    rows, meta = unpack_response(
+        {"@context": [], "locations": {"A": "x", "B": None}},
+        rows_key="locations",
+        kind="map",
+    )
+    assert rows == [
+        {"key": "A", "value": "x"},
+        {"key": "B", "value": None},
+    ] and meta == {"@context": []}
+
+
+def test_merge_object_variants_unions_fields_enums_and_required():
+    status = {"type": "string", "enum": ["Released", "Cancelled"]}
+    schema = {
+        "anyOf": [
+            {
+                "properties": {
+                    "id": {"type": "string"},
+                    "status": status,
+                    "x": {"type": "integer"},
+                },
+                "required": ["id", "x"],
+            },
+            # results shape: ``status`` is the plain string "Results" (no enum), has its own fields
+            {
+                "properties": {
+                    "id": {"type": "string"},
+                    "status": {"type": "string"},
+                    "totals": {"type": "number"},
+                },
+                "required": ["id"],
+            },
+        ]
+    }
+    out = fg._merge_object_variants(schema)
+    assert set(out["properties"]) == {"id", "status", "x", "totals"}
+    # an enum in one variant and the plain type in another admits both
+    assert "enum" not in out["properties"]["status"]
+    # a field is required only if every variant requires it
+    assert out["required"] == ["id"]
+    # same-typed enums are unioned
+    a = {"type": "string", "enum": ["A", "B"]}
+    b = {"type": "string", "enum": ["B", "C"]}
+    assert fg._merge_prop_schemas(a, b)["enum"] == ["A", "B", "C"]
+    # not a union of 2+ objects -> no merge
+    assert (
+        fg._merge_object_variants({"anyOf": [{"type": "string"}, {"type": "null"}]})
+        is None
+    )
+
+
+def test_scalar_array_beside_other_fields_is_a_field_not_the_rows():
+    soma = {
+        "type": "object",
+        "properties": {
+            "soma": {
+                "type": "object",
+                "properties": {
+                    "asOfDate": {"type": "string"},
+                    "wam": {"type": "number"},
+                    "securityTypes": {"type": "array", "items": {"type": "string"}},
+                },
+            }
+        },
+    }
+    out = fg._data_schema({"response_schema": soma})
+    assert set(out["properties"]) == {"asOfDate", "wam", "securityTypes"}
+    # ...but a scalar array standing alone (beside JSON-LD keys) is the rows
+    types = {
+        "type": "object",
+        "properties": {
+            "@context": {"type": "array"},
+            "eventTypes": {"type": "array", "items": {"type": "string"}},
+        },
+    }
+    assert set(fg._data_schema({"response_schema": types})["properties"]) == {"value"}
+
+
+def test_oneof_of_wrapper_variants_models_the_rows_inside_each():
+    def variant(key, field):
+        return {
+            "properties": {
+                key: {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "details": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {field: {"type": "string"}},
+                            },
+                        },
+                    },
+                }
+            }
+        }
+
+    response = {
+        "type": "object",
+        "properties": {
+            "guidesheet": {
+                "type": "object",
+                "oneOf": [
+                    variant("si", "cusip"),
+                    variant("wi", "cusip"),
+                    variant("fs", "formLine"),
+                ],
+            }
+        },
+    }
+    out = fg._data_schema({"response_schema": response})
+    assert set(out["properties"]) == {"cusip", "formLine"}
+    # one-field *rows* in a union are not wrappers
+    flat = {
+        "oneOf": [
+            {"properties": {"a": {"type": "string"}}},
+            {"properties": {"b": {"type": "string"}}},
+        ]
+    }
+    assert fg._wrapper_choice_rows(flat) is None

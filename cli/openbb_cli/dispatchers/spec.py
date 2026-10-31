@@ -87,6 +87,50 @@ def _operation_providers(op: dict[str, Any]) -> list[str]:
     return []
 
 
+_COLLECTION_FORMATS = {"csv": "csv", "multi": "multi", "ssv": "space", "pipes": "pipe"}
+
+
+_DELIMITED_RE = re.compile(
+    r"(?<!not )(?<!n't )\b(comma|pipe|space)[- ](?:delimited|separated)\b",
+    re.IGNORECASE,
+)
+_DELIMITED_STYLE = {"comma": "csv", "pipe": "pipe", "space": "space"}
+
+
+def _described_delimiter(description: str | None) -> str | None:
+    """List style a parameter's *description* states, e.g. "(comma-delimited)".
+
+    Many specs type such a parameter as a plain string and say in prose that it
+    takes several values; the wire format is still a delimited list.
+    """
+    match = _DELIMITED_RE.search(description or "")
+    return _DELIMITED_STYLE[match.group(1).lower()] if match else None
+
+
+def _list_style(param: dict[str, Any], location: str) -> str:
+    """Return how an array parameter is serialized on the wire.
+
+    One of ``"multi"`` (``a=1&a=2``), ``"csv"`` (``a=1,2``), ``"space"``
+    (``a=1 2``) or ``"pipe"`` (``a=1|2``). Follows the OpenAPI 3 ``style`` /
+    ``explode`` rules (query default: ``form`` + ``explode=true``) and the
+    Swagger 2 ``collectionFormat`` field.
+    """
+    fmt = param.get("collectionFormat")
+    if fmt in _COLLECTION_FORMATS:
+        return _COLLECTION_FORMATS[fmt]
+    style = param.get("style")
+    if style == "spaceDelimited":
+        return "space"
+    if style == "pipeDelimited":
+        return "pipe"
+    explode = param.get("explode")
+    if explode is None:
+        explode = (
+            style or ("form" if location in ("query", "cookie") else "simple")
+        ) == "form"
+    return "multi" if explode and style in (None, "form") else "csv"
+
+
 def _normalize_parameter(
     param: dict[str, Any], providers_set: set[str] | None = None
 ) -> dict[str, Any] | None:
@@ -99,6 +143,12 @@ def _normalize_parameter(
     schema = param.get("schema", {}) or {}
     json_arg = bool(param.get("_json_arg"))
     py_type, enum_choices, is_list = _resolve_schema(schema)
+    described = None
+    if not is_list and location in ("query", "header", "cookie"):
+        described = _described_delimiter(
+            param.get("description") or schema.get("description")
+        )
+        is_list = described is not None
     if json_arg:
         py_type, enum_choices, is_list = str, [], False
     choices: list[Any] = list(enum_choices)
@@ -133,14 +183,22 @@ def _normalize_parameter(
         example = schema.get("example")
 
     type_name = _TYPE_TO_NAME.get(py_type, "string")
-    if location == "path" and type_name == "number":
+    if (
+        location == "path"
+        and type_name == "number"
+        and not re.search(r"(^|[^a-z])(lat|lon|lng|latitude|longitude)", name, re.I)
+    ):
         type_name = "integer"
 
+    list_style = (
+        {"list_style": described or _list_style(param, location)} if is_list else {}
+    )
     return {
         "name": name,
         "in": location,
         "type": type_name,
         "is_list": is_list,
+        **list_style,
         "required": required,
         "default": default,
         "choices": choices,
@@ -196,6 +254,7 @@ def _build_operation_entry(
     method: str,
     op: dict[str, Any],
     path_item: dict[str, Any] | None = None,
+    accept: str | None = None,
 ) -> dict[str, Any]:
     """Build the per-URL command entry — params, providers, schemas."""
     providers = _operation_providers(op)
@@ -229,7 +288,7 @@ def _build_operation_entry(
         "parameters": params,
         "providers": providers,
         "request_body_schema": extract_request_body_schema(spec, op),
-        "response_schema": extract_response_schema(spec, op),
+        "response_schema": extract_response_schema(spec, op, accept),
         "response_schemas": extract_response_schemas(spec, op),
     }
 
@@ -289,7 +348,7 @@ def _count_path_placeholders(url: str) -> int:
 
 
 def build_command_spec(
-    spec: dict[str, Any], *, api_prefix: str = "/api/v1"
+    spec: dict[str, Any], *, api_prefix: str = "/api/v1", accept: str | None = None
 ) -> dict[str, dict[str, Any]]:
     """Return ``{dotted_command: {url_path, method, description, parameters[]}}``.
 
@@ -310,7 +369,7 @@ def build_command_spec(
         if not base_cmd:
             continue
         groups.setdefault(base_cmd, []).append(
-            _build_operation_entry(spec, url, method, op, methods)
+            _build_operation_entry(spec, url, method, op, methods, accept)
         )
     out: dict[str, dict[str, Any]] = {}
     for cmd, entries in groups.items():
@@ -353,12 +412,27 @@ def build_spec_document(
     base_url: str,
     api_prefix: str | None = None,
     source_url: str | None = None,
+    headers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    """Build the on-disk spec dict from a fetched OpenAPI document."""
+    """Build the on-disk spec dict from a fetched OpenAPI document.
+
+    Non-credential ``headers`` (from ``--header``) are recorded in the spec and
+    applied to every request; header parameters of the same name are dropped
+    from each command so they are not surfaced as arguments. Credential headers
+    (``API-Key``, ``Authorization``, ...) are left alone: the credential
+    detection maps them to the generated ``Credentials`` objects.
+    """
     effective_prefix = (
         api_prefix if api_prefix is not None else detect_api_prefix(openapi)
     )
-    return {
+    accept = next(
+        (v for k, v in (headers or {}).items() if k.lower() == "accept"), None
+    )
+    commands = build_command_spec(openapi, api_prefix=effective_prefix, accept=accept)
+    headers = _fixed_headers(commands, headers)
+    if headers:
+        _strip_fixed_headers(commands, headers)
+    doc = {
         "version": SPEC_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "generator": _generator_identifier(),
@@ -366,10 +440,50 @@ def build_spec_document(
         "api_version": str(openapi.get("openapi") or openapi.get("swagger") or ""),
         "base_url": _resolve_base_url(openapi, base_url),
         "api_prefix": (("/" + effective_prefix.strip("/")) if effective_prefix else ""),
-        "commands": build_command_spec(openapi, api_prefix=effective_prefix),
+        "commands": commands,
         "routers": build_router_map(openapi, api_prefix=effective_prefix),
         "reference": build_reference(openapi, api_prefix=effective_prefix),
     }
+    if headers:
+        doc["headers"] = dict(headers)
+    return doc
+
+
+def _fixed_headers(
+    commands: dict[str, dict[str, Any]], headers: dict[str, str] | None
+) -> dict[str, str]:
+    """Return the ``--header`` entries that are not credentials."""
+    from openbb_cli.codegen.credentials import (
+        classify_parameter,
+        is_credential_name,
+        normalize_credential_key,
+    )
+
+    credential_headers = {
+        normalize_credential_key(prm["name"])
+        for cmd in commands.values()
+        for prm in cmd.get("parameters") or []
+        if prm.get("in") == "header" and classify_parameter(prm) is not None
+    }
+    return {
+        k: v
+        for k, v in (headers or {}).items()
+        if not is_credential_name(k)
+        and normalize_credential_key(k) not in credential_headers
+    }
+
+
+def _strip_fixed_headers(
+    commands: dict[str, dict[str, Any]], headers: dict[str, str]
+) -> None:
+    """Remove header parameters supplied by ``headers`` (case-insensitive)."""
+    fixed = {k.lower() for k in headers}
+    for cmd in commands.values():
+        cmd["parameters"] = [
+            prm
+            for prm in cmd.get("parameters") or []
+            if not (prm.get("in") == "header" and str(prm.get("name")).lower() in fixed)
+        ]
 
 
 def _content_hash(spec_doc: dict[str, Any]) -> str:
@@ -426,6 +540,7 @@ class SpecDocument(BaseModel):
     version: int
     base_url: str
     api_prefix: str = ""
+    headers: dict[str, str] = Field(default_factory=dict)
     commands: dict[str, _CommandSpec]
     routers: dict[str, Any] = Field(default_factory=dict)
     reference: dict[str, Any] = Field(default_factory=dict)

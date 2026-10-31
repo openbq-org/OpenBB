@@ -1,6 +1,6 @@
 """HTTP transport for the FINRA data services."""
 
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -243,7 +243,7 @@ class QueryApiSession:
 
 
 @asynccontextmanager
-async def query_api_session() -> AsyncIterator[QueryApiSession]:
+async def query_api_session() -> AsyncGenerator[QueryApiSession, None]:
     """Open a session on the public FINRA Query API.
 
     Yields
@@ -412,7 +412,7 @@ async def _trace_token(session: Any) -> str:
 
 
 @asynccontextmanager
-async def trace_session() -> AsyncIterator[TraceSession]:
+async def trace_session() -> AsyncGenerator[TraceSession, None]:
     """Open a session on the public TRACE data service.
 
     Yields
@@ -590,7 +590,7 @@ class MarketDataSession:
 
 
 @asynccontextmanager
-async def market_data_session() -> AsyncIterator[MarketDataSession]:
+async def market_data_session() -> AsyncGenerator[MarketDataSession, None]:
     """Open a seeded session on the FINRA Market Data Center.
 
     Yields
