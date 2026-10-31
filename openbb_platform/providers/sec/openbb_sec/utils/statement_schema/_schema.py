@@ -13,11 +13,13 @@ from openbb_core.app.model.abstract.error import OpenBBError
 from openbb_sec.utils.statement_schema._detection import (
     detect_reporting_currency,
     detect_type,
+    filter_facts_as_of,
     get_filing_dates,
     get_fiscal_meta,
     preliminary_view,
 )
 from openbb_sec.utils.statement_schema._extraction import (
+    compute_period_pit_meta,
     compute_ref_filings,
     extract_row_values,
     rescaled_facts,
@@ -200,9 +202,15 @@ class StatementSchema:
 
     @staticmethod
     def _preliminary_facts(
-        facts: dict[str, Any], include_preliminary: bool, pit_mode: bool
+        facts: dict[str, Any],
+        include_preliminary: bool,
+        pit_mode: bool,
+        as_of_date: Any = None,
     ) -> dict[str, Any]:
         """Return facts restated at each filer's scale, in the preliminary view when preliminary data is requested."""
+        if as_of_date is not None:
+            facts = filter_facts_as_of(facts, as_of_date)
+
         if not isinstance(facts, (ScaledFacts, PreliminaryFacts)):
             facts = rescaled_facts(facts)
 
@@ -268,9 +276,13 @@ class StatementSchema:
         pit_mode: bool = False,
         include_preliminary: bool = False,
         annual_ref_map: dict[str, str] | None = None,
+        as_of_date: Any = None,
     ) -> StatementResult:
         facts = self._preliminary_facts(
-            company_facts.get("facts", company_facts), include_preliminary, pit_mode
+            company_facts.get("facts", company_facts),
+            include_preliminary,
+            pit_mode,
+            as_of_date=as_of_date,
         )
 
         if company_type is None:
@@ -577,6 +589,17 @@ class StatementSchema:
         ]
 
         fiscal_data = self.get_fiscal_meta(facts, frequency, pruned_dates)
+        pit_meta = compute_period_pit_meta(
+            facts,
+            rows_def,
+            frequency,
+            currency,
+            ref_filed_map,
+            include_preliminary=include_preliminary,
+        )
+        for d, fmeta in fiscal_data.items():
+            if d in pit_meta:
+                fmeta.update(pit_meta[d])
 
         final_preliminary = _preliminary_dates & pruned_dates
         if final_preliminary:
@@ -673,9 +696,13 @@ class StatementSchema:
         pit_mode: bool = False,
         include_preliminary: bool = False,
         annual_results: dict[str, StatementResult] | None = None,
+        as_of_date: Any = None,
     ) -> dict[str, StatementResult]:
         facts = self._preliminary_facts(
-            company_facts.get("facts", company_facts), include_preliminary, pit_mode
+            company_facts.get("facts", company_facts),
+            include_preliminary,
+            pit_mode,
+            as_of_date=as_of_date,
         )
 
         if company_type is None:
@@ -685,7 +712,7 @@ class StatementSchema:
             facts, frequency, include_preliminary=include_preliminary
         )
 
-        if not filing_dates and frequency == "quarterly":
+        if not filing_dates and frequency == "quarterly" and as_of_date is None:
             forms_seen: set[str] = set()
 
             for ns_facts in facts.values():
@@ -804,6 +831,17 @@ class StatementSchema:
 
         aligned = sorted(common_dates)
         aligned_fiscal = self.get_fiscal_meta(facts, frequency, common_dates)
+        pit_meta = compute_period_pit_meta(
+            facts,
+            all_rows,
+            frequency,
+            currency,
+            shared_ref_map,
+            include_preliminary=include_preliminary,
+        )
+        for d, fmeta in aligned_fiscal.items():
+            if d in pit_meta:
+                fmeta.update(pit_meta[d])
 
         all_preliminary: set[str] = set()
         for stmt_result in results.values():

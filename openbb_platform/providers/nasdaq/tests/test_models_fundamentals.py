@@ -144,6 +144,27 @@ class TestStatements:
 
         assert len(NasdaqBalanceSheetFetcher.transform_data(query, payload)) == 1
 
+    def test_as_of_date_filters_periods(self):
+        """as_of_date excludes periods ending after the cutoff."""
+        payload = {
+            "incomeStatementTable": {
+                "headers": {
+                    "value1": "Period Ending:",
+                    "value2": "12/31/2025",
+                    "value3": "12/31/2024",
+                },
+                "rows": [
+                    {"value1": "Total Revenue", "value2": "$200", "value3": "$100"}
+                ],
+            }
+        }
+        query = NasdaqIncomeStatementFetcher.transform_query(
+            {"symbol": "AAPL", "as_of_date": "2025-06-15"}
+        )
+        rows = NasdaqIncomeStatementFetcher.transform_data(query, payload)
+        assert len(rows) == 1
+        assert rows[0].period_ending == date(2024, 12, 31)
+
 
 class TestHistoricalEps:
     """Cover the earnings surprise model."""

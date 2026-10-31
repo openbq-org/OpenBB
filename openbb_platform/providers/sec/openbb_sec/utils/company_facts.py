@@ -45,13 +45,14 @@ def normalize_period_fields(
     """
     _NAN = float("nan")
 
-    int_fields: set[str] = set()
+    non_float_fields: set[str] = set()
     for fname, finfo in model_cls.model_fields.items():
         ann = finfo.annotation
-        if ann is int or (
-            hasattr(ann, "__args__") and int in getattr(ann, "__args__", ())
-        ):
-            int_fields.add(fname)
+        is_float = ann is float or (
+            hasattr(ann, "__args__") and float in getattr(ann, "__args__", ())
+        )
+        if not is_float:
+            non_float_fields.add(fname)
 
     all_tags: set[str] = set()
     for d in periods.values():
@@ -62,7 +63,7 @@ def normalize_period_fields(
 
     for key, old in periods.items():
         periods[key] = {
-            tag: old.get(tag, None if tag in int_fields else _NAN)
+            tag: old.get(tag, None if tag in non_float_fields else _NAN)
             for tag in ordered_tags
         }
 
@@ -146,6 +147,7 @@ class StandardizedStatements:
     cik: int | str
     company_type: str = "industrial"
     currency: str = "USD"
+    schema_version: str = field(default_factory=lambda: _schema.version)
     income_statement: list[dict[str, Any]] = field(default_factory=list)
     balance_sheet: list[dict[str, Any]] = field(default_factory=list)
     cash_flow: list[dict[str, Any]] = field(default_factory=list)
@@ -192,6 +194,10 @@ def _build_records(
         fm = result.fiscal_data.get(date, {})
         fiscal_year = fm.get("fiscal_year", int(date[:4]))
         fiscal_period = fm.get("fiscal_period", "FY")
+        filing_date = fm.get("filing_date")
+        original_filing_date = fm.get("original_filing_date")
+        latest_filing_date = fm.get("latest_filing_date")
+        is_restated = fm.get("is_restated")
 
         if fiscal_years and fiscal_year not in fiscal_years:
             continue
@@ -219,31 +225,38 @@ def _build_records(
                 else:
                     source_str = f"imputed-zero: {source_str}"
 
-            records.append(
-                {
-                    "period_ending": date,
-                    "fiscal_year": fiscal_year,
-                    "fiscal_period": (
-                        f"{fiscal_period} (Preliminary)"
-                        if date in result.preliminary_dates
-                        else fiscal_period
-                    ),
-                    "calendar_year": calendar_year,
-                    "calendar_period": calendar_period,
-                    "tag": r.tag,
-                    "label": r.label,
-                    "description": r.description,
-                    "parent": r.parent,
-                    "sequence": r.sequence,
-                    "factor": r.factor_on(date),
-                    "balance": r.balance,
-                    "unit": r.unit,
-                    "period_type": r.period_type,
-                    "currency": currency,
-                    "value": val,
-                    "source": source_str,
-                }
-            )
+            rec_dict: dict[str, Any] = {
+                "period_ending": date,
+                "fiscal_year": fiscal_year,
+                "fiscal_period": (
+                    f"{fiscal_period} (Preliminary)"
+                    if date in result.preliminary_dates
+                    else fiscal_period
+                ),
+                "calendar_year": calendar_year,
+                "calendar_period": calendar_period,
+                "tag": r.tag,
+                "label": r.label,
+                "description": r.description,
+                "parent": r.parent,
+                "sequence": r.sequence,
+                "factor": r.factor_on(date),
+                "balance": r.balance,
+                "unit": r.unit,
+                "period_type": r.period_type,
+                "currency": currency,
+                "value": val,
+                "source": source_str,
+            }
+            if filing_date is not None:
+                rec_dict["filing_date"] = filing_date
+            if original_filing_date is not None:
+                rec_dict["original_filing_date"] = original_filing_date
+            if latest_filing_date is not None:
+                rec_dict["latest_filing_date"] = latest_filing_date
+            if is_restated is not None:
+                rec_dict["is_restated"] = is_restated
+            records.append(rec_dict)
 
     return records
 
@@ -289,28 +302,36 @@ def _compute_ttm(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 method = "sum"
 
             anchor = window[-1]
-            ttm_records.append(
-                {
-                    "period_ending": anchor["period_ending"],
-                    "fiscal_year": anchor["fiscal_year"],
-                    "fiscal_period": "TTM",
-                    "calendar_year": anchor["calendar_year"],
-                    "calendar_period": anchor["calendar_period"],
-                    "tag": tag,
-                    "label": anchor["label"],
-                    "description": anchor["description"],
-                    "parent": anchor["parent"],
-                    "sequence": anchor["sequence"],
-                    "factor": anchor["factor"],
-                    "balance": anchor["balance"],
-                    "unit": anchor["unit"],
-                    "period_type": anchor["period_type"],
-                    "currency": anchor["currency"],
-                    "value": ttm_val,
-                    "source": f"TTM: {method}({' + '.join(dates)})",
-                    "frequency": "ttm",
-                }
-            )
+            ttm_rec: dict[str, Any] = {
+                "period_ending": anchor["period_ending"],
+                "fiscal_year": anchor["fiscal_year"],
+                "fiscal_period": "TTM",
+                "calendar_year": anchor["calendar_year"],
+                "calendar_period": anchor["calendar_period"],
+                "tag": tag,
+                "label": anchor["label"],
+                "description": anchor["description"],
+                "parent": anchor["parent"],
+                "sequence": anchor["sequence"],
+                "factor": anchor["factor"],
+                "balance": anchor["balance"],
+                "unit": anchor["unit"],
+                "period_type": anchor["period_type"],
+                "currency": anchor["currency"],
+                "value": ttm_val,
+                "source": f"TTM: {method}({' + '.join(dates)})",
+                "frequency": "ttm",
+            }
+            window_filings = [w["filing_date"] for w in window if w.get("filing_date")]
+            if window_filings:
+                ttm_rec["filing_date"] = max(window_filings)
+            if anchor.get("original_filing_date") is not None:
+                ttm_rec["original_filing_date"] = anchor["original_filing_date"]
+            if anchor.get("latest_filing_date") is not None:
+                ttm_rec["latest_filing_date"] = anchor["latest_filing_date"]
+            if any(w.get("is_restated") is not None for w in window):
+                ttm_rec["is_restated"] = any(bool(w.get("is_restated")) for w in window)
+            ttm_records.append(ttm_rec)
 
     return ttm_records
 
@@ -368,7 +389,7 @@ def _pct_record(
     pct: float,
     freq: str,
 ) -> dict[str, Any]:
-    return {
+    rec: dict[str, Any] = {
         "period_ending": current["period_ending"],
         "fiscal_year": current["fiscal_year"],
         "fiscal_period": current["fiscal_period"],
@@ -392,6 +413,17 @@ def _pct_record(
         ),
         "frequency": freq,
     }
+    if current.get("filing_date") is not None:
+        rec["filing_date"] = current["filing_date"]
+    if current.get("original_filing_date") is not None:
+        rec["original_filing_date"] = current["original_filing_date"]
+    if current.get("latest_filing_date") is not None:
+        rec["latest_filing_date"] = current["latest_filing_date"]
+    if current.get("is_restated") is not None or prior.get("is_restated") is not None:
+        rec["is_restated"] = bool(
+            current.get("is_restated") or prior.get("is_restated")
+        )
+    return rec
 
 
 def resolve_company_facts(
@@ -400,6 +432,7 @@ def resolve_company_facts(
     period: PeriodType = "both",
     pit_mode: bool = False,
     include_preliminary: bool = False,
+    as_of_date: Any = None,
 ) -> StandardizedStatements:
     """Parse an SEC company-facts JSON and produce standardized statements.
 
@@ -417,6 +450,9 @@ def resolve_company_facts(
     include_preliminary : bool
         If True, 8-K data is used for periods no 10-K, 10-Q, 20-F, 40-F, or 6-K
         had reported when the 8-K was filed.
+    as_of_date : str | date | None
+        Point-in-time cutoff date (YYYY-MM-DD). When provided, only filings
+        filed on or before ``as_of_date`` are considered.
 
     Returns
     -------
@@ -424,9 +460,14 @@ def resolve_company_facts(
         Contains ``.income_statement``, ``.balance_sheet``, ``.cash_flow``
         as list-of-dicts ready for DataFrame conversion.
     """
+    from openbb_sec.utils.statement_schema._detection import filter_facts_as_of
+
     entity_name = facts_json.get("entityName", "")
     cik = facts_json.get("cik", "")
     facts = facts_json.get("facts", {})
+    if as_of_date is not None:
+        facts = filter_facts_as_of(facts, as_of_date)
+        facts_json = {**facts_json, "facts": facts}
 
     company_type = _schema.detect_type(facts)
 
@@ -448,6 +489,7 @@ def resolve_company_facts(
             company_type=company_type,
             pit_mode=pit_mode,
             include_preliminary=include_preliminary,
+            as_of_date=as_of_date,
         )
         for stmt_result in stmts.values():
             output.currency = stmt_result.currency
@@ -490,6 +532,7 @@ def resolve_company_facts(
                 pit_mode=pit_mode,
                 include_preliminary=include_preliminary,
                 annual_results=annual_stmts,
+                as_of_date=as_of_date,
             )
             if freq == "annual":
                 annual_stmts = stmts
@@ -517,6 +560,7 @@ async def get_standardized_financials(
     use_cache: bool = True,
     pit_mode: bool = False,
     include_preliminary: bool = False,
+    as_of_date: Any = None,
 ) -> StandardizedStatements:
     """Fetch company facts from SEC and return standardized financial statements.
 
@@ -542,6 +586,9 @@ async def get_standardized_financials(
     include_preliminary : bool
         If True, 8-K data is used for periods no 10-K, 10-Q, 20-F, 40-F, or 6-K
         had reported when the 8-K was filed.
+    as_of_date : str | date | None
+        Point-in-time cutoff date (YYYY-MM-DD). When provided, only filings
+        filed on or before ``as_of_date`` are considered.
 
     Returns
     -------
@@ -601,4 +648,5 @@ async def get_standardized_financials(
         period=period,
         pit_mode=pit_mode,
         include_preliminary=include_preliminary,
+        as_of_date=as_of_date,
     )

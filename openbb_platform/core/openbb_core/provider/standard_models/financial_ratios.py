@@ -19,6 +19,9 @@ class FinancialRatiosQueryParams(QueryParams):
     limit: int | None = Field(
         default=None, description=QUERY_DESCRIPTIONS.get("limit", "")
     )
+    as_of_date: dateType | None = Field(
+        default=None, description=QUERY_DESCRIPTIONS.get("as_of_date", "")
+    )
 
     @field_validator("symbol", mode="before", check_fields=False)
     @classmethod
@@ -40,3 +43,10 @@ class FinancialRatiosData(Data):
         default=None, description="Period of the financial ratios."
     )
     fiscal_year: int | None = Field(default=None, description="Fiscal year.")
+    filing_date: dateType | None = Field(
+        default=None, description="The filing date of the report."
+    )
+    is_restated: bool | None = Field(
+        default=None,
+        description="Whether the period data has been restated in a subsequent filing.",
+    )

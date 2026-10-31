@@ -75,3 +75,13 @@ class TestTransformReports:
 
     def test_missing_period_end_is_skipped(self):
         assert transform_reports([{"IncomeStatement": {"A": 1}}], "income") == []
+
+    def test_query_accepts_as_of_date(self):
+        from datetime import date
+
+        from openbb_tmx.models.income_statement import TmxIncomeStatementFetcher
+
+        q = TmxIncomeStatementFetcher.transform_query(
+            {"symbol": "RY", "as_of_date": "2025-12-31"}
+        )
+        assert q.as_of_date == date(2025, 12, 31)

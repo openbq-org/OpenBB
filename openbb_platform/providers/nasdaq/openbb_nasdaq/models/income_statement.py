@@ -166,6 +166,9 @@ class NasdaqIncomeStatementFetcher(
             data, "income", INCOME_STATEMENT_MAP, query.symbol, query.period
         )
 
+        if getattr(query, "as_of_date", None) is not None:
+            records = [r for r in records if r["period_ending"] <= query.as_of_date]
+
         if not records:
             raise EmptyDataError(f"No income statement was found for {query.symbol}.")
 

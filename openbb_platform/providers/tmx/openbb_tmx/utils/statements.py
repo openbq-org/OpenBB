@@ -14,7 +14,13 @@ MODULES = {
 
 ITEM_COLUMN = "Item"
 
-SKIPPED_FIELDS = ("period_ending", "fiscal_period", "fiscal_year")
+SKIPPED_FIELDS = (
+    "period_ending",
+    "fiscal_period",
+    "fiscal_year",
+    "filing_date",
+    "is_restated",
+)
 
 PERIOD_FIELD = "period_ending"
 
