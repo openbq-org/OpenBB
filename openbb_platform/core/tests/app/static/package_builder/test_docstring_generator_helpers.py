@@ -1961,6 +1961,7 @@ def test_literal_choices_reads_bare_optional_and_non_literal_types():
         ("list[typing.Optional[str]]", "list[str | None]"),
         ("<class 'str'>", "str"),
         ("datetime.date", "date"),
+        ("typing.Optional[str", "Optional[str"),
         # Literal still collapses to str; duplicates still collapse
         ("typing.Optional[typing.Literal['a', 'b']]", "str | None"),
         ("typing.Union[typing.Literal['a'], typing.Literal['b']]", "str"),
