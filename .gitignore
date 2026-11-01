@@ -39,7 +39,6 @@ cache/
 lightning_logs/
 */mocked_path
 *.pem
-.claude/
 
 # CLI
 *.pyo
@@ -64,10 +63,3 @@ obb/*
 *.pkg
 *.exe
 build/conda/tmp
-github_metadata/extract_repo_metadata.py
-github_metadata/output/.stargazers_rest_cache.json
-github_metadata/output/openbb_contributors.json
-github_metadata/output/openbb_forks.json
-github_metadata/output/openbb_stargazers.json
-github_metadata/output/openbb_watchers.json
-github_metadata/output/repository.json
