@@ -151,7 +151,7 @@ regenerate `openbb/package/` and `reference.json`.
 
 ## Prerequisites
 
-- Python `>=3.10,<4`
+- Python `>=3.11,<4`
 - For extension authors: working knowledge of FastAPI and Pydantic v2.
 
 ## Installation

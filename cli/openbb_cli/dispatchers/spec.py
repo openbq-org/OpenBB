@@ -6,7 +6,7 @@ import argparse
 import hashlib
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from importlib.metadata import (
     PackageNotFoundError,
     version as _pkg_version,
@@ -434,7 +434,7 @@ def build_spec_document(
         _strip_fixed_headers(commands, headers)
     doc = {
         "version": SPEC_VERSION,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "generator": _generator_identifier(),
         "source_url": source_url or "",
         "api_version": str(openapi.get("openapi") or openapi.get("swagger") or ""),

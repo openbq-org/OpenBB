@@ -1,7 +1,7 @@
 """Validation models for MCP configuration structures."""
 
 import re
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from fastmcp.utilities.logging import get_logger
@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 logger = get_logger(__name__)
 
 
-class MCPType(str, Enum):
+class MCPType(StrEnum):
     """Valid MCP type values."""
 
     TOOL = "tool"
@@ -18,7 +18,7 @@ class MCPType(str, Enum):
     RESOURCE_TEMPLATE = "resource_template"
 
 
-class HTTPMethod(str, Enum):
+class HTTPMethod(StrEnum):
     """Valid HTTP methods for route configuration."""
 
     GET = "GET"
