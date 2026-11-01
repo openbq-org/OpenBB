@@ -407,3 +407,42 @@ def test_generate_routers_command_that_is_also_a_namespace_lives_in_its_own_rout
     assert "async def count(" in by_module["alerts_active"].source
     for r in out.routers:
         ast.parse(r.source)
+
+
+def test_safe_segment_prefixes_digits_and_suffixes_keywords():
+    assert rg._safe_segment("24hr") == "_24hr"
+    assert rg._safe_segment("class") == "class_"
+    assert rg._safe_segment("Return") == "return_"
+
+
+def test_generate_routers_digit_and_keyword_commands_are_valid_python():
+    tree = nt.build_namespace_tree(
+        {
+            "ticker.24hr": {"providers": ["fmp"], "description": "24h stats"},
+            "ticker.class": {"providers": ["fmp"], "description": "Class"},
+            "24hr": {"providers": ["fmp"], "description": "Root 24h"},
+        }
+    )
+    fetchers = {
+        key: _Fetcher(
+            module_name=key.replace(".", "_"),
+            fetcher_class="F",
+            model_name="M",
+        )
+        for key in ("ticker.24hr", "ticker.class", "24hr")
+    }
+    out = rg.generate_routers(
+        tree,
+        package_name="openbb_codegen",
+        provider_name="fmp",
+        fetchers_by_command=fetchers,
+        post_commands_by_command={},
+    )
+    assert out.routers
+    for router in out.routers:
+        ast.parse(router.source)
+    for block in out.root_commands:
+        ast.parse(block)
+    generated = "".join(r.source for r in out.routers) + "".join(out.root_commands)
+    assert "async def _24hr(" in generated
+    assert "async def class_(" in generated

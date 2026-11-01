@@ -75,6 +75,59 @@ def test_basemodel_to_multiindex_df():
     assert isinstance(df.index, pd.MultiIndex)
 
 
+@pytest.mark.parametrize(
+    "names",
+    [["x", "y"], [None, None], ["x", None], [None, "y"]],
+)
+def test_multiindex_round_trip(names):
+    """Test that a MultiIndex survives a df -> basemodel -> df round trip."""
+    original = df_multiindex.copy()
+    original.index.names = names
+
+    result = basemodel_to_df(df_to_basemodel(original))
+
+    pd.testing.assert_frame_equal(result, original)
+
+
+@pytest.mark.parametrize(
+    "names, columns",
+    [
+        (["z", "y"], ["z"]),
+        ([None, "y"], ["level_0"]),
+        (["x", "x"], ["z"]),
+        (["is_multiindex", "y"], ["z"]),
+    ],
+)
+def test_multiindex_round_trip_name_clash(names, columns):
+    """Test that index levels named after a column or each other survive a round trip."""
+    original = df_multiindex.copy()
+    original.index.names = names
+    original.columns = columns
+
+    result = basemodel_to_df(df_to_basemodel(original))
+
+    pd.testing.assert_frame_equal(result, original)
+
+
+@pytest.mark.parametrize("values", [list("abcdefghij"), list(range(10))])
+def test_multiindex_round_trip_non_date_date_level(values):
+    """Test that an index level named date that holds non-date values survives a round trip."""
+    original = df.assign(date=values).set_index(["date", "y"])
+
+    result = basemodel_to_df(df_to_basemodel(original))
+
+    pd.testing.assert_frame_equal(result, original)
+
+
+def test_df_to_basemodel_does_not_modify_multiindex_input():
+    """Test that converting a MultiIndex DataFrame leaves the input untouched."""
+    original = df.set_index(["x", "y"])
+
+    df_to_basemodel(original)
+
+    pd.testing.assert_frame_equal(original, df.set_index(["x", "y"]))
+
+
 def test_get_target_column():
     """Test the get_target_column helper."""
     target = get_target_column(df, "x")

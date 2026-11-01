@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import keyword
 import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -56,9 +57,18 @@ class GeneratedRouters:
 
 
 def _safe_segment(name: str) -> str:
-    """Lower-case + replace non-alphanumerics with underscores."""
-    cleaned = re.sub(r"[^0-9a-zA-Z]+", "_", name).strip("_")
-    return cleaned.lower() or "ns"
+    """Lower-case + replace non-alphanumerics with underscores.
+
+    A result that starts with a digit gets a leading underscore and a Python
+    keyword gets a trailing one (as pydantic_gen does for field names), so it
+    stays a valid function and module identifier.
+    """
+    cleaned = (re.sub(r"[^0-9a-zA-Z]+", "_", name).strip("_") or "ns").lower()
+    if cleaned[0].isdigit():
+        cleaned = f"_{cleaned}"
+    elif keyword.iskeyword(cleaned):
+        cleaned = f"{cleaned}_"
+    return cleaned
 
 
 def _module_name_for(path: str) -> str:
