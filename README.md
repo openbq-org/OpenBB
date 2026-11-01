@@ -33,7 +33,7 @@ output = obb.equity.price.historical("AAPL")
 df = output.to_dataframe()
 ```
 
-Data integrations available can be found here: <https://docs.openbb.co/python/reference>
+Data integrations available can be found in the [OpenBB Python Reference](https://docs.openbb.co/python/reference).
 
 ---
 
@@ -41,7 +41,7 @@ Data integrations available can be found here: <https://docs.openbb.co/python/re
 
 While the Open Data Platform provides the open-source data integration foundation, **OpenBB Workspace** offers the enterprise UI for analysts to visualize datasets and leverage AI agents. The platform's "connect once, consume everywhere" architecture enables seamless integration between the two.
 
-You can find OpenBB Workspace at <https://pro.openbb.co>.
+You can find OpenBB Workspace at [pro.openbb.co](https://pro.openbb.co).
 <a href="https://pro.openbb.co">
   <div align="center">
   <img src="https://openbb-cms.directus.app/assets/f69b6aaf-0821-4bc8-a43c-715e03a924ef.png" alt="Logo" width="1000">
@@ -76,7 +76,7 @@ openbb-api
 
 This will launch a FastAPI server, via Uvicorn, at `127.0.0.1:6900`.
 
-You can check that it works by going to <http://127.0.0.1:6900>.
+You can check that it works by going to [`http://127.0.0.1:6900`](http://127.0.0.1:6900).
 
 #### Integrate the ODP Backend to OpenBB Workspace
 
@@ -88,7 +88,7 @@ Sign-in to the [OpenBB Workspace](https://pro.openbb.co/), and follow the follow
 2. Click on "Connect backend"
 3. Fill in the form with:
    Name: Open Data Platform
-   URL: <http://127.0.0.1:6900>
+   URL: [`http://127.0.0.1:6900`](http://127.0.0.1:6900)
 4. Click on "Test". You should get a "Test successful" with the number of apps found.
 5. Click on "Add".
 
