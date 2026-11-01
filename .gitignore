@@ -39,6 +39,7 @@ cache/
 lightning_logs/
 */mocked_path
 *.pem
+.openbb_platform/
 
 # CLI
 *.pyo

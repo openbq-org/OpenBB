@@ -1,0 +1,28 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://min-api.cryptocompare.com/data/v2/histoday?aggregate=1&fsym=BTC&limit=5&toTs=1672876800&tsym=USD
+  response:
+    body:
+      string: '{"Response":"Success","Message":"","HasWarning":false,"Type":100,"RateLimit":{},"Data":{"Aggregated":false,"TimeFrom":1672444800,"TimeTo":1672876800,"Data":[{"time":1672444800,"high":16650.12,"low":16400.0,"open":16510.42,"close":16580.33,"volumefrom":1324.5,"volumeto":21954230.12,"conversionType":"direct","conversionSymbol":""},{"time":1672531200,"high":16780.41,"low":16520.52,"open":16580.33,"close":16710.77,"volumefrom":1120.13,"volumeto":18723511.45,"conversionType":"direct","conversionSymbol":""},{"time":1672617600,"high":16840.85,"low":16640.13,"open":16710.77,"close":16795.14,"volumefrom":1211.88,"volumeto":20356444.58,"conversionType":"direct","conversionSymbol":""},{"time":1672704000,"high":16920.64,"low":16760.02,"open":16795.14,"close":16888.12,"volumefrom":1098.77,"volumeto":18564355.76,"conversionType":"direct","conversionSymbol":""},{"time":1672790400,"high":16980.91,"low":16810.17,"open":16888.12,"close":16940.55,"volumefrom":1455.02,"volumeto":24622590.61,"conversionType":"direct","conversionSymbol":""}]},"SponsoredData":[]}'
+    headers:
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Jul 2024 00:00:00 GMT
+      Server:
+      - cloudflare
+      Content-Length:
+      - '1038'
+    status:
+      code: 200
+      message: OK
+version: 1

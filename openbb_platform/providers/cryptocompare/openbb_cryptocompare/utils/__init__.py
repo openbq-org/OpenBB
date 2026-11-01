@@ -1,0 +1,1 @@
+"""CryptoCompare utility helpers."""

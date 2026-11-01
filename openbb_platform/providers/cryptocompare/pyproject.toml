@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "openbb-cryptocompare"
+version = "1.5.0"
+description = "CryptoCompare extension for OpenBB"
+authors = ["OpenBB Team <hello@openbb.co>"]
+license = "AGPL-3.0-only"
+readme = "README.md"
+packages = [{ include = "openbb_cryptocompare" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.14"
+openbb-core = "^1.5.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."openbb_provider_extension"]
+cryptocompare = "openbb_cryptocompare:cryptocompare_provider"
