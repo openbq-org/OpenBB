@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import keyword
 import re
 from dataclasses import dataclass, field
 from typing import Any, cast
@@ -9,6 +10,12 @@ from typing import Any, cast
 from openbb_cli.codegen.credentials import (
     credentials_from_command,
     filter_user_params,
+)
+from openbb_cli.codegen.fetcher_gen import (
+    UrlChoices,
+    boolean_params,
+    render_choose_url_call,
+    url_choices_for,
 )
 from openbb_cli.codegen.pydantic_gen import (
     GeneratedClass,
@@ -83,7 +90,8 @@ def _module_name_from_command(name: str) -> str:
         safe = "command"
     if safe[0].isdigit():
         safe = f"_{safe}"
-    return safe.lower()
+    safe = safe.lower()
+    return f"{safe}_" if keyword.iskeyword(safe) else safe
 
 
 def _path_template_keys(url_path: str) -> list[str]:
@@ -530,6 +538,16 @@ def generate_post_command_module(spec: PostCommandSpec) -> GeneratedPostCommand:
     full_url_path = _resolve_url_path(
         spec.api_prefix, spec.cmd_spec.get("url_path") or ""
     )
+    signature_names = {name for name, *_ in params}
+    url_choices = url_choices_for(
+        spec.cmd_spec,
+        spec.api_prefix,
+        {
+            p["name"]: safe_field_name(p["name"])[0]
+            for p in filter_user_params(spec.cmd_spec.get("parameters") or [])
+            if p.get("name") and safe_field_name(p["name"])[0] in signature_names
+        },
+    )
     body_block = _render_body_block(
         cmd_spec=spec.cmd_spec,
         body_field=body_field,
@@ -541,6 +559,7 @@ def generate_post_command_module(spec: PostCommandSpec) -> GeneratedPostCommand:
         data_class=data_class,
         params=params,
         fixed_headers=spec.headers,
+        url_choices=url_choices,
     )
 
     imports = {
@@ -549,11 +568,19 @@ def generate_post_command_module(spec: PostCommandSpec) -> GeneratedPostCommand:
         "from openbb_core.app.model.abstract.error import OpenBBError",
         "from openbb_core.app.model.obbject import OBBject",
         "from openbb_core.provider.abstract.data import Data",
-        "from openbb_core.provider.utils.helpers import "
-        "get_async_requests_session, get_querystring",
+        "from openbb_core.provider.utils.helpers import get_async_requests_session",
         "from pydantic import BaseModel, Field",
-        "from ....utils import unpack_response",
+        "from ....utils import encode_query, unpack_response",
     }
+    if url_choices:
+        imports.add("from ....utils import choose_url_template")
+    elif boolean_params(spec.cmd_spec) & set(path_params):
+        imports.add("from ....utils import wire_value")
+    if any(
+        p.get("is_list") and p.get("list_style") == "json"
+        for p in filter_user_params(spec.cmd_spec.get("parameters") or [])
+    ):
+        imports.add("from ....utils import json_array")
     if creds:
         imports.add("from openbb_core.app.model.command_context import CommandContext")
     imports.update(data_generated.collect_imports())
@@ -631,6 +658,7 @@ def _render_body_block(
     data_class: str,
     params: list[tuple[str, str, str | None, bool, Any]],
     fixed_headers: dict[str, str] | None = None,
+    url_choices: UrlChoices | None = None,
 ) -> str:
     """Render the function body for a POST command.
 
@@ -656,6 +684,8 @@ def _render_body_block(
         Function parameters.
     fixed_headers : dict, optional
         Headers sent with every request (from ``--header`` at spec generation).
+    url_choices : UrlChoices, optional
+        The URLs of a merged command, picked between at call time.
 
     Returns
     -------
@@ -683,19 +713,47 @@ def _render_body_block(
     lines: list[str] = []
     lines.extend(cred_lines)
 
-    if path_params:
-        sub_args = ", ".join(f"{p}={p}" for p in path_params)
+    if url_choices:
+        call = render_choose_url_call(url_choices, None, "    ")
+        call[0] = "    _path, _used, _query_names = choose_url_template("
+        lines.extend(call)
+    elif path_params:
+        booleans = boolean_params(cmd_spec)
+        sub_args = ", ".join(
+            f"{p}=wire_value({p})" if p in booleans else f"{p}={p}" for p in path_params
+        )
         lines.append(f"    _path = {url_path_template!r}.format({sub_args})")
     else:
         lines.append(f"    _path = {url_path_template!r}")
 
+    json_lists = {
+        p["name"]: p.get("type") or "string"
+        for p in filter_user_params(cmd_spec.get("parameters") or [])
+        if p.get("is_list") and p.get("list_style") == "json"
+    }
     lines.append("    _query_dict: dict[str, Any] = {}")
     for name in query_field_names:
         wire = wire_by_safe.get(name, name)
-        if wire in path_params or name in path_params:
+        if not url_choices and (wire in path_params or name in path_params):
             continue
         lines.append(f"    if {name} is not None:")
-        lines.append(f"        _query_dict[{wire!r}] = {name}")
+        if wire in json_lists:
+            type_arg = "" if json_lists[wire] == "string" else f", {json_lists[wire]!r}"
+            lines.append(
+                f"        _value = json_array({name} if isinstance({name}, str) "
+                f"else _json.dumps(list({name})){type_arg})"
+            )
+            lines.append("        if _value is not None:")
+            lines.append(f"            _query_dict[{wire!r}] = _value")
+        else:
+            lines.append(f"        _query_dict[{wire!r}] = {name}")
+    if url_choices:
+        lines.append(f"    for _name in {tuple(url_choices.names)!r}:")
+        lines.append(
+            "        if _name in _used or _name not in _query_names "
+            'or _query_dict.get(_name) in ("", []):'
+        )
+        lines.append("            _query_dict.pop(_name, None)")
     for canonical, info in creds.items():
         if info["in"] != "query":
             continue
@@ -703,7 +761,7 @@ def _render_body_block(
         var = f"_cred_{canonical}"
         lines.append(f"    if {var}:")
         lines.append(f"        _query_dict[{wire_name!r}] = {var}")
-    lines.append("    _query_string = get_querystring(_query_dict, [])")
+    lines.append("    _query_string = encode_query(_query_dict)")
     lines.append(
         f'    _url = f"{base_url}{{_path}}" + ("?" + _query_string if _query_string else "")'
     )

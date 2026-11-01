@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import keyword
+import re
 from dataclasses import dataclass
+from itertools import islice, product
 from typing import TYPE_CHECKING, Any
 
-from openbb_cli.codegen.pydantic_gen import safe_field_name
+from openbb_cli.codegen.pydantic_gen import query_field_name
 
 if TYPE_CHECKING:
-    from openbb_cli.codegen.fetcher_gen import GeneratedFetcher
+    from openbb_cli.codegen.fetcher_gen import GeneratedFetcher, UrlChoices
 
 
 _STANDARD_HEADER_REDACTIONS: tuple[tuple[str, str | None], ...] = (
@@ -111,7 +114,11 @@ def generate_provider_tests(
     for f in sorted(fetchers, key=lambda x: x.fetcher_class):
         dotted = _dotted_for_fetcher(f, commands_by_dotted)
         cmd_spec = commands_by_dotted.get(dotted, {}) if dotted else {}
-        params = _derive_test_params(cmd_spec, provider_name)
+        params = _derive_test_params(
+            cmd_spec,
+            provider_name,
+            class_name=f.fetcher_class.removesuffix("Fetcher") + "QueryParams",
+        )
         if params is None:
             continue
         testable.append((f, params))
@@ -213,14 +220,12 @@ def _dotted_for_fetcher(
 
 def _normalize_to_module(dotted: str) -> str:
     """Match ``fetcher_gen._module_name_from_command`` exactly."""
-    import re
-
     safe = re.sub(r"[^0-9a-zA-Z]+", "_", dotted).strip("_").lower()
     if not safe:
         safe = "command"
     if safe[0].isdigit():
         safe = f"_{safe}"
-    return safe
+    return f"{safe}_" if keyword.iskeyword(safe) else safe
 
 
 _DATE_PARAM_NAMES: frozenset[str] = frozenset(
@@ -245,10 +250,24 @@ def _is_date_param(name: str) -> bool:
 
 
 def _derive_test_params(
-    cmd_spec: dict[str, Any], provider_name: str
+    cmd_spec: dict[str, Any], provider_name: str, class_name: str = "QueryParams"
 ) -> dict[str, Any] | None:
-    """Build a kwargs dict for the command's testable params, or ``None``."""
+    """Build a kwargs dict for the command's testable params, or ``None``.
+
+    Keys are the generated ``QueryParams`` field names, the attribute names
+    ``Fetcher.test`` reads back from the validated query. The params satisfy
+    the command's required groups and, for a command with several URLs, form
+    one of them; when that is impossible the test is skipped.
+    """
     out: dict[str, Any] = {}
+    params_by_name: dict[str, dict[str, Any]] = {}
+    heuristic: set[str] = set()
+    placeholders = {
+        name
+        for template in cmd_spec.get("url_templates")
+        or [cmd_spec.get("url_path") or ""]
+        for name in re.findall(r"\{([^}]+)\}", template)
+    }
     for raw in cmd_spec.get("parameters") or []:
         if not isinstance(raw, dict):
             continue
@@ -258,30 +277,190 @@ def _derive_test_params(
         param_providers = raw.get("providers") or []
         if param_providers and provider_name not in param_providers:
             continue
-        field_name, _ = safe_field_name(name)
+        params_by_name[name] = raw
         if raw.get("required"):
             value = _spec_supplied_value(raw)
             if value is None:
                 return None
-            out[field_name] = value
-        elif _is_date_param(name):
-            out[field_name] = _refresh_date_shape(name, "1970-01-01")
-    return out
+            out[name] = value
+        elif (
+            _is_date_param(name)
+            and not raw.get("choices")
+            and raw.get("in", "query") != "path"
+            and name not in placeholders
+        ):
+            out[name] = _refresh_date_shape(name, "1970-01-01")
+            heuristic.add(name)
+    groups = cmd_spec.get("required_groups") or []
+    satisfied = _satisfy_groups(groups, out, params_by_name, heuristic)
+    if satisfied is None:
+        return None
+    formed = _satisfy_url_templates(cmd_spec, satisfied, params_by_name)
+    if formed is None:
+        return None
+    from openbb_cli.codegen.fetcher_gen import query_params_fields
+
+    field_names = query_params_fields(
+        {**cmd_spec, "parameters": list(params_by_name.values())},
+        provider_name,
+        class_name,
+    )
+    return {
+        field_names.get(name) or query_field_name(name): value
+        for name, value in formed.items()
+    }
+
+
+def _is_present(out: dict[str, Any], name: str) -> bool:
+    """Whether ``out`` passes a value for ``name``, by the validator's rule."""
+    return out.get(name) not in (None, "", [])
+
+
+def _group_holds(group: dict[str, Any], out: dict[str, Any]) -> bool:
+    """Whether ``out`` passes the generated ``_check_required_groups`` for ``group``."""
+    if not group.get("required", True) and not any(
+        _is_present(out, name) for name in group.get("members") or []
+    ):
+        return True
+    met = sum(
+        all(_is_present(out, name) for name in alt)
+        for alt in group.get("alternatives") or []
+    )
+    return met == 1 if group.get("combinator") == "oneOf" else met >= 1
+
+
+_MAX_GROUP_COMBINATIONS = 512
+
+
+def _satisfy_groups(
+    groups: list[dict[str, Any]],
+    out: dict[str, Any],
+    params_by_name: dict[str, dict[str, Any]],
+    heuristic: set[str],
+) -> dict[str, Any] | None:
+    """Return ``out`` changed so every required group passes, or ``None``.
+
+    Optional groups set off only by params the date heuristic added are
+    disarmed by removing those params. Then every combination of one
+    alternative per group (an optional group may also be left out) is tried in
+    order, up to a bound: missing values come from the spec, and for ``oneOf``
+    the params only unchosen alternatives need are removed. Required params
+    are never removed.
+    """
+    if all(_group_holds(group, out) for group in groups):
+        return out
+    base = dict(out)
+    for group in groups:
+        if group.get("required", True) or _group_holds(group, base):
+            continue
+        triggered = [n for n in group.get("members") or [] if _is_present(base, n)]
+        if triggered and set(triggered) <= heuristic:
+            for name in triggered:
+                base.pop(name, None)
+    if all(_group_holds(group, base) for group in groups):
+        return base
+    required = {name for name, raw in params_by_name.items() if raw.get("required")}
+    options = [
+        list(group.get("alternatives") or [])
+        + ([] if group.get("required", True) else [None])
+        for group in groups
+    ]
+    for combo in islice(product(*options), _MAX_GROUP_COMBINATIONS):
+        candidate = _fill(
+            base, [n for alt in combo if alt for n in alt], params_by_name
+        )
+        if candidate is None:
+            continue
+        chosen = {name for alt in combo if alt for name in alt}
+        for group, alt in zip(groups, combo, strict=True):
+            if alt is None or group.get("combinator") != "oneOf":
+                continue
+            for other in group.get("alternatives") or []:
+                for name in other:
+                    if name not in chosen and name not in required:
+                        candidate.pop(name, None)
+        if all(_group_holds(group, candidate) for group in groups):
+            return candidate
+    return None
+
+
+def _fill(
+    out: dict[str, Any],
+    names: list[str],
+    params_by_name: dict[str, dict[str, Any]],
+) -> dict[str, Any] | None:
+    """Copy ``out`` with spec-supplied values for any of ``names`` it lacks."""
+    candidate = dict(out)
+    for name in names:
+        if _is_present(candidate, name):
+            continue
+        raw = params_by_name.get(name)
+        value = _spec_supplied_value(raw) if raw is not None else None
+        if value is None:
+            return None
+        candidate[name] = value
+    return candidate
+
+
+def _satisfy_url_templates(
+    cmd_spec: dict[str, Any],
+    out: dict[str, Any],
+    params_by_name: dict[str, dict[str, Any]],
+) -> dict[str, Any] | None:
+    """Make ``out`` form one of a merged command's URLs, as its validator checks.
+
+    When the params form none, the first URL whose placeholders can all be
+    filled from the spec is filled; ``None`` when no URL can be.
+    """
+    from openbb_cli.codegen.fetcher_gen import url_choices_for
+
+    choices = url_choices_for(cmd_spec, "", {name: name for name in params_by_name})
+    if choices is None or _forms_url(choices, out):
+        return out
+    for _, path_names, _ in choices.templates:
+        candidate = _fill(out, list(path_names), params_by_name)
+        if candidate is not None and _forms_url(choices, candidate):
+            return candidate
+    return None
+
+
+def _forms_url(choices: UrlChoices, out: dict[str, Any]) -> bool:
+    """Whether ``out`` passes the generated ``_check_url_template``."""
+    from openbb_cli.dispatchers._unpack import choose_url_template
+
+    values = {
+        name: out.get(name, choices.defaults.get(name)) for name in choices.placeholders
+    }
+    try:
+        choose_url_template(choices.templates, values, None, choices.defaults)
+    except ValueError:
+        return False
+    return True
 
 
 def _spec_supplied_value(param: dict[str, Any]) -> Any:
-    """Return a value the spec itself vouches for, or ``None`` to abort the test."""
-    raw_value: Any = None
-    if param.get("example") is not None:
-        raw_value = param["example"]
-    elif param.get("default") is not None:
-        raw_value = param["default"]
-    else:
-        choices = param.get("choices") or []
-        if choices:
-            raw_value = choices[0]
+    """Return a value the spec itself vouches for, or ``None`` to abort the test.
+
+    The example wins, then the default, then the first choice; when the param
+    declares ``choices``, an example or default outside them is skipped.
+    """
+    choices = param.get("choices") or []
+    raw_value: Any = next(
+        (
+            value
+            for value in (param.get("example"), param.get("default"))
+            if value is not None and (not choices or value in choices)
+        ),
+        choices[0] if choices else None,
+    )
     if raw_value is None:
         return None
+    if (
+        isinstance(raw_value, list)
+        and param.get("is_list")
+        and param.get("in", "query") == "query"
+    ):
+        raw_value = ",".join(str(item) for item in raw_value)
     return _refresh_date_shape(param.get("name") or "", raw_value)
 
 
