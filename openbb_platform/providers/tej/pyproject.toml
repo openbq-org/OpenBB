@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "openbb-tej"
+version = "1.0.1"
+description = "TEJ provider for OpenBB"
+authors = ["OpenBB Team <hello@openbb.co>"]
+license = "AGPL-3.0-only"
+readme = "README.md"
+packages = [{include = "openbb_tej"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.14"
+openbb-core = "^1.5.8"
+tejapi = "^0.1.31"
+
+[tool.poetry.plugins."openbb_provider_extension"]
+tej = "openbb_tej:tej_provider"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
