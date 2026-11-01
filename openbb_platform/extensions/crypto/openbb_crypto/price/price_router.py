@@ -46,3 +46,31 @@ async def historical(
 ) -> OBBject:
     """Get historical price data for cryptocurrency pair(s) within a provider."""
     return await OBBject.from_query(Query(**locals()))
+
+
+@router.command(
+    model="CryptoPrice",
+    examples=[
+        APIEx(parameters={"symbol": "bitcoin", "provider": "coingecko"}),
+        APIEx(parameters={"symbol": "bitcoin,ethereum", "vs_currency": "eur", "provider": "coingecko"}),
+        APIEx(
+            description="Get real-time prices for multiple cryptocurrencies with market data.",
+            parameters={
+                "symbol": "bitcoin,ethereum,cardano",
+                "vs_currency": "usd",
+                "include_market_cap": True,
+                "include_24hr_vol": True,
+                "include_24hr_change": True,
+                "provider": "coingecko",
+            },
+        ),
+    ],
+)
+async def quote(
+    cc: CommandContext,
+    provider_choices: ProviderChoices,
+    standard_params: StandardParams,
+    extra_params: ExtraParams,
+) -> OBBject:
+    """Get real-time price data for cryptocurrency(s) from CoinGecko."""
+    return await OBBject.from_query(Query(**locals()))
