@@ -223,7 +223,7 @@ class FredAmeriborFetcher(Fetcher[FredAmeriborQueryParams, list[FredAmeriborData
         df["maturity"] = Categorical(
             df["maturity"], categories=maturity_categories, ordered=True
         )
-        df.sort_values(by=["date", "maturity"], inplace=True)
+        df = df.sort_values(by=["date", "maturity"])
         records = df.to_dict(orient="records")
 
         return AnnotatedResult(

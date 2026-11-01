@@ -137,7 +137,7 @@ ENGINE_METADATA = f"""\
 Metadata-Version: 2.1
 Name: {DIST_NAME}
 Version: {DIST_VERSION}
-Requires-Python: >=3.10,<4
+Requires-Python: >=3.11,<4
 Requires-Dist: openbb-core
 """
 
