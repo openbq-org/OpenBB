@@ -69,6 +69,20 @@ def safe_field_name(name: str) -> tuple[str, bool]:
     return (cleaned, cleaned != name)
 
 
+def query_field_name(name: str) -> str:
+    """Snake-case attribute name for a query parameter.
+
+    The platform exposes every query parameter in snake_case (``zoneId`` is
+    passed as ``zone_id``); the original name is kept as the field alias so
+    the upstream wire name is unchanged.
+    """
+    safe, _ = safe_field_name(name)
+    snake = re.sub(r"(?<=[a-z0-9])([A-Z])", r"_\1", safe)
+    snake = re.sub(r"(?<=[A-Z])([A-Z][a-z])", r"_\1", snake)
+    snake = re.sub(r"_+", "_", snake).lower().strip("_") or "field"
+    return f"{snake}_" if keyword.iskeyword(snake) else snake
+
+
 def class_name_from(*parts: str) -> str:
     """Join + camel-case a set of name parts into a Python class identifier."""
     words: list[str] = []
@@ -185,12 +199,20 @@ def _resolve_union(
         return "Any"
 
     rendered: list[str] = []
-    for variant in non_null:
+    for index, variant in enumerate(non_null, start=1):
+        # Untitled object variants would all get the same class name and
+        # collapse into one; number them so every shape stays distinct.
+        distinct = (
+            isinstance(variant, dict)
+            and len(non_null) > 1
+            and (variant.get("properties") or variant.get("type") == "object")
+            and not variant.get("title")
+        )
         rendered.append(
             schema_to_type(
                 variant,
                 parent_class_name=parent_class_name,
-                field_name=field_name,
+                field_name=f"{field_name}_v{index}" if distinct else field_name,
                 nested_classes=nested_classes,
                 imports=imports,
             )
@@ -314,6 +336,7 @@ def _build_field_call(
 def _resolve_field_description(
     prop: dict[str, Any],
     field_name: str | None = None,  # noqa: ARG001
+    include_choices: bool = True,
 ) -> str:
     """Pick the description text for a Pydantic Field."""
     text = prop.get("description") or prop.get("title")
@@ -327,7 +350,7 @@ def _resolve_field_description(
         if isinstance(prop.get("const"), (str, int, float, bool))
         else None
     )
-    if enum:
+    if enum and include_choices:
         rendered = ", ".join(str(v) for v in enum)
         parts.append(f"Choices: {rendered}.")
     return " ".join(parts).rstrip()
@@ -557,9 +580,13 @@ def generate_class(
     body_lines: list[str] = []
     doc_fields: list[tuple[str, str, str | None, bool, Any, bool]] = []
     optional_object_fields: list[str] = []
+    multiple_items: dict[str, dict[str, Any]] = {}
 
     for raw_name, prop_schema in properties.items():
         safe_name, needs_alias = safe_field_name(raw_name)
+        if base_class == "QueryParams":
+            safe_name = query_field_name(raw_name)
+            needs_alias = safe_name != raw_name
         annotation = schema_to_type(
             prop_schema if isinstance(prop_schema, dict) else {},
             parent_class_name=class_name,
@@ -569,12 +596,22 @@ def generate_class(
         )
         is_required = raw_name in required_set
         prop = prop_schema if isinstance(prop_schema, dict) else {}
+        if prop.get("x-multiple-items"):
+            extra: dict[str, Any] = {"multiple_items_allowed": True}
+            if prop.get("x-choices"):
+                extra["choices"] = list(prop["x-choices"])
+            multiple_items[safe_name] = extra
         if not is_required and (prop.get("type") == "object" or "properties" in prop):
             optional_object_fields.append(safe_name)
         has_default = "default" in prop
-        if not is_required and "None" not in annotation:
+        nullable = bool(schema.get("x-null-empty"))  # response rows: null == empty
+        if (not is_required or nullable) and "None" not in annotation:
             annotation = f"{annotation} | None"
-        description = _resolve_field_description(prop, field_name=raw_name)
+        # The platform lists a query parameter's choices itself ("Choices for
+        # <provider>: ..."); repeating them in the description duplicates them.
+        description = _resolve_field_description(
+            prop, field_name=raw_name, include_choices=base_class != "QueryParams"
+        )
         breakout = _nested_object_breakout(prop)
         if breakout:
             description = (
@@ -620,6 +657,34 @@ def generate_class(
             "    def _empty_list_to_none(cls, v: Any) -> Any:\n"
             '        """Coerce `[]` to None."""\n'
             "        return None if v == [] else v"
+        )
+
+    if multiple_items:
+        imports.add("from pydantic import field_validator")
+        imports.add("from typing import Any")
+        names = ", ".join(repr(n) for n in multiple_items)
+        body_lines.append(f"\n    __json_schema_extra__ = {multiple_items!r}")
+        body_lines.append(
+            f'\n    @field_validator({names}, mode="before")\n'
+            "    @classmethod\n"
+            "    def _join_multiple_items(cls, v: Any) -> Any:\n"
+            '        """Accept a list and join it into a comma-separated string."""\n'
+            "        if isinstance(v, (list, tuple, set)):\n"
+            '            return ",".join(str(i) for i in v)\n'
+            "        return v"
+        )
+
+    if schema.get("x-null-empty"):
+        imports.add("from pydantic import model_validator")
+        imports.add("from typing import Any")
+        body_lines.append(
+            '\n    @model_validator(mode="before")\n'
+            "    @classmethod\n"
+            "    def _empty_string_is_null(cls, values: Any) -> Any:\n"
+            '        """Treat empty strings as null."""\n'
+            "        if isinstance(values, dict):\n"
+            '            return {k: (None if v == "" else v) for k, v in values.items()}\n'
+            "        return values"
         )
 
     summary = docstring or class_name

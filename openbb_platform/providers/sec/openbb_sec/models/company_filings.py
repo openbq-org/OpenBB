@@ -236,7 +236,7 @@ class SecCompanyFilingsFetcher(
 
         # This seems to work for the data structure.
         filings = (
-            DataFrame.from_records(data["filings"].get("recent"))
+            DataFrame(data["filings"].get("recent"))
             if "filings" in data
             else DataFrame()
         )
@@ -272,7 +272,7 @@ class SecCompanyFilingsFetcher(
             )
             for result in extra:
                 if result:
-                    results.extend(DataFrame.from_records(result).to_dict("records"))
+                    results.extend(DataFrame(result).to_dict("records"))
 
         return results
 

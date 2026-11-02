@@ -160,7 +160,7 @@ See [extensions/mcp_server/README.md](extensions/mcp_server/README.md) for trans
 Requirements:
 
 - Git
-- Python 3.10 or newer
+- Python 3.11 or newer
 - [uv](https://docs.astral.sh/uv/)
 
 From an activated virtual environment at the repository root:

@@ -6,15 +6,6 @@ env:
 on:
   pull_request:
     types: [opened, synchronize, edited]
-    paths:
-      - 'openbb_platform/**'
-      - '!openbb_platform/api/**'
-      - '!openbb_platform/extensions/**'
-      - '!openbb_platform/providers/**'
-      - '!openbb_platform/obbject_extensions/**'
-      - '.github/workflows/lint-openbb-platform.yml'
-      - '.github/codeql/**'
-      - '.github/workflows/codeql.yml'
   merge_group:
     types: [checks_requested]
 
@@ -23,8 +14,46 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      platform: ${{ steps.filter.outputs.platform }}
+    steps:
+      - name: Check for shared platform changes
+        id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Path filtering lives here instead of `on.pull_request.paths`: a workflow
+          # skipped by a trigger filter never reports its checks, which leaves the
+          # required "General Code Linting" and "Markdown Linting" checks pending
+          # forever. Jobs skipped by a job-level `if:` report success instead.
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "platform=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          gh api --paginate "repos/${REPO}/pulls/${PR_NUMBER}/files" --jq '.[].filename' > changed_files.txt
+          if awk '
+            /^\.github\/(workflows\/(lint-openbb-platform|codeql)\.yml$|codeql\/)/ { found = 1 }
+            /^openbb_platform\// && !/^openbb_platform\/(api|extensions|providers|obbject_extensions)\// { found = 1 }
+            END { exit !found }
+          ' changed_files.txt; then
+            echo "platform=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "platform=false" >> "$GITHUB_OUTPUT"
+          fi
+
   code-linting:
     name: General Code Linting
+    needs: changes
+    # Fail closed: run unless change detection explicitly found nothing relevant.
+    if: ${{ !cancelled() && needs.changes.outputs.platform != 'false' }}
     runs-on: ubuntu-latest
     env:
       UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
@@ -42,10 +71,10 @@ jobs:
       - name: Fetch base branch
         run: git fetch --no-tags --depth=20 origin ${{ github.base_ref }}
 
-      - name: Setup Python 3.10
+      - name: Setup Python 3.11
         uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           architecture: x64
 
       - name: Get changed files in openbb_platform for PR
@@ -62,9 +91,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/.uv-cache
-          key: uv-${{ runner.os }}-py3.10-lint-${{ hashFiles('openbb_platform/**/pyproject.toml', 'cli/pyproject.toml') }}
+          key: uv-${{ runner.os }}-py3.11-lint-${{ hashFiles('openbb_platform/**/pyproject.toml', 'cli/pyproject.toml') }}
           restore-keys: |
-            uv-${{ runner.os }}-py3.10-lint-
+            uv-${{ runner.os }}-py3.11-lint-
 
       - name: Install tooling (ruff + ty + codespell)
         run: |
@@ -122,6 +151,8 @@ jobs:
 
   markdown-link-check:
     name: Markdown Linting
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.platform != 'false' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -136,6 +167,8 @@ jobs:
 
   json-yaml-validate:
     name: JSON Check
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.platform != 'false' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

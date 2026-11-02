@@ -1,7 +1,7 @@
 """Settings model."""
 
 import os
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Literal
 from zoneinfo import available_timezones
 
@@ -16,7 +16,7 @@ from openbb_cli.config.constants import AVAILABLE_FLAIRS, ENV_FILE_SETTINGS
 VERSION = get_package_version("openbb-cli")
 
 
-class OutputMode(str, Enum):
+class OutputMode(StrEnum):
     """Output mode for displaying results."""
 
     rich = "rich"

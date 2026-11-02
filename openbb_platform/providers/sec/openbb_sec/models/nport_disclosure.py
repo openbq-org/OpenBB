@@ -292,7 +292,8 @@ class SecNportDisclosureFetcher(
             if query.quarter is None:
                 query.quarter = 4 if query.year < to_datetime(dates).max().year else 1
             date = (
-                Timestamp(f"{query.year}-Q{query.quarter}") + offsets.QuarterEnd()
+                Timestamp(f"{query.year}-{3 * int(query.quarter) - 2:02d}-01")
+                + offsets.QuarterEnd()
             ).date()
             # Gets the URL for the nearest date to the requested date.
             __dates = Series(to_datetime(dates))

@@ -32,7 +32,7 @@ def _wpsr_file(sheets):
     with ExcelWriter(buffer) as writer:
         for name, frame in sheets.items():
             frame.to_excel(writer, sheet_name=name, header=False, index=False)
-    return ExcelFile(BytesIO(buffer.getvalue()))
+    return ExcelFile(BytesIO(buffer.getvalue()), engine="calamine")
 
 
 class TestPetroleumStatusReportQuery:

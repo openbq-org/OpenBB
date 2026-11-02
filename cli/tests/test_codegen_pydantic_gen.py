@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import ast
+
 import pytest
 
 from openbb_cli.codegen import pydantic_gen as pg
@@ -1018,3 +1020,21 @@ def test_quick_schema_type_renders_datetime_format():
 def test_quick_schema_type_unknown_type_falls_back_to_any():
     """A schema with no ``type`` and no other handled keys collapses to ``Any``."""
     assert pg._quick_schema_type({}) == "Any"
+
+
+def test_union_of_untitled_object_variants_keeps_distinct_classes():
+    schema = {
+        "type": "object",
+        "properties": {
+            "loc": {
+                "oneOf": [
+                    {"type": "object", "properties": {"type": {"type": "string"}}},
+                    {"type": "object", "properties": {"city": {"type": "string"}}},
+                ]
+            }
+        },
+    }
+    src = pg.render_module(pg.generate_class(schema, class_name="Pt"))
+    assert "city:" in src and "type:" in src
+    ast.parse(src)
+    assert len({line for line in src.splitlines() if line.startswith("class ")}) >= 3

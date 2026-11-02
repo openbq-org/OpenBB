@@ -349,11 +349,64 @@ def _build_root_router(
     if commands:
         parts.append("")
         parts.extend(commands)
+    # The root router's file must not share a name with a namespace router: a
+    # spec with a top-level ``congress`` namespace under a provider named
+    # ``congress`` would otherwise overwrite it and the root would import itself.
+    taken = {r.module_name.lower() for r in sub_routers}
+    module_name = root_namespace
+    while module_name.lower() in taken:
+        module_name = f"{module_name}_root"
     return GeneratedRouter(
-        module_name=root_namespace,
+        module_name=module_name,
         entry_point_name=root_namespace,
         source="\n".join(parts).rstrip() + "\n",
     )
+
+
+def _assert_unique_router_modules(routers: list[GeneratedRouter]) -> None:
+    """Refuse to emit routers that would overwrite each other's files.
+
+    Every router is one module; two sharing a name (case-insensitively, for
+    case-folding filesystems) means one silently replaces the other and the
+    survivor can import itself. Router modules only ever import their own
+    children, so unique names are what keeps the import graph acyclic.
+    """
+    seen: dict[str, str] = {}
+    for r in routers:
+        key = r.module_name.lower()
+        if key in seen:
+            raise ValueError(
+                f"Router module name collision: {r.module_name!r} and "
+                f"{seen[key]!r} would both be written to routers/{key}.py. "
+                "Rename one namespace in the spec, or use --router-name."
+            )
+        seen[key] = r.module_name
+    _assert_acyclic(routers)
+
+
+def _assert_acyclic(routers: list[GeneratedRouter]) -> None:
+    """Raise if the routers' ``from ...routers.<x> import`` graph has a cycle."""
+    import re
+
+    edges = {
+        r.module_name: set(re.findall(r"\.routers\.(\w+) import", r.source))
+        for r in routers
+    }
+    state: dict[str, int] = {}
+
+    def visit(node: str, path: list[str]) -> None:
+        if state.get(node) == 2:
+            return
+        if state.get(node) == 1:
+            cycle = " -> ".join([*path[path.index(node) :], node])
+            raise ValueError(f"Circular router import in generated package: {cycle}")
+        state[node] = 1
+        for nxt in sorted(edges.get(node, ())):
+            visit(nxt, [*path, node])
+        state[node] = 2
+
+    for name in edges:
+        visit(name, [])
 
 
 _SKIP_TOP_NAMESPACES: frozenset[str] = frozenset({"coverage"})
@@ -412,6 +465,7 @@ def generate_packages(
     """
     base_url = (spec_doc.get("base_url") or "").rstrip("/")
     api_prefix = spec_doc.get("api_prefix") or ""
+    fixed_headers = {str(k): str(v) for k, v in (spec_doc.get("headers") or {}).items()}
     filtered_commands = {
         name: cmd
         for name, cmd in (spec_doc.get("commands") or {}).items()
@@ -458,6 +512,7 @@ def generate_packages(
                     base_url=base_url,
                     api_prefix=api_prefix,
                     provider_name="tools",
+                    headers=fixed_headers,
                 )
             )
             post_commands.append(post)
@@ -480,6 +535,7 @@ def generate_packages(
                     base_url=base_url,
                     api_prefix=api_prefix,
                     provider_name=prov,
+                    headers=fixed_headers,
                 )
             )
             fetchers_by_provider.setdefault(prov, []).append(fetcher)
@@ -522,6 +578,7 @@ def generate_packages(
         root_has_stream=routers.root_has_stream,
     )
     routers.routers.append(root_router)
+    _assert_unique_router_modules(routers.routers)
 
     providers: list[GeneratedProvider] = []
     for prov in target_providers:
