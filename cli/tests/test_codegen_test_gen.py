@@ -45,12 +45,40 @@ def test_spec_supplied_value_prefers_example_over_everything():
     assert (
         tg._spec_supplied_value(
             {
+                "example": "AMZN",
+                "default": "GOOG",
+                "choices": ["GOOG", "AMZN"],
+            }
+        )
+        == "AMZN"
+    )
+    assert tg._spec_supplied_value({"example": "AAPL", "default": "MSFT"}) == "AAPL"
+
+
+def test_spec_supplied_value_skips_example_and_default_outside_choices():
+    assert (
+        tg._spec_supplied_value(
+            {
                 "example": "AAPL",
                 "default": "MSFT",
                 "choices": ["GOOG", "AMZN"],
             }
         )
-        == "AAPL"
+        == "GOOG"
+    )
+    assert (
+        tg._spec_supplied_value(
+            {"example": "AAPL", "default": "AMZN", "choices": ["GOOG", "AMZN"]}
+        )
+        == "AMZN"
+    )
+
+
+def test_spec_supplied_value_skips_quoted_example_outside_choices():
+    """Binance's klines spec gives ``interval`` the example ``'"1m"'``."""
+    assert (
+        tg._spec_supplied_value({"example": '"1m"', "choices": ["1s", "1m", "1h"]})
+        == "1s"
     )
 
 
@@ -117,6 +145,214 @@ def test_derive_test_params_returns_none_when_required_param_has_no_supplied_val
         ]
     }
     assert tg._derive_test_params(cmd, "fmp") is None
+
+
+def _grouped(alternatives, combinator="oneOf", required=True, params=None):
+    members = sorted({name for alt in alternatives for name in alt})
+    return {
+        "parameters": params
+        or [
+            {"name": "symbol", "example": "BNBUSDT"},
+            {"name": "symbols", "example": '["BTCUSDT"]'},
+            {"name": "windowSize"},
+        ],
+        "required_groups": [
+            {
+                "combinator": combinator,
+                "alternatives": alternatives,
+                "members": members,
+                "required": required,
+            }
+        ],
+    }
+
+
+def test_derive_test_params_fills_first_fillable_alternative():
+    spec = _grouped([["symbol"], ["symbols"]])
+    assert tg._derive_test_params(spec, "binance") == {"symbol": "BNBUSDT"}
+    spec = _grouped([["windowSize"], ["symbols"]], combinator="anyOf")
+    assert tg._derive_test_params(spec, "binance") == {"symbols": '["BTCUSDT"]'}
+
+
+def test_derive_test_params_skips_test_when_no_alternative_is_fillable():
+    spec = _grouped([["windowSize"], ["missing"]])
+    assert tg._derive_test_params(spec, "binance") is None
+
+
+def test_derive_test_params_leaves_absent_optional_group_alone():
+    spec = _grouped([["symbol"], ["symbols"]], required=False)
+    assert tg._derive_test_params(spec, "binance") == {}
+
+
+def test_derive_test_params_keeps_exactly_one_one_of_alternative():
+    """The date heuristic fills both dates; oneOf keeps only the first."""
+    params = [{"name": "startDate"}, {"name": "endDate"}]
+    spec = _grouped([["startDate"], ["endDate"]], params=params)
+    out = tg._derive_test_params(spec, "binance")
+    assert list(out) == ["start_date"]
+    spec = _grouped([["startDate"], ["endDate"]], combinator="anyOf", params=params)
+    assert list(tg._derive_test_params(spec, "binance")) == ["start_date", "end_date"]
+
+
+def test_derive_test_params_one_of_with_nested_alternatives():
+    params = [{"name": "a", "example": "A"}, {"name": "b", "example": "B"}]
+    spec = _grouped([["a", "b"], ["a"]], params=params)
+    assert tg._derive_test_params(spec, "binance") == {"a": "A"}
+
+
+def test_derive_test_params_never_drops_a_required_param():
+    params = [
+        {"name": "symbol", "required": True, "example": "BTCUSDT"},
+        {"name": "date"},
+    ]
+    spec = _grouped([["date"], ["symbol"]], params=params)
+    assert tg._derive_test_params(spec, "binance") == {"symbol": "BTCUSDT"}
+    params = [
+        {"name": "symbol", "required": True, "example": "BTCUSDT"},
+        {"name": "symbols", "required": True, "example": "X"},
+    ]
+    spec = _grouped([["symbol"], ["symbols"]], params=params)
+    assert tg._derive_test_params(spec, "binance") is None
+
+
+def test_derive_test_params_solves_groups_together():
+    """oneOf [a|b] plus anyOf [b|c]: {b} meets both, though filling a first does not."""
+    params = [
+        {"name": "a", "example": "A"},
+        {"name": "b", "example": "B"},
+        {"name": "c"},
+    ]
+    spec = _grouped([["a"], ["b"]], params=params)
+    spec["required_groups"].append(
+        {
+            "combinator": "anyOf",
+            "alternatives": [["b"], ["c"]],
+            "members": ["b", "c"],
+            "required": True,
+        }
+    )
+    assert tg._derive_test_params(spec, "binance") == {"b": "B"}
+
+
+def test_derive_test_params_skips_test_when_groups_truly_conflict():
+    params = [{"name": "a", "example": "A"}, {"name": "b", "example": "B"}]
+    spec = _grouped([["a"], ["b"]], params=params)
+    spec["required_groups"].append(
+        {
+            "combinator": "anyOf",
+            "alternatives": [["a", "b"]],
+            "members": ["a", "b"],
+            "required": True,
+        }
+    )
+    assert tg._derive_test_params(spec, "binance") is None
+
+
+def test_derive_test_params_fills_a_merged_url_when_none_fits():
+    """No URL is free of placeholders, so the test fills the first it can."""
+    cmd = {
+        "url_path": "/orders/{orderId}",
+        "url_templates": ["/orders/{orderId}", "/{account}/orders"],
+        "template_query_params": {"/orders/{orderId}": [], "/{account}/orders": []},
+        "parameters": [
+            {"name": "orderId", "in": "path", "required": False},
+            {"name": "account", "in": "path", "required": False, "example": "acct"},
+        ],
+    }
+    assert tg._derive_test_params(cmd, "prov") == {"account": "acct"}
+    cmd["parameters"][1].pop("example")
+    assert tg._derive_test_params(cmd, "prov") is None
+
+
+def test_derive_test_params_date_heuristic_skips_any_url_placeholder():
+    """The merged ``date`` kept its query copy, but another URL uses it as a segment."""
+    cmd = {
+        "url_path": "/obs/{station}",
+        "url_templates": ["/obs/{station}", "/obs/{date}"],
+        "template_query_params": {"/obs/{station}": ["date"], "/obs/{date}": []},
+        "parameters": [
+            {"name": "station", "in": "path", "required": False, "example": "KPHX"},
+            {"name": "date", "in": "query", "required": False},
+        ],
+    }
+    out = tg._derive_test_params(cmd, "prov")
+    assert "date" not in out
+
+
+def test_derive_test_params_disarms_optional_group_set_off_by_heuristic_dates():
+    params = [{"name": "startDate"}, {"name": "symbol"}]
+    spec = _grouped([["symbol"]], combinator="anyOf", required=False, params=params)
+    spec["required_groups"][0]["members"] = ["startDate", "symbol"]
+    assert tg._derive_test_params(spec, "binance") == {}
+
+
+def test_derive_test_params_reuses_heuristic_value_inside_an_alternative():
+    params = [{"name": "symbol", "example": "BTCUSDT"}, {"name": "date"}]
+    spec = _grouped([["symbol", "date"]], combinator="anyOf", params=params)
+    out = tg._derive_test_params(spec, "binance")
+    assert set(out) == {"symbol", "date"}
+    assert out["symbol"] == "BTCUSDT"
+
+
+def test_derive_test_params_keys_are_query_params_field_names():
+    """``Fetcher.test`` reads each key back with ``getattr`` on the query."""
+    from openbb_cli.codegen.fetcher_gen import _query_params_schema
+    from openbb_cli.codegen.pydantic_gen import generate_class, render_module
+
+    cmd = {
+        "parameters": [
+            {
+                "name": "operationType",
+                "type": "string",
+                "required": True,
+                "example": "all",
+            },
+            {"name": "cwsu-id", "type": "string", "required": True, "example": "ZAB"},
+            {"name": "startDate", "type": "string"},
+        ]
+    }
+    out = tg._derive_test_params(cmd, "prov")
+    assert set(out) == {"operation_type", "cwsu_id", "start_date"}
+    cls = generate_class(
+        _query_params_schema(cmd, "prov"), class_name="Q", base_class="QueryParams"
+    )
+    namespace: dict = {}
+    exec(  # noqa: S102
+        "from openbb_core.provider.abstract.query_params import QueryParams\n"
+        + render_module(cls),
+        namespace,
+    )
+    query = namespace["Q"](**out)
+    assert all(getattr(query, key) == value for key, value in out.items())
+
+
+def test_derive_test_params_date_heuristic_skips_params_with_choices():
+    """``date_type`` (trade | maturity) is not a date; filling it fails validation."""
+    cmd = {
+        "parameters": [
+            {"name": "date_type", "type": "string", "choices": ["trade", "maturity"]},
+            {"name": "startDate", "type": "string"},
+        ]
+    }
+    assert set(tg._derive_test_params(cmd, "prov")) == {"start_date"}
+
+
+def test_derive_test_params_date_heuristic_skips_path_params():
+    """A merged command's optional ``{date}`` belongs to another URL, not this test."""
+    cmd = {
+        "parameters": [
+            {"name": "cwsuId", "in": "path", "required": True, "example": "ZAB"},
+            {"name": "date", "in": "path", "required": False},
+            {"name": "startDate", "in": "query"},
+        ]
+    }
+    assert set(tg._derive_test_params(cmd, "prov")) == {"cwsu_id", "start_date"}
+
+
+def test_spec_supplied_value_joins_list_example_for_list_query_param():
+    param = {"name": "symbols", "in": "query", "is_list": True, "example": ["A", "B"]}
+    assert tg._spec_supplied_value(param) == "A,B"
+    assert tg._spec_supplied_value({**param, "is_list": False}) == ["A", "B"]
 
 
 def test_derive_test_params_skips_provider_discriminator():
@@ -209,8 +445,8 @@ def test_derive_test_params_includes_optional_date_params_with_current_date():
     from datetime import date, timedelta
 
     assert out["scope"] == "all"
-    assert out["startDate"] == str(date.today() - timedelta(days=30))
-    assert out["endDate"] == str(date.today())
+    assert out["start_date"] == str(date.today() - timedelta(days=30))
+    assert out["end_date"] == str(date.today())
 
 
 def test_derive_test_params_skips_optional_param_without_date_shape_or_required():
@@ -540,3 +776,24 @@ def test_snake_handles_multi_word_camelcase():
     )
     assert tg._snake("XYZFetcher") == "xyzfetcher"
     assert tg._snake("simple") == "simple"
+
+
+def test_normalize_to_module_matches_keyword_suffix():
+    assert tg._normalize_to_module("class") == "class_"
+
+
+def test_derive_test_params_keys_renamed_fields_by_their_field_name():
+    cmd_spec = {
+        "url_path": "/items/{ID}",
+        "parameters": [
+            {
+                "name": "ID",
+                "in": "path",
+                "type": "string",
+                "required": True,
+                "example": "A1",
+            },
+            {"name": "id", "in": "query", "type": "string"},
+        ],
+    }
+    assert tg._derive_test_params(cmd_spec, "prov", "ItemsQueryParams") == {"id_": "A1"}

@@ -2505,3 +2505,9 @@ def test_url_to_command_drops_placeholder_only_segments():
         == "gridpoints.forecast"
     )
     assert url_to_command("/points/{latitude},{longitude}", api_prefix="") == "points"
+
+
+def test_merge_allof_ignores_a_required_flag_that_is_not_a_list():
+    member = {"type": "object", "required": True, "properties": {"a": {}}}
+    merged = merge_allof({"allOf": [member], "required": True})
+    assert merged == {"type": "object", "properties": {"a": {}}}
