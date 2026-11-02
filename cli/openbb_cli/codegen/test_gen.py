@@ -5,6 +5,7 @@ from __future__ import annotations
 import keyword
 import re
 from dataclasses import dataclass
+from datetime import UTC
 from itertools import islice, product
 from typing import TYPE_CHECKING, Any
 
@@ -467,7 +468,7 @@ def _spec_supplied_value(param: dict[str, Any]) -> Any:
 def _refresh_date_shape(name: str, value: Any) -> Any:
     """Replace an aged date-shaped string with an equivalent current date."""
     import re
-    from datetime import date, datetime, timedelta, timezone
+    from datetime import date, datetime, timedelta
 
     if not isinstance(value, str):
         return value
@@ -477,7 +478,7 @@ def _refresh_date_shape(name: str, value: Any) -> Any:
         today = date.today()
         return str(today - timedelta(days=30) if is_start else today)
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?", value):
-        now = datetime.now(timezone.utc).replace(microsecond=0)
+        now = datetime.now(UTC).replace(microsecond=0)
         chosen = (now - timedelta(days=30)) if is_start else now
         return chosen.isoformat().replace("+00:00", "Z")
     return value

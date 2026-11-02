@@ -101,7 +101,7 @@ async def download_excel_file(url: str, use_cache: bool = True) -> "ExcelFile":
     from pandas import ExcelFile
 
     async def callback(response, _) -> "ExcelFile":
-        return ExcelFile(BytesIO(await response.read()))
+        return ExcelFile(BytesIO(await response.read()), engine="calamine")
 
     if use_cache is False:
         download_excel_file.cache_invalidate(url, True)
