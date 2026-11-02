@@ -74,7 +74,7 @@ build-backend = "hatchling.build"
 name = "{project_name}"
 version = "{version}"
 description = {description!r}
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 license = {{ text = "Apache-2.0" }}
 dependencies = [
     "openbb-core>=2.0.0",

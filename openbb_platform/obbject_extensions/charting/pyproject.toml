@@ -5,7 +5,7 @@ description = "Charting extension for OpenBB"
 authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
 license = { text = "Apache-2.0" }
 readme = "README.md"
-requires-python = ">=3.10,<4"  # scipy forces python <4.0 explicitly
+requires-python = ">=3.11,<4"  # scipy forces python <4.0 explicitly
 dependencies = [
     "openbb-core[pandas]>=2.0.0",
     "pandas-ta-openbb>=0.4.25",

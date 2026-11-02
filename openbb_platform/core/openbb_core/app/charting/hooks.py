@@ -8,7 +8,7 @@ chart is requested from the Python interface, the REST API, the CLI, or MCP.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from importlib_metadata import entry_points
@@ -16,7 +16,7 @@ from importlib_metadata import entry_points
 CHARTING_HOOKS_GROUP = "openbb_charting_hooks"
 
 
-class ChartLifecycle(str, Enum):
+class ChartLifecycle(StrEnum):
     """Stages a chart passes through during creation."""
 
     RESOLVE_DATA = "resolve_data"

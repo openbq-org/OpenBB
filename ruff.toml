@@ -3,7 +3,7 @@ exclude = [
     "^cookiecutter/*",
 ]
 line-length = 88
-target-version = "py310"
+target-version = "py311"
 fix = true
 
 [format]

@@ -7,7 +7,7 @@ import inspect
 import json
 import re
 import warnings
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from time import perf_counter_ns
 from typing import Any
 
@@ -818,7 +818,7 @@ class HttpDispatcher:
         wire_request = request
         if time_axis is not None or fetch_all:
             wire_request = _request_with_page_size_limit(request)
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
         start_ns = perf_counter_ns()
         try:
             url, body_or_query = self._resolve_url(
