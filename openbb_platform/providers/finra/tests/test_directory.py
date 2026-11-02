@@ -6,18 +6,8 @@ import json
 from urllib.parse import urlparse
 
 import pytest
-from openbb_core.app.model.abstract.error import OpenBBError
 
 from openbb_finra.utils import directory, generate_securities
-
-LOOKUP = {
-    "Type": "FE",
-    "CompositeExchangeID": "126",
-    "OS01W": "State Street SPDR S&P 500 ETF",
-    "SecId": "FEUSA00001",
-    "PID": "0P00002D7X",
-    "ListingMarket": "16",
-}
 
 
 def _partitions():
@@ -97,42 +87,20 @@ def asset(monkeypatch, tmp_path):
     return path
 
 
-@pytest.fixture(autouse=True)
-def _no_waiting(monkeypatch):
-    """Retry without pausing."""
-    monkeypatch.setattr("openbb_finra.utils.constants.LOOKUP_THROTTLE_WAIT", 0)
-
-
-def _responder(response, lookup_statuses=None, reject=()):
-    """Answer the Query API and the Market Data Center."""
-    statuses = list(lookup_statuses or [])
+def _responder(response):
+    """Answer FINRA Query API requests."""
 
     def respond(call):
-        url = call["url"]
+        path = urlparse(call["url"]).path
 
-        if urlparse(url).path.startswith("/partitions/"):
+        if path.startswith("/partitions/"):
             return response(200, _partitions())
 
-        if urlparse(url).path.endswith("/weeklySummary"):
+        if path.endswith("/weeklySummary"):
             body, headers = _summary(call)
-
             return response(200, body, headers)
 
-        if urlparse(url).path == "/finralogin.jsp":
-            return response(200, "\n")
-
-        if statuses:
-            return response(statuses.pop(0), "")
-
-        symbols = call["params"]["symbol"].split(",")
-
-        if any(bad in symbol for symbol in symbols for bad in reject):
-            return response(500, "error")
-
-        return response(
-            200,
-            json.dumps({"Records": [{**LOOKUP, "QueryKey": s} for s in symbols]}),
-        )
+        return response(200, "{}")
 
     return respond
 
@@ -156,10 +124,10 @@ class TestAsset:
 
 
 class TestList:
-    """The list joins the live universe to the bundled and live classes."""
+    """The list joins the live universe to the bundled classes."""
 
     def test_rows(self, asset, fake_session, response):
-        """Known symbols use the asset, new ones are looked up, unresolved stay bare."""
+        """Known symbols use the asset; new symbols are returned without classes."""
         session = fake_session(responder=_responder(response))
         rows = {row["symbol"]: row for row in asyncio.run(directory.list_securities())}
 
@@ -167,23 +135,17 @@ class TestList:
         assert rows["AAPL"]["security_type"] == "ST"
         assert rows["AAPL"]["tier"] == "NMS Tier 1"
         assert urlparse(rows["AAPL"]["url"]).query == "query=19:0P000000GY"
-        assert rows["SPY"]["security_type"] == "FE"
+        assert rows["SPY"].get("security_type") is None
+        assert rows["NEWCO"].get("security_type") is None
         assert rows["ACHR.W"].get("security_type") is None
         assert rows["ACHR.W"]["url"] is None
 
-        lookups = [
-            call
-            for call in session.calls
-            if urlparse(call["url"]).path == "/getids.jsp"
-        ]
+        assert not any(
+            urlparse(call["url"]).path == "/getids.jsp" for call in session.calls
+        )
 
-        assert [call["params"] for call in lookups] == [
-            {"symbol": "22:NEWCO", "cb": "finraLookup"},
-            {"symbol": "126:SPY", "cb": "finraLookup"},
-        ]
-
-    def test_nothing_to_look_up(self, asset, monkeypatch):
-        """When the asset knows every symbol no lookup session is opened."""
+    def test_bundled_classification_is_preserved(self, asset, monkeypatch):
+        """A known symbol keeps its bundled classification."""
 
         async def _universe():
             return {"AAPL": {"tier": "T1"}}
@@ -192,78 +154,5 @@ class TestList:
 
         rows = asyncio.run(directory.list_securities())
 
+        assert rows[0]["security_type"] == "ST"
         assert [row["symbol"] for row in rows] == ["AAPL"]
-
-
-class TestLookups:
-    """Live lookups retry throttling and isolate rejected symbols."""
-
-    @staticmethod
-    def _classify(fake_session, response, symbols, **kwargs):
-        session = fake_session(responder=_responder(response, **kwargs))
-        universe = {symbol: {"tier": "NMS Tier 1"} for symbol in symbols}
-
-        return asyncio.run(directory.classify_symbols(universe)), session
-
-    def test_rejected_symbol_is_isolated(self, fake_session, response):
-        """A symbol that fails its batch is dropped and the rest classified."""
-        classes, _ = self._classify(
-            fake_session, response, ["AAA", "BAD", "CCC"], reject=("BAD",)
-        )
-
-        assert set(classes) == {"AAA", "CCC"}
-
-    def test_throttled_then_served(self, fake_session, response):
-        """A throttled batch is retried after a fresh login."""
-        classes, session = self._classify(
-            fake_session, response, ["AAA"], lookup_statuses=[429]
-        )
-        logins = [
-            call
-            for call in session.calls
-            if urlparse(call["url"]).path == "/finralogin.jsp"
-        ]
-
-        assert set(classes) == {"AAA"}
-        assert len(logins) == 2
-
-    def test_always_throttled(self, fake_session, response):
-        """A batch throttled on every attempt raises."""
-        with pytest.raises(OpenBBError, match="kept throttling"):
-            self._classify(fake_session, response, ["AAA"], lookup_statuses=[429] * 10)
-
-    def test_preferred_series(self, fake_session, response):
-        """Preferred series are looked up in the Market Data Center form."""
-        classes, session = self._classify(fake_session, response, ["ACP$A"])
-
-        assert set(classes) == {"ACP$A"}
-        assert session.calls[1]["params"] == {
-            "symbol": "126:ACPpA",
-            "cb": "finraLookup",
-        }
-
-    def test_fallback_keeps_only_us_markets(self, fake_session, response):
-        """A symbol missed on its market is kept from any market only if it is US."""
-
-        def respond(call):
-            if urlparse(call["url"]).path == "/finralogin.jsp":
-                return response(200, "\n")
-
-            if ":" in call["params"]["symbol"]:
-                return response(200, json.dumps({"Records": []}))
-
-            records = [
-                {**LOOKUP, "QueryKey": "WARR", "CompositeExchangeID": "126"},
-                {**LOOKUP, "QueryKey": "ISSC", "CompositeExchangeID": "52"},
-            ]
-
-            return response(200, json.dumps({"Records": records}))
-
-        fake_session(responder=respond)
-        classes = asyncio.run(
-            directory.classify_symbols(
-                {"ISSC": {"tier": "NMS Tier 2"}, "WARR": {"tier": "NMS Tier 2"}}
-            )
-        )
-
-        assert set(classes) == {"WARR"}

@@ -37,8 +37,8 @@ class SecurityTypesBuildHook(BuildHookInterface):
             if returncode != 0 or not _ASSET.exists():
                 self.app.abort(
                     "finra-security-types: failed to generate security_types.json.gz "
-                    f"(exit code {returncode}). api.finra.org and "
-                    "finra-markets.morningstar.com must be reachable during the build."
+                    f"(exit code {returncode}). api.finra.org must be "
+                    "reachable during the build."
                 )
         else:
             sys.stderr.write(

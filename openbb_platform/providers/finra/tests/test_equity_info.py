@@ -49,10 +49,7 @@ class TestProfiles:
         session = fake_session("equity_info")
         _fetch({"symbol": "AAPL,SPY,VFIAX,BRK-B"})
 
-        assert session.calls[1]["params"] == {
-            "symbol": "AAPL,SPY,VFIAX,BRK.B",
-            "cb": "finraLookup",
-        }
+        assert session.calls[1]["params"] == {"symbol": "AAPL,SPY,VFIAX,BRK.B"}
         assert session.closed
 
     def test_unresolved(self, fake_session, response):
