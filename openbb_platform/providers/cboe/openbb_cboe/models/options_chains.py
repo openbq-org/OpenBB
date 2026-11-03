@@ -108,7 +108,7 @@ class CboeOptionsChainsFetcher(
         """Transform the data to the standard format."""
         from zoneinfo import ZoneInfo
 
-        from pandas import DataFrame, DatetimeIndex, Series, to_datetime
+        from pandas import DataFrame, DatetimeIndex, to_datetime
 
         if not data:
             raise EmptyDataError()
@@ -155,6 +155,8 @@ class CboeOptionsChainsFetcher(
         results_metadata = {k: v for k, v in results_metadata.items() if v is not None}
 
         options_df = DataFrame.from_records(options)
+        if options_df.empty or "option" not in options_df.columns:
+            raise EmptyDataError("No options data returned by Cboe.")
         options_df = options_df.rename(
             columns={
                 "option": "contract_symbol",
@@ -164,32 +166,32 @@ class CboeOptionsChainsFetcher(
                 "prev_day_close": "prev_close",
             }
         )
-        option_df_index = options_df["contract_symbol"].str.extractall(
-            r"^(?P<Ticker>\D*)(?P<expiration>\d*)(?P<option_type>\D*)(?P<strike>\d*)"
+        # OCC option symbols end with a fixed-width suffix: YYMMDD + C/P + strike.
+        # Slice from the right so roots that contain digits (e.g. "B1SPY") parse too.
+        contract_symbols = options_df["contract_symbol"].astype("string")
+        valid_contract_mask = contract_symbols.str.fullmatch(
+            r"[A-Z0-9]{1,6}\d{6}[CP]\d{8}", na=False
         )
-        option_df_index = option_df_index.reset_index().drop(
-            columns=["match", "level_0"]
-        )
-        valid_expiration_mask = option_df_index["expiration"].str.len() <= 6
-        option_df_index = option_df_index[valid_expiration_mask]
-        options_df = options_df.iloc[option_df_index.index]
+        options_df = options_df[valid_contract_mask].reset_index(drop=True)
+        if options_df.empty:
+            raise EmptyDataError(
+                "No valid OCC option symbols found in the Cboe response."
+            )
 
-        option_df_index.option_type = option_df_index.option_type.str.replace(
-            "C", "call"
-        ).str.replace("P", "put")
-        option_df_index.strike = [ele.lstrip("0") for ele in option_df_index.strike]
-        option_df_index.strike = Series(option_df_index.strike).astype(float)
-        option_df_index.strike = option_df_index.strike * (1 / 1000)
-        option_df_index.strike = option_df_index.strike.to_list()
-        option_df_index.expiration = [
-            ele.lstrip("1") for ele in option_df_index.expiration
-        ]
-        option_df_index.expiration = DatetimeIndex(
-            option_df_index.expiration, yearfirst=True
-        ).astype(str)
-        option_df_index = option_df_index.rename(
-            columns={"Ticker": "underlying_symbol"}
+        contract_symbols = options_df["contract_symbol"].astype(str)
+        option_df_index = DataFrame(
+            {
+                "underlying_symbol": contract_symbols.str.slice(0, -15),
+                "expiration": contract_symbols.str.slice(-15, -9),
+                "option_type": contract_symbols.str.slice(-9, -8).replace(
+                    {"C": "call", "P": "put"}
+                ),
+                "strike": contract_symbols.str.slice(-8).astype(float) / 1000,
+            }
         )
+        option_df_index["expiration"] = DatetimeIndex(
+            option_df_index["expiration"], yearfirst=True
+        ).astype(str)
 
         quotes = option_df_index.join(options_df)
         eastern = ZoneInfo("America/New_York")
