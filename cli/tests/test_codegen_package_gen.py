@@ -721,3 +721,71 @@ def test_router_import_cycles_are_rejected():
     selfref = GeneratedRouter("c", None, "from p.routers.c import router\n")
     with pytest.raises(ValueError, match="Circular router import"):
         _assert_unique_router_modules([selfref])
+
+
+def test_generated_package_readme_lists_mounted_command_paths(tmp_path):
+    """README paths match the router functions, not the raw spec names."""
+    command = _spec_with_get_command()["commands"]["equity.search"]
+    spec = {
+        "base_url": "https://api.example.com/",
+        "api_prefix": "",
+        "commands": {
+            "pet": {**command, "url_path": "/pet"},
+            "pet.findByStatus": {**command, "url_path": "/pet/findByStatus"},
+            "ticker.24hr": {**command, "url_path": "/ticker/24hr"},
+        },
+    }
+    out = pkg.generate_packages(spec, output_root=tmp_path, provider_name="fmp")
+    readme = out.packages[0]._readme()
+    assert "`obb.fmp.pet.pet` — provider: `fmp`" in readme
+    assert "`obb.fmp.pet.findbystatus` — provider: `fmp`" in readme
+    assert "`obb.fmp.ticker._24hr` — provider: `fmp`" in readme
+    assert "findByStatus`" not in readme
+    assert "ticker.24hr" not in readme
+
+
+def test_exploded_object_param_flows_from_openapi_to_generated_package(tmp_path):
+    """One OpenAPI object parameter with a ``oneOf`` becomes two arguments,
+    a QueryParams validator, and a generated test that satisfies it."""
+    import ast
+
+    from openbb_cli.dispatchers.spec import build_spec_document
+
+    openapi = {
+        "openapi": "3.0.2",
+        "paths": {
+            "/ticker": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "selection",
+                            "in": "query",
+                            "required": True,
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "symbol": {"type": "string", "example": "BNBUSDT"},
+                                    "symbols": {"type": "string"},
+                                },
+                                "oneOf": [
+                                    {"required": ["symbol"]},
+                                    {"required": ["symbols"]},
+                                ],
+                            },
+                        }
+                    ],
+                    "responses": {"200": {"description": "ok"}},
+                }
+            }
+        },
+    }
+    doc = build_spec_document(openapi, base_url="https://x.test")
+    out = pkg.generate_packages(doc, output_root=tmp_path, provider_name="ex")
+    package = out.packages[0]
+    [fetcher] = package.fetchers_by_provider["ex"]
+    assert "symbol: str | None" in fetcher.source
+    assert "symbols: str | None" in fetcher.source
+    assert "_check_required_groups" in fetcher.source
+    ast.parse(fetcher.source)
+    [tests] = package.test_modules
+    assert "params = {'symbol': 'BNBUSDT'}" in tests.source
