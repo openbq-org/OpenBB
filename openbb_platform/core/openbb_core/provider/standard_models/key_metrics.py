@@ -16,6 +16,9 @@ class KeyMetricsQueryParams(QueryParams):
     """Key Metrics Query."""
 
     symbol: str = Field(description=QUERY_DESCRIPTIONS.get("symbol", ""))
+    as_of_date: dateType | None = Field(
+        default=None, description=QUERY_DESCRIPTIONS.get("as_of_date", "")
+    )
 
     @field_validator("symbol", mode="before", check_fields=False)
     @classmethod
@@ -36,6 +39,13 @@ class KeyMetricsData(Data):
     )
     fiscal_period: str | None = Field(
         default=None, description="Fiscal period for the data, if available."
+    )
+    filing_date: dateType | None = Field(
+        default=None, description="The filing date of the report."
+    )
+    is_restated: bool | None = Field(
+        default=None,
+        description="Whether the period data has been restated in a subsequent filing.",
     )
     currency: str | None = Field(
         default=None,

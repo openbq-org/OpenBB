@@ -7,6 +7,7 @@ QUERY_DESCRIPTIONS = {
     "interval": "Time interval of the data to return.",
     "period": "Time period of the data to return.",
     "date": "A specific date to get data for.",
+    "as_of_date": "Point-in-time date (YYYY-MM-DD) to return data as it was known on that date.",
     "limit": "The number of data entries to return.",
     "country": "The country to get data.",
     "countries": "The country or countries to get data.",

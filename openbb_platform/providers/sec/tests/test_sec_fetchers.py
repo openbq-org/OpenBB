@@ -346,11 +346,14 @@ def _mock_get_standardized(blk_facts):
         use_cache=True,
         pit_mode=False,
         include_preliminary=False,
+        as_of_date=None,
     ):
         return resolve_company_facts(
             blk_facts,
             period=period,
             include_preliminary=include_preliminary,
+            pit_mode=pit_mode,
+            as_of_date=as_of_date,
         )
 
     return _inner

@@ -3268,3 +3268,124 @@ class TestSixKReportingPeriods:
 
         with pytest.raises(OpenBBError, match="quarterly"):
             resolve_company_facts(_six_k_lapsed_interim_facts(), period="quarterly")
+
+
+class TestPointInTimeAsOfDate:
+    """Point-in-Time (PIT) as_of_date filtering, filing_date, and is_restated metadata."""
+
+    @staticmethod
+    def _restated_facts():
+        return create_mock_facts(
+            [
+                # 2022 originally filed on 2023-02-15 with Revenues = 1000
+                {
+                    "tag": "Assets",
+                    "val": 5000,
+                    "end": "2022-12-31",
+                    "form": "10-K",
+                    "filed": "2023-02-15",
+                },
+                {
+                    "tag": "NetCashProvidedByUsedInOperatingActivities",
+                    "val": 200,
+                    "start": "2022-01-01",
+                    "end": "2022-12-31",
+                    "form": "10-K",
+                    "filed": "2023-02-15",
+                },
+                {
+                    "tag": "Revenues",
+                    "val": 1000,
+                    "start": "2022-01-01",
+                    "end": "2022-12-31",
+                    "form": "10-K",
+                    "filed": "2023-02-15",
+                },
+                # 2022 restated in 2023 10-K filed on 2024-02-15 with Revenues = 1150
+                {
+                    "tag": "Assets",
+                    "val": 5000,
+                    "end": "2022-12-31",
+                    "form": "10-K",
+                    "filed": "2024-02-15",
+                },
+                {
+                    "tag": "NetCashProvidedByUsedInOperatingActivities",
+                    "val": 200,
+                    "start": "2022-01-01",
+                    "end": "2022-12-31",
+                    "form": "10-K",
+                    "filed": "2024-02-15",
+                },
+                {
+                    "tag": "Revenues",
+                    "val": 1150,
+                    "start": "2022-01-01",
+                    "end": "2022-12-31",
+                    "form": "10-K",
+                    "filed": "2024-02-15",
+                },
+                # 2023 filed on 2024-02-15 with Revenues = 1300
+                {
+                    "tag": "Assets",
+                    "val": 6000,
+                    "end": "2023-12-31",
+                    "form": "10-K",
+                    "filed": "2024-02-15",
+                },
+                {
+                    "tag": "NetCashProvidedByUsedInOperatingActivities",
+                    "val": 300,
+                    "start": "2023-01-01",
+                    "end": "2023-12-31",
+                    "form": "10-K",
+                    "filed": "2024-02-15",
+                },
+                {
+                    "tag": "Revenues",
+                    "val": 1300,
+                    "start": "2023-01-01",
+                    "end": "2023-12-31",
+                    "form": "10-K",
+                    "filed": "2024-02-15",
+                },
+            ]
+        )
+
+    def test_as_of_date_prevents_lookahead(self):
+        """As of 2023-06-15, 2023-12-31 does not exist and 2022-12-31 has original value 1000."""
+        facts = self._restated_facts()
+        res_pit = resolve_company_facts(facts, period="annual", as_of_date="2023-06-15")
+        dates = {r["period_ending"] for r in res_pit.income_statement}
+        assert dates == {"2022-12-31"}
+        rev = _pick(res_pit.income_statement, "total_revenue", "2022-12-31")
+        assert rev["value"] == 1000
+        assert rev["filing_date"] == "2023-02-15"
+        assert rev["is_restated"] is False
+
+    def test_after_restatement_reflects_restated_value_and_flag(self):
+        """As of 2024-06-15 (or default), 2022-12-31 reflects restated value 1150 and is_restated=True."""
+        facts = self._restated_facts()
+        res_later = resolve_company_facts(
+            facts, period="annual", as_of_date="2024-06-15"
+        )
+        dates = {r["period_ending"] for r in res_later.income_statement}
+        assert dates == {"2022-12-31", "2023-12-31"}
+        rev_2022 = _pick(res_later.income_statement, "total_revenue", "2022-12-31")
+        assert rev_2022["value"] == 1150
+        assert rev_2022["filing_date"] == "2024-02-15"
+        assert rev_2022["original_filing_date"] == "2023-02-15"
+        assert rev_2022["is_restated"] is True
+
+        rev_2023 = _pick(res_later.income_statement, "total_revenue", "2023-12-31")
+        assert rev_2023["value"] == 1300
+        assert rev_2023["filing_date"] == "2024-02-15"
+        assert rev_2023["is_restated"] is False
+
+    def test_as_of_date_before_any_filing_returns_empty(self):
+        """An as_of_date before the earliest filing returns empty statements."""
+        facts = self._restated_facts()
+        res = resolve_company_facts(facts, period="annual", as_of_date="2020-01-01")
+        assert res.income_statement == []
+        assert res.balance_sheet == []
+        assert res.cash_flow == []

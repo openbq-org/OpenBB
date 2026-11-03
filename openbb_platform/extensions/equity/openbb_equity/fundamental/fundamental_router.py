@@ -26,6 +26,15 @@ router = Router(prefix="/fundamental")
                 "provider": "intrinio",
             }
         ),
+        APIEx(
+            description="Get the balance sheet as it was known on a specific historical date (Point-in-Time).",
+            parameters={
+                "symbol": "AAPL",
+                "period": "annual",
+                "as_of_date": "2022-06-15",
+                "provider": "sec",
+            },
+        ),
     ],
 )
 async def balance(
@@ -66,6 +75,15 @@ async def balance_growth(
                 "limit": 5,
                 "provider": "intrinio",
             }
+        ),
+        APIEx(
+            description="Get the cash flow statement as it was known on a specific historical date (Point-in-Time).",
+            parameters={
+                "symbol": "AAPL",
+                "period": "annual",
+                "as_of_date": "2022-06-15",
+                "provider": "sec",
+            },
         ),
     ],
 )
@@ -237,6 +255,15 @@ async def historical_attributes(
                 "limit": 5,
                 "provider": "intrinio",
             }
+        ),
+        APIEx(
+            description="Get the income statement as it was known on a specific historical date (Point-in-Time).",
+            parameters={
+                "symbol": "AAPL",
+                "period": "annual",
+                "as_of_date": "2022-06-15",
+                "provider": "sec",
+            },
         ),
     ],
 )

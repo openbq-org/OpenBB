@@ -726,3 +726,42 @@ def prior_period_end(date: str) -> str | None:
     fn = _PRIOR.get(dt.month)
 
     return fn(dt.year) if fn else None
+
+
+def filter_facts_as_of(
+    facts: dict[str, Any], as_of_date: Any
+) -> dict[str, Any]:
+    """Return a copy of facts containing only entries filed on or before as_of_date."""
+    cutoff = str(as_of_date)[:10]
+    filtered: dict[str, Any] = {}
+
+    for ns, ns_facts in facts.items():
+        if not isinstance(ns_facts, dict):
+            filtered[ns] = ns_facts
+            continue
+
+        ns_out: dict[str, Any] = {}
+        for tag, tag_data in ns_facts.items():
+            if not isinstance(tag_data, dict) or "units" not in tag_data:
+                ns_out[tag] = tag_data
+                continue
+
+            units_out: dict[str, list[dict[str, Any]]] = {}
+            for unit, entries in tag_data.get("units", {}).items():
+                kept = [
+                    e
+                    for e in entries
+                    if e.get("filed", "")
+                    and e["filed"] <= cutoff
+                    and (not e.get("end") or e["end"] <= cutoff)
+                ]
+                if kept:
+                    units_out[unit] = kept
+
+            if units_out:
+                ns_out[tag] = {**tag_data, "units": units_out}
+
+        if ns_out:
+            filtered[ns] = ns_out
+
+    return filtered

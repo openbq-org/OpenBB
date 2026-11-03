@@ -162,3 +162,23 @@ def test_transform_data_limit(fetcher, data_cls, statement, tag):
     result = fetcher.transform_data(SimpleNamespace(limit=1), data)
     assert len(result.result) == 1
     assert str(result.result[0].period_ending) == "2023-12-31"
+
+
+@pytest.mark.parametrize("fetcher, data_cls, statement, tag", CASES, ids=_IDS)
+def test_transform_data_pit_metadata(fetcher, data_cls, statement, tag):
+    """PIT fields (filing_date, is_restated) and metadata['periods'] / as_of_date populate."""
+    rec = _record("2023-12-31", 2023, tag, 100.0)
+    rec["filing_date"] = "2024-02-15"
+    rec["original_filing_date"] = "2024-02-15"
+    rec["latest_filing_date"] = "2025-02-15"
+    rec["is_restated"] = True
+    res_obj = _result(statement, [rec], [])
+    res_obj.schema_version = "1.0"
+    data = {"result": res_obj, "statement": statement}
+    query = fetcher.transform_query({"symbol": "AAPL", "as_of_date": "2025-06-15"})
+    out = fetcher.transform_data(query, data)
+    assert str(out.result[0].filing_date) == "2024-02-15"
+    assert out.result[0].is_restated is True
+    assert out.metadata["as_of_date"] == "2025-06-15"
+    assert out.metadata["periods"]["2023-12-31"]["is_restated"] is True
+    assert out.metadata["periods"]["2023-12-31"]["filing_date"] == "2024-02-15"

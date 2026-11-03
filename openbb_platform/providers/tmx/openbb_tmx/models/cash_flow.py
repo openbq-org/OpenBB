@@ -390,6 +390,10 @@ class TmxCashFlowStatementFetcher(
         )
         results = transform_reports(reports, "cash")
 
+        if getattr(query, "as_of_date", None) is not None:
+            cutoff = str(query.as_of_date)
+            results = [r for r in results if str(r["period_ending"]) <= cutoff]
+
         if not results:
             raise EmptyDataError(f"No cash flow data was returned for {query.symbol}.")
 

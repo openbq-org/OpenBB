@@ -1065,3 +1065,131 @@ def compute_ref_filings(
                     ref_map[end_date] = filed
 
     return ref_map
+
+
+def compute_period_pit_meta(
+    facts: dict[str, Any],
+    rows_def: list,
+    frequency: Frequency,
+    currency: str,
+    ref_filed_map: dict[str, str],
+    include_preliminary: bool = False,
+) -> dict[str, dict[str, Any]]:
+    """Compute per-period PIT metadata (filing_date, original_filing_date, latest_filing_date, is_restated)."""
+    earliest_map = compute_ref_filings(
+        facts,
+        rows_def,
+        frequency,
+        currency,
+        include_preliminary=include_preliminary,
+        pit_mode=True,
+    )
+    latest_map = compute_ref_filings(
+        facts,
+        rows_def,
+        frequency,
+        currency,
+        include_preliminary=include_preliminary,
+        pit_mode=False,
+    )
+
+    _base_forms = ANNUAL_PERIOD_FORMS if frequency == "annual" else ALL_FORMS
+    allowed_forms = (
+        _base_forms | PRELIMINARY_FORMS if include_preliminary else _base_forms
+    )
+
+    amended_dates: set[str] = set()
+    restated_dates: set[str] = set()
+
+    for row_def in rows_def:
+        period_type = row_def.period_type
+        for xbrl_entry in row_def.xbrl_tags:
+            ns_facts = facts.get(xbrl_entry["namespace"], {})
+            tag_data = ns_facts.get(xbrl_entry["tag"])
+            if not tag_data:
+                continue
+            unit_data = _get_unit_data(tag_data, row_def.unit, currency)
+            if not unit_data:
+                continue
+
+            by_period: dict[tuple[str, str], dict[str, float]] = defaultdict(dict)
+            for entry in unit_data:
+                form = entry.get("form", "")
+                if form not in allowed_forms:
+                    continue
+                end_date = entry.get("end", "")
+                filed = entry.get("filed", "")
+                val = entry.get("val")
+                if not end_date or not filed or val is None:
+                    continue
+
+                if period_type == "duration":
+                    start_date = entry.get("start", "")
+                    if not start_date or start_date == end_date:
+                        continue
+                    try:
+                        days = (
+                            datetime.strptime(end_date, "%Y-%m-%d")
+                            - datetime.strptime(start_date, "%Y-%m-%d")
+                        ).days
+                    except (ValueError, TypeError):
+                        continue
+                    if frequency == "annual":
+                        if not 300 <= days <= 400:
+                            continue
+                    elif form in SEMI_ANNUAL_FORMS:
+                        if not (
+                            60 <= days <= 135
+                            or 150 <= days <= 200
+                            or 240 <= days <= 310
+                        ):
+                            continue
+                    elif (
+                        form in ANNUAL_FORMS
+                        and row_def.unit == "monetary"
+                        or not 60 <= days <= 135
+                    ):
+                        continue
+                    key = (start_date, end_date)
+                elif entry.get("start", end_date) != end_date:
+                    continue
+                else:
+                    key = ("", end_date)
+
+                if form.endswith("/A"):
+                    amended_dates.add(end_date)
+
+                latest_ref = latest_map.get(end_date)
+                if latest_ref and filed > latest_ref:
+                    continue
+                by_period[key][filed] = float(val)
+
+            for (_, end_date), fvals in by_period.items():
+                if len(fvals) > 1:
+                    earliest_f = min(fvals)
+                    latest_f = max(fvals)
+                    if not isclose(
+                        fvals[earliest_f], fvals[latest_f], rel_tol=1e-5, abs_tol=1.0
+                    ):
+                        restated_dates.add(end_date)
+
+    all_dates = set(ref_filed_map) | set(earliest_map) | set(latest_map)
+    meta: dict[str, dict[str, Any]] = {}
+    for end_date in all_dates:
+        f_date = (
+            ref_filed_map.get(end_date)
+            or latest_map.get(end_date)
+            or earliest_map.get(end_date)
+        )
+        orig_date = earliest_map.get(end_date, f_date)
+        lat_date = latest_map.get(end_date, f_date)
+        meta[end_date] = {
+            "filing_date": f_date,
+            "original_filing_date": orig_date,
+            "latest_filing_date": lat_date,
+            "is_restated": bool(
+                end_date in restated_dates or end_date in amended_dates
+            ),
+        }
+
+    return meta

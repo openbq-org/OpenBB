@@ -16,6 +16,9 @@ class CashFlowStatementQueryParams(QueryParams):
     limit: NonNegativeInt | None = Field(
         default=5, description=QUERY_DESCRIPTIONS.get("limit", "")
     )
+    as_of_date: dateType | None = Field(
+        default=None, description=QUERY_DESCRIPTIONS.get("as_of_date", "")
+    )
 
     @field_validator("symbol", mode="before", check_fields=False)
     @classmethod
@@ -33,4 +36,11 @@ class CashFlowStatementData(Data):
     )
     fiscal_year: int | None = Field(
         description="The fiscal year of the fiscal period.", default=None
+    )
+    filing_date: dateType | None = Field(
+        description="The filing date of the report.", default=None
+    )
+    is_restated: bool | None = Field(
+        description="Whether the period data has been restated in a subsequent filing.",
+        default=None,
     )

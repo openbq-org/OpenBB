@@ -146,6 +146,9 @@ class NasdaqFinancialRatiosFetcher(
             data, "ratios", FINANCIAL_RATIOS_MAP, query.symbol, query.period
         )
 
+        if getattr(query, "as_of_date", None) is not None:
+            records = [r for r in records if r["period_ending"] <= query.as_of_date]
+
         if not records:
             raise EmptyDataError(f"No financial ratios was found for {query.symbol}.")
 

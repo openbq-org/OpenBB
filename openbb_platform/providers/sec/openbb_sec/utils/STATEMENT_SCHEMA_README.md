@@ -2375,6 +2375,21 @@ captures preliminary earnings data as released — the most temporally accurate
 view available. Use this combination for PIT databases that need to reflect
 what the market saw at the earliest possible date.
 
+**Point-in-Time (`as_of_date`) Queries.** All fundamental financial statement
+and growth endpoints accept an optional `as_of_date` (`YYYY-MM-DD`) parameter:
+
+- **True Point-in-Time (`sec` provider)**: Filters all underlying SEC EDGAR XBRL
+  facts by their filing date (`filed <= as_of_date`) before scale normalization,
+  filing-date discovery, reference-filing selection, and imputation. Any period
+  not yet filed as of `as_of_date` is excluded, and any period filed on or before
+  `as_of_date` reflects the exact filing vintage known on that date (without
+  look-ahead into later restatements or comparative re-presentations). Each
+  returned row and `metadata["periods"]` entry includes `filing_date`,
+  `original_filing_date`, `latest_filing_date`, and `is_restated` (`bool`).
+- **Best-Effort (`nasdaq`, `tmx`, and snapshot providers)**: Providers that do
+  not expose historical filing-date snapshots filter returned periods by
+  `period_ending <= as_of_date`.
+
 ---
 
 ## 14. Final Output Format

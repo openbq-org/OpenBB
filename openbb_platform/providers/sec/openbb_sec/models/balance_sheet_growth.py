@@ -611,13 +611,16 @@ class SecBalanceSheetGrowthFetcher(
             "quarterly_yoy": "yoy_quarterly",
             "ttm": "pop",
         }
-        result = await get_standardized_financials(
-            symbol=query.symbol,
-            period=period_map[query.period],
-            use_cache=query.use_cache,
-            include_preliminary=query.include_preliminary,
-            pit_mode=query.pit_mode,
-        )
+        kwargs_call: dict[str, Any] = {
+            "symbol": query.symbol,
+            "period": period_map[query.period],
+            "use_cache": query.use_cache,
+            "include_preliminary": query.include_preliminary,
+            "pit_mode": query.pit_mode,
+        }
+        if query.as_of_date is not None:
+            kwargs_call["as_of_date"] = query.as_of_date
+        result = await get_standardized_financials(**kwargs_call)
         return {"result": result, "statement": "balance_sheet"}
 
     @staticmethod
@@ -642,6 +645,7 @@ class SecBalanceSheetGrowthFetcher(
         periods: dict[str, dict] = {}
         sources: dict[str, dict[str, str]] = {}
         field_meta: dict[str, dict] = {}
+        period_meta: dict[str, dict] = {}
 
         for rec in records:
             date_key = rec["period_ending"]
@@ -653,6 +657,22 @@ class SecBalanceSheetGrowthFetcher(
                     "fiscal_year": rec.get("fiscal_year"),
                     "reported_currency": rec.get("currency"),
                 }
+                if rec.get("filing_date") is not None:
+                    periods[date_key]["filing_date"] = rec["filing_date"]
+                if rec.get("is_restated") is not None:
+                    periods[date_key]["is_restated"] = rec["is_restated"]
+                if (
+                    rec.get("filing_date") is not None
+                    or rec.get("is_restated") is not None
+                ):
+                    period_meta[date_key] = {
+                        "period_end": date_key,
+                        "filing_date": rec.get("filing_date"),
+                        "original_filing_date": rec.get("original_filing_date"),
+                        "latest_filing_date": rec.get("latest_filing_date"),
+                        "is_restated": rec.get("is_restated"),
+                        "source": "SEC EDGAR XBRL",
+                    }
                 sources[date_key] = {}
 
             tag = rec["tag"]
@@ -706,6 +726,14 @@ class SecBalanceSheetGrowthFetcher(
             "company_type": result.company_type,
             "fields": order_field_meta(field_meta, SecBalanceSheetGrowthData),
         }
+        if getattr(result, "schema_version", None):
+            metadata["schema_version"] = result.schema_version
+        if period_meta:
+            metadata["periods"] = period_meta
+        if getattr(query, "as_of_date", None) is not None:
+            metadata["as_of_date"] = str(query.as_of_date)
+        if getattr(query, "pit_mode", False):
+            metadata["pit_mode"] = True
 
         if result.diagnostics:
             diag_details = [
