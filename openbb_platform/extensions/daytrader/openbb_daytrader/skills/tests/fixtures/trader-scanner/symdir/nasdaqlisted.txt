@@ -1,0 +1,20 @@
+Symbol|Security Name|Market Category|Test Issue|Financial Status|Round Lot Size|ETF|NextShares
+AAAP|Pacer Barings CLO Market Flex ETF|G|N|N|100|Y|N
+AACG|ATA Creativity Global - American Depositary Shares, each representing two common shares|S|N|D|100|N|N
+AACI|Armada Acquisition Corp. III - Class A Ordinary Share|G|N|N|100|N|N
+AACIU|Armada Acquisition Corp. III - Units|G|N|N|100|N|N
+AACIW|Armada Acquisition Corp. III - Warrant|G|N|N|100|N|N
+AACPR|Apogee Acquisition Corp - Rights|G|N|N|100|N|N
+AAPL|Apple Inc. - Common Stock|Q|N|N|40|N|N
+ARCIU|Archimedes Tech SPAC Partners III Co. - Unit|G|N|N|100|N|N
+ARLP|Alliance Resource Partners, L.P. - Common Units Representing Limited Partnership Interests|Q|N|N|100|N|N
+CDZIP|Cadiz, Inc. - Depositary Shares|G|N|N|100|N|N
+CHTRP|Charter Communications, Inc. - Series A Cumulative Redeemable Preferred Stock|Q|N|N|100|N|N
+GENVR|Gen Digital Inc. - Contingent Value Rights|G|N|N|100|N|N
+HAVAR|Harvard Ave Acquisition Corporation - Rights that convert on a 1/10th of 1 basis to Class A ordinary Shares|G|N|N|100|N|N
+OBAI|Our Bond, Inc. - Common Stock|G|N|D|100|N|N
+ORGO|Organogenesis Holdings Inc.  - Class A |S|N|N|100|N|N
+PFBC|Preferred Bank - Common Stock|Q|N|N|100|N|N
+TSLA|Tesla, Inc.  - Common Stock|Q|N|N|40|N|N
+ZAZZT|Tick Pilot Test Stock Class A Common Stock|G|Y|N|100|N|N
+File Creation Time: 1019202610:01|||||||

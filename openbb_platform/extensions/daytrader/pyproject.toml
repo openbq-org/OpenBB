@@ -1,0 +1,83 @@
+[project]
+name = "openbb-daytrader"
+version = "1.0.0"
+description = "Day trading desk for OpenBB: scanner, entry, exit, time machine, sizing, risk and tickets from day-trader-skill"
+authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
+license = { text = "Apache-2.0 AND MIT" }
+readme = "README.md"
+requires-python = ">=3.11,<4"
+dependencies = [
+    "openbb-core[pandas]>=2.0.0",
+]
+
+[project.entry-points."openbb_core_extension"]
+daytrader = "openbb_daytrader.router:router"
+
+[project.urls]
+Homepage = "https://openbb.co"
+Repository = "https://github.com/OpenBB-finance/OpenBB"
+
+[dependency-groups]
+dev = ["openbb-devtools>=2.0.1"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["openbb_daytrader"]
+
+[tool.hatch.build.targets.sdist]
+include = ["openbb_daytrader", "README.md", "pyproject.toml"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+fix = true
+extend-exclude = ["openbb_daytrader/skills"]
+
+[tool.ruff.lint]
+select = ["D", "E", "W", "F", "S", "UP", "I", "PLC", "PLE", "PLR", "PLW", "SIM", "T20"]
+ignore = [
+    "PLR2004", "PLR0913", "PLR0915", "PLC0415",
+    "E402", "E501",
+    "D101", "D102", "D103", "D105", "D107",
+    "D202", "D203", "D205", "D206", "D210", "D212", "D213", "D214",
+    "D215", "D300", "D400", "D401", "D404", "D405", "D406", "D407",
+    "D408", "D409", "D410", "D411", "D413", "D415", "D416", "D417",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"openbb_daytrader/*.py" = ["PLR0911", "PLR0912", "PLR0913", "PLR0914", "PLR0915", "PLR0917", "ARG001", "ARG002", "SLF001"]
+"tests/**" = ["S101", "S104", "S105", "S106", "S108", "D", "F841", "PLR0911", "PLW0108", "SIM105", "SIM117", "E741", "SLF001"]
+"integration/**" = ["S101", "S104", "S105", "S106", "S108", "D", "PLC0415", "PLR0911", "PLR0913", "PLR0914", "PLR0915", "PLR0917"]
+"**/__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-wrap-aliases = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ty]
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.ty.src]
+include = ["openbb_daytrader"]
+exclude = ["tests", "integration", "openbb_daytrader/skills"]
+
+[tool.ty.rules]
+unresolved-import = "warn"
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError", "@overload"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "-q --strict-markers"
+testpaths = ["tests"]
+markers = [
+    "integration: end-to-end tests that hit live services (excluded from the coverage gate)",
+]

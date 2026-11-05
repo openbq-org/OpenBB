@@ -1,0 +1,41 @@
+{
+  "created_by": "trader-budget",
+  "status": "proposed",
+  "orders": [
+    {
+      "symbol": "AAPL",
+      "side": "buy",
+      "notional": "1250",
+      "type": "market",
+      "time_in_force": "day"
+    },
+    {
+      "symbol": "AXP",
+      "side": "buy",
+      "notional": "1119",
+      "type": "market",
+      "time_in_force": "day"
+    },
+    {
+      "symbol": "GOOGL",
+      "side": "buy",
+      "notional": "823",
+      "type": "market",
+      "time_in_force": "day"
+    },
+    {
+      "symbol": "KO",
+      "side": "buy",
+      "notional": "708",
+      "type": "market",
+      "time_in_force": "day"
+    },
+    {
+      "symbol": "BAC",
+      "side": "buy",
+      "notional": "600",
+      "type": "market",
+      "time_in_force": "day"
+    }
+  ]
+}

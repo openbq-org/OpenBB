@@ -1,0 +1,48 @@
+                                                                                                                              Filing ID #20035590
+
+                           P                               T                                             R
+               Clerk of the House of Representatives • Legislative Resource Center • B81 Cannon Building • Washington, DC 20515
+
+
+F          I
+Name:                 Hon. Josh Gottheimer
+Status:               Member
+State/District: NJ05
+
+
+T
+ID         Owner Asset                                            Transaction Date                 Notification Amount                   Cap.
+                                                                  Type                             Date                                  Gains >
+                                                                                                                                         $200?
+
+           JT          Applied Materials, Inc. - Common           S                 09/15/2026 10/06/2026             $1,001 - $15,000
+                       Stock (AMAT) [ST]
+                       F      S      : New
+                       S            O : Morgan Stanley - Select UMA Account # 1
+
+
+           JT          McDonald's Corporation Common              S (partial)       09/25/2026 10/06/2026             $1,001 - $15,000
+                       Stock (MCD) [ST]
+                       F      S      : New
+                       S            O : Morgan Stanley - Select UMA Account # 1
+
+* For the complete list of asset type abbreviations, please visit https://fd.house.gov/reference/asset-type-codes.aspx.
+
+
+I                      V               D
+
+     Morgan Stanley - Select UMA Account # 1 (Owner: JT)
+     L       : US
+
+
+
+I               P           O
+     Yes        No
+
+
+C                                  S
+    I CERTIFY that the statements I have made on the attached Periodic Transaction Report are true, complete, and correct to the best of
+my knowledge and belief. Further, I CERTIFY that I have disclosed all transactions as required by the STOCK Act.
+
+Digitally Signed: Hon. Josh Gottheimer , 10/07/2026
+

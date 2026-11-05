@@ -1,0 +1,48 @@
+{
+  "source": "Berkshire Hathaway Inc 13F-HR, Q2 2026, accession 0001193125-26-352200, filed 2026-08-14",
+  "as_of": "2026-06-30",
+  "table_value_total_usd": 299253556246,
+  "note": "Top 5 issuers (share classes combined). weight = pct_of_13f, not yet renormalised.",
+  "weights": [
+    {
+      "ticker": "AAPL",
+      "name": "Apple",
+      "issuer": "APPLE INC",
+      "value_usd": 65950296923,
+      "pct_of_13f": 22.04,
+      "weight": 22.04
+    },
+    {
+      "ticker": "AXP",
+      "name": "American Express",
+      "issuer": "AMERICAN EXPRESS CO",
+      "value_usd": 51282319275,
+      "pct_of_13f": 17.14,
+      "weight": 17.14
+    },
+    {
+      "ticker": "GOOGL",
+      "name": "Alphabet",
+      "issuer": "ALPHABET INC",
+      "value_usd": 37764088383,
+      "pct_of_13f": 12.62,
+      "weight": 12.62
+    },
+    {
+      "ticker": "KO",
+      "name": "Coca-Cola",
+      "issuer": "COCA COLA CO",
+      "value_usd": 32508000000,
+      "pct_of_13f": 10.86,
+      "weight": 10.86
+    },
+    {
+      "ticker": "BAC",
+      "name": "Bank of America",
+      "issuer": "BANK OF AMER CORP",
+      "value_usd": 27543790975,
+      "pct_of_13f": 9.2,
+      "weight": 9.2
+    }
+  ]
+}

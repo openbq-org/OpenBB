@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<rss version="2.0">
+    <channel>
+        <copyright>Copyright (c) 2026 Yahoo Inc. All rights reserved.</copyright>
+        <description>Latest Financial News for AAPL</description>
+        <image>
+            <height>45</height>
+            <link>http://finance.yahoo.com/q/h?s=AAPL</link>
+            <title>Yahoo! Finance: AAPL News</title>
+            <url>https://s.yimg.com/rz/stage/p/yahoo_finance_en-US_h_p_finance_2.png</url>
+            <width>144</width>
+        </image>
+        <item>
+            <description>Yahoo Finance Technology Editor Dan Howley joins Market Domination host Brooke DiPalma to discuss the latest round of Apple (AAPL) smart home products and the company's edge in competing with Google (GOOG) and Amazon (AMZN).</description>
+            <guid isPermaLink="false">b32e819f-7aa9-4b0a-91b1-3ac7979de1f4</guid>
+            <link>https://finance.yahoo.com/video/apple-may-have-a-way-to-dominate-the-smart-home-space-194652300.html?.tsrc=rss</link>
+            <pubDate>Tue, 13 Oct 2026 19:46:52 +0000</pubDate>
+            <title>Apple may have a way to dominate the smart home space</title>
+        </item>
+        <item>
+            <description>Apple’s new smart-home hub puts messages, calendars, FaceTime and smart home controls on a screen designed to make your iPhone less essential at home. WSJ’s Nicole Nguyen gives her first impressions.</description>
+            <guid isPermaLink="false">1fe6cc83-8d8f-3bbc-a80a-df68fd475409</guid>
+            <link>https://finance.yahoo.com/video/apple-299-homeview-tech-giant-222100009.html?.tsrc=rss</link>
+            <pubDate>Tue, 13 Oct 2026 22:21:00 +0000</pubDate>
+            <title>Apple’s $299 HomeView Is The Tech Giant’s Next Bet on the Smart Home</title>
+        </item>
+        <item>
+            <description>Apple stock finished with a market cap of $4.98 trillion after it released its new smart home lineup.</description>
+            <guid isPermaLink="false">44e3206a-a255-3b83-94a0-ab1efc4b012f</guid>
+            <link>https://finance.yahoo.com/m/44e3206a-a255-3b83-94a0-ab1efc4b012f/apple-takes-on-amazon-with.html?.tsrc=rss</link>
+            <pubDate>Tue, 13 Oct 2026 20:37:00 +0000</pubDate>
+            <title>Apple Takes on Amazon With New Smart Home Gadgets. It Still Isn’t Worth $5 Trillion.</title>
+        </item>
+        <item>
+            <description>A federal judge ruled that Apple can access OpenAI's interview materials involving former Apple employees, as well as private messages and testimony from key figures in the case.</description>
+            <guid isPermaLink="false">d3667d87-c646-3bba-acee-f2232e1aca9c</guid>
+            <link>https://finance.yahoo.com/technology/ai/articles/judge-orders-openai-turn-over-203644748.html?.tsrc=rss</link>
+            <pubDate>Tue, 13 Oct 2026 20:36:44 +0000</pubDate>
+            <title>Judge orders OpenAI to turn over hiring records in Apple trade secrets case</title>
+        </item>
+        <item>
+            <description>Apple entered the smart home market with a product launch event headlined by the company's HomeView device control hub. Apple stock rose.</description>
+            <guid isPermaLink="false">24497fee-3636-3690-9127-568bddae03f0</guid>
+            <link>https://finance.yahoo.com/m/24497fee-3636-3690-9127-568bddae03f0/apple-introduces-homeview.html?.tsrc=rss</link>
+            <pubDate>Tue, 13 Oct 2026 20:24:24 +0000</pubDate>
+            <title>Apple Introduces HomeView Smart Home Hub, Other Gadgets</title>
+        </item>
+        <item>
+            <description>New CEO John Ternus rides countertop gadgets to a $5 trillion market cap.</description>
+            <guid isPermaLink="false">40221747-5f82-3945-9291-021447756a0c</guid>
+            <link>https://app.moby.co/home/news/news-apple-hits-fresh-all-time-high?utm_source=yahoo_finance&amp;utm_medium=rss&amp;.tsrc=rss</link>
+            <pubDate>Tue, 13 Oct 2026 19:50:32 +0000</pubDate>
+            <title>Apple Hits Fresh All-Time High</title>
+        </item>
+        <language>en-US</language>
+        <lastBuildDate>Wed, 14 Oct 2026 02:18:03 +0000</lastBuildDate>
+        <link>http://finance.yahoo.com/q/h?s=AAPL</link>
+        <title>Yahoo! Finance: AAPL News</title>
+    </channel>
+</rss>

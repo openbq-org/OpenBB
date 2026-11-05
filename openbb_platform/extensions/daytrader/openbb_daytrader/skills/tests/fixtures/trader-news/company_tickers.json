@@ -1,0 +1,37 @@
+{
+"1": {
+"cik_str": 320193,
+"ticker": "AAPL",
+"title": "Apple Inc."
+},
+"2": {
+"cik_str": 1652044,
+"ticker": "GOOGL",
+"title": "Alphabet Inc."
+},
+"9": {
+"cik_str": 1067983,
+"ticker": "BRK-B",
+"title": "BERKSHIRE HATHAWAY INC"
+},
+"28": {
+"cik_str": 21344,
+"ticker": "KO",
+"title": "COCA COLA CO"
+},
+"29": {
+"cik_str": 70858,
+"ticker": "BAC",
+"title": "BANK OF AMERICA CORP /DE/"
+},
+"70": {
+"cik_str": 4962,
+"ticker": "AXP",
+"title": "AMERICAN EXPRESS CO"
+},
+"7481": {
+"cik_str": 1652044,
+"ticker": "GOOG",
+"title": "Alphabet Inc."
+}
+}

@@ -1,0 +1,73 @@
+                                                                                                                              Filing ID #20035143
+
+                          P                             T                                            R
+              Clerk of the House of Representatives • Legislative Resource Center • B81 Cannon Building • Washington, DC 20515
+
+
+F         I
+Name:                Hon. Nancy Pelosi
+Status:              Member
+State/District: CA11
+
+
+T
+ID        Owner Asset                                          Transaction Date                Notification Amount                     Cap.
+                                                               Type                            Date                                    Gains >
+                                                                                                                                       $200?
+
+          SP          Bloom Energy Corporation Class A         P                07/24/2026 07/24/2026            $1,000,001 -
+                      Common Stock (BE) [ST]                                                                     $5,000,000
+                      F      S      : New
+                      D           : Purchased 10,000 shares.
+
+
+          SP          Bloom Energy Corporation Class A         P                07/24/2026 07/24/2026            $1,000,001 -
+                      Common Stock (BE) [OP]                                                                     $5,000,000
+                      F      S      : New
+                      D           : Purchased 100 call options with a strike price of $100 and an expiration date of 6/17/27.
+
+
+          SP          Bloom Energy Corporation Class A         P                07/28/2026 07/28/2026            $500,001 -
+                      Common Stock (BE) [ST]                                                                     $1,000,000
+                      F      S      : New
+                      D           : Purchased 5,000 shares.
+
+
+          SP          Bloom Energy Corporation Class A         P                07/28/2026 07/28/2026            $500,001 -
+                      Common Stock (BE) [OP]                                                                     $1,000,000
+                      F      S      : New
+                      D           : Purchased 100 call options with a strike price of $100 and an expiration date of 6/17/27.
+
+
+          SP          Intel Corporation - Common Stock         P                07/24/2026 07/24/2026            $250,001 -
+                      (INTC) [OP]                                                                                $500,000
+                      F      S      : New
+                      D           : Purchased 50 call options with a strike price of $50 and an expiration date of 6/17/27.
+
+
+          SP          Intel Corporation - Common Stock         P                07/24/2026 07/24/2026            $500,001 -
+                      (INTC) [ST]                                                                                $1,000,000
+                      F      S      : New
+                      D           : Purchased 10,000 shares.
+ID         Owner Asset                                            Transaction Date                 Notification Amount               Cap.
+                                                                  Type                             Date                              Gains >
+                                                                                                                                     $200?
+
+           SP         REOF XXV, LLC [AB]                          P                 07/27/2026 07/27/2026            $500,001 -
+                                                                                                                     $1,000,000
+                     F       S       : New
+                     D             : Additional investment in LLC which is acquiring and restoring a luxury hotel property in San Francisco, CA.
+
+* For the complete list of asset type abbreviations, please visit https://fd.house.gov/reference/asset-type-codes.aspx.
+
+
+I            P             O
+     Yes     No
+
+
+C                                  S
+    I CERTIFY that the statements I have made on the attached Periodic Transaction Report are true, complete, and correct to the best of
+my knowledge and belief. Further, I CERTIFY that I have disclosed all transactions as required by the STOCK Act.
+
+Digitally Signed: Hon. Nancy Pelosi , 08/21/2026
+

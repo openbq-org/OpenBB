@@ -1,0 +1,11 @@
+{
+  "source": "Berkshire Hathaway Inc 13F-HR, Q2 2026 (period 2026-06-30, filed 2026-08-14, accession 0001193125-26-352200), top 5 renormalised",
+  "as_of": "2026-06-30",
+  "weights": [
+    {"ticker": "AAPL", "name": "Apple", "weight": 30.67, "pct_of_13f": 22.04},
+    {"ticker": "AXP", "name": "American Express", "weight": 23.85, "pct_of_13f": 17.14},
+    {"ticker": "GOOGL", "name": "Alphabet", "weight": 17.56, "pct_of_13f": 12.62},
+    {"ticker": "KO", "name": "Coca-Cola", "weight": 15.11, "pct_of_13f": 10.86},
+    {"ticker": "BAC", "name": "Bank of America", "weight": 12.80, "pct_of_13f": 9.20}
+  ]
+}

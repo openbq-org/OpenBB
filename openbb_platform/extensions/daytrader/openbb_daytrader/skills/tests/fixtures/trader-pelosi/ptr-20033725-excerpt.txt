@@ -1,0 +1,58 @@
+                                                                                                                               Filing ID #20033725
+
+                          P                             T                                            R
+              Clerk of the House of Representatives • Legislative Resource Center • B81 Cannon Building • Washington, DC 20515
+
+
+F         I
+Name:                Hon. Nancy Pelosi
+Status:              Member
+State/District: CA11
+
+
+T
+ID        Owner Asset                                          Transaction Date                 Notification Amount                     Cap.
+                                                               Type                             Date                                    Gains >
+                                                                                                                                        $200?
+
+     SP    NVIDIA Corporation - Common Stock P                        01/16/2026 01/16/2026           $250,001 -
+           (NVDA) [ST]                                                                                $500,000
+           F     S       : New
+           D           : Exercised 50 call options purchased 1/14/25 (5,000 shares) at a strike price of $80 with an expiration date of
+           1/16/26.
+
+
+     SP    PayPal Holdings, Inc. - Common           S                 12/30/2025 12/30/2025           $250,001 -
+           Stock (PYPL) [ST]                                                                          $500,000
+           F       S     : New
+           D           : Sold 5,000 shares.
+
+
+     SP    Tempus AI, Inc. - Class A Common         P                 01/16/2026 01/16/2026           $50,001 -
+ID         Owner Asset                                            Transaction Date                 Notification Amount                 Cap.
+                                                                  Type                             Date                                Gains >
+                                                                                                                                       $200?
+                      Stock (TEM) [ST]                                                                                $100,000
+                     F     S         : New
+                     D             : Exercised 50 call options purchased 1/14/25 (5,000 shares) at a strike price of $20 with an expiration date of
+                     1/16/26.
+
+
+           SP         Versant Media Group, Inc. - Class A         E                 01/02/2026 01/02/2026             $15.00
+                      Common Stock (VSNT) [ST]
+                     F      S      : New
+                     D           : 776 shares and cash in lieu received as a result of spinoff from Comcast Corporation. No shares of Comcast
+                     were surrendered as a result of the spinoff.
+
+
+           SP         Vistra Corp. Common Stock (VST)             P                 01/16/2026 01/16/2026             $100,001 -
+                      [ST]                                                                                            $250,000
+                     F     S         : New
+                     D             : Exercised 50 call options purchased 1/14/25 (5,000 shares) at a strike price of $50 with an expiration date of
+                     1/16/26.
+
+
+* For the complete list of asset type abbreviations, please visit https://fd.house.gov/reference/asset-type-codes.aspx.
+
+
+Digitally Signed: Hon. Nancy Pelosi , 01/23/2026

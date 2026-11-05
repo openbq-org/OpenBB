@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+  <feed xmlns="http://www.w3.org/2005/Atom">
+    <author>
+      <email>webmaster@sec.gov</email>
+      <name>Webmaster</name>
+    </author>
+    <company-info>
+      <addresses>
+        <address type="mailing">
+          <city>CUPERTINO</city>
+          <state>CA</state>
+          <street1>ONE APPLE PARK WAY</street1>
+          <zip>95014</zip>
+        </address>
+        <address type="business">
+          <city>CUPERTINO</city>
+          <phone>(408) 996-1010</phone>
+          <state>CA</state>
+          <street1>ONE APPLE PARK WAY</street1>
+          <zip>95014</zip>
+        </address>
+      </addresses>
+      <assigned-sic>3571</assigned-sic>
+      <assigned-sic-desc>ELECTRONIC COMPUTERS</assigned-sic-desc>
+      <assigned-sic-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;SIC=3571&amp;owner=include&amp;count=10</assigned-sic-href>
+      <cik>0000320193</cik>
+      <cik-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000320193&amp;owner=include&amp;count=10</cik-href>
+      <conformed-name>Apple Inc.</conformed-name>
+      <fiscal-year-end>0926</fiscal-year-end>
+      <formerly-names count="3">
+        <names>
+          <date>2007-01-04</date>
+          <name>APPLE COMPUTER INC</name>
+        </names>
+        <names>
+          <date>1997-07-28</date>
+          <name>APPLE COMPUTER INC/ FA</name>
+        </names>
+        <names>
+          <date>2019-08-05</date>
+          <name>APPLE INC</name>
+        </names>
+      </formerly-names>
+      <state-location>CA</state-location>
+      <state-location-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;State=CA&amp;owner=include&amp;count=10</state-location-href>
+      <state-of-incorporation>CA</state-of-incorporation>
+    </company-info>
+    <entry>
+      <category label="form type" scheme="https://www.sec.gov/" term="8-K/A" />
+      <content type="text/xml">
+        <accession-number>0001140361-26-035325</accession-number>
+        <act>34</act>
+        <amend>[Amend]</amend>
+        <file-number>001-36743</file-number>
+        <file-number-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;filenum=001-36743&amp;owner=include&amp;count=10</file-number-href>
+        <filing-date>2026-09-01</filing-date>
+        <filing-href>https://www.sec.gov/Archives/edgar/data/320193/000114036126035325/0001140361-26-035325-index.htm</filing-href>
+        <filing-type>8-K/A</filing-type>
+        <film-number>261351260</film-number>
+        <form-name>Current report</form-name>
+        <items-desc>item 5.02</items-desc>
+        <size>241 KB</size>
+        <xbrl_href>https://www.sec.gov/cgi-bin/viewer?action=view&amp;cik=320193&amp;accession_number=0001140361-26-035325&amp;xbrl_type=f</xbrl_href>
+      </content>
+      <id>urn:tag:sec.gov,2008:accession-number=0001140361-26-035325</id>
+      <link href="https://www.sec.gov/Archives/edgar/data/320193/000114036126035325/0001140361-26-035325-index.htm" rel="alternate" type="text/html" />
+      <summary type="html"> &lt;b&gt;Filed:&lt;/b&gt; 2026-09-01 &lt;b&gt;AccNo:&lt;/b&gt; 0001140361-26-035325 &lt;b&gt;Size:&lt;/b&gt; 241 KB&lt;br&gt;Item 5.02: Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers: Compensatory Arrangements of Certain Officers</summary>
+      <title>8-K/A [Amend]  - Current report</title>
+      <updated>2026-09-01T16:30:35-04:00</updated>
+    </entry>
+    <entry>
+      <category label="form type" scheme="https://www.sec.gov/" term="8-K" />
+      <content type="text/xml">
+        <accession-number>0000320193-26-000018</accession-number>
+        <act>34</act>
+        <file-number>001-36743</file-number>
+        <file-number-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;filenum=001-36743&amp;owner=include&amp;count=10</file-number-href>
+        <filing-date>2026-07-30</filing-date>
+        <filing-href>https://www.sec.gov/Archives/edgar/data/320193/000032019326000018/0000320193-26-000018-index.htm</filing-href>
+        <filing-type>8-K</filing-type>
+        <film-number>261223821</film-number>
+        <form-name>Current report</form-name>
+        <items-desc>items 2.02 and 9.01</items-desc>
+        <size>417 KB</size>
+        <xbrl_href>https://www.sec.gov/cgi-bin/viewer?action=view&amp;cik=320193&amp;accession_number=0000320193-26-000018&amp;xbrl_type=f</xbrl_href>
+      </content>
+      <id>urn:tag:sec.gov,2008:accession-number=0000320193-26-000018</id>
+      <link href="https://www.sec.gov/Archives/edgar/data/320193/000032019326000018/0000320193-26-000018-index.htm" rel="alternate" type="text/html" />
+      <summary type="html"> &lt;b&gt;Filed:&lt;/b&gt; 2026-07-30 &lt;b&gt;AccNo:&lt;/b&gt; 0000320193-26-000018 &lt;b&gt;Size:&lt;/b&gt; 417 KB&lt;br&gt;Item 2.02: Results of Operations and Financial Condition&lt;br&gt;Item 9.01: Financial Statements and Exhibits</summary>
+      <title>8-K  - Current report</title>
+      <updated>2026-07-30T16:30:28-04:00</updated>
+    </entry>
+    <entry>
+      <category label="form type" scheme="https://www.sec.gov/" term="8-K" />
+      <content type="text/xml">
+        <accession-number>0000320193-26-000011</accession-number>
+        <act>34</act>
+        <file-number>001-36743</file-number>
+        <file-number-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;filenum=001-36743&amp;owner=include&amp;count=10</file-number-href>
+        <filing-date>2026-04-30</filing-date>
+        <filing-href>https://www.sec.gov/Archives/edgar/data/320193/000032019326000011/0000320193-26-000011-index.htm</filing-href>
+        <filing-type>8-K</filing-type>
+        <film-number>26926130</film-number>
+        <form-name>Current report</form-name>
+        <items-desc>items 2.02 and 9.01</items-desc>
+        <size>412 KB</size>
+        <xbrl_href>https://www.sec.gov/cgi-bin/viewer?action=view&amp;cik=320193&amp;accession_number=0000320193-26-000011&amp;xbrl_type=f</xbrl_href>
+      </content>
+      <id>urn:tag:sec.gov,2008:accession-number=0000320193-26-000011</id>
+      <link href="https://www.sec.gov/Archives/edgar/data/320193/000032019326000011/0000320193-26-000011-index.htm" rel="alternate" type="text/html" />
+      <summary type="html"> &lt;b&gt;Filed:&lt;/b&gt; 2026-04-30 &lt;b&gt;AccNo:&lt;/b&gt; 0000320193-26-000011 &lt;b&gt;Size:&lt;/b&gt; 412 KB&lt;br&gt;Item 2.02: Results of Operations and Financial Condition&lt;br&gt;Item 9.01: Financial Statements and Exhibits</summary>
+      <title>8-K  - Current report</title>
+      <updated>2026-04-30T16:30:41-04:00</updated>
+    </entry>
+    <id>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000320193</id>
+    <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000320193&amp;type=8-K&amp;owner=include&amp;start=0&amp;count=10" rel="alternate" type="text/html" />
+    <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000320193&amp;type=8-K&amp;owner=include&amp;start=0&amp;count=10&amp;output=atom" rel="self" type="application/atom+xml" />
+    <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000320193&amp;type=8-K%25&amp;datea=&amp;dateb=&amp;owner=include&amp;count=10&amp;output=atom&amp;start=10" rel="next" type="application/atom+xml" />
+    <title>Apple Inc.  (0000320193)</title>
+    <updated>2026-10-13T22:18:10-04:00</updated>
+  </feed>

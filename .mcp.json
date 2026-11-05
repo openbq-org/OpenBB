@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "openbb": {
+      "command": "openbb-mcp",
+      "args": ["--transport", "stdio"],
+      "env": {
+        "OPENBB_DAYTRADER_WORKDIR": "${OPENBB_DAYTRADER_WORKDIR:-.}"
+      }
+    },
+    "alpaca": {
+      "command": "uvx",
+      "args": ["alpaca-mcp-server"],
+      "env": {
+        "ALPACA_API_KEY": "${ALPACA_API_KEY:-}",
+        "ALPACA_SECRET_KEY": "${ALPACA_SECRET_KEY:-}",
+        "ALPACA_PAPER_TRADE": "true",
+        "ALPACA_TOOLSETS": "account,trading,stock-data"
+      }
+    }
+  }
+}

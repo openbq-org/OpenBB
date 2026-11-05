@@ -63,3 +63,6 @@ obb/*
 *.pkg
 *.exe
 build/conda/tmp
+
+# Day Trader desk state (trader-* skills / openbb-daytrader)
+/trader/

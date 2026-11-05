@@ -1,0 +1,20 @@
+ACT Symbol|Security Name|Exchange|CQS Symbol|ETF|Round Lot Size|Test Issue|NASDAQ Symbol
+A|Agilent Technologies, Inc. Common Stock|N|A|N|100|N|A
+AAC.U|Ares Acquisition Corporation III Units, each consisting of one Class A ordinary share and one-tenth of one redeemable warrant|N|AAC.U|N|100|N|AAC=
+AAC.W|Ares Acquisition Corporation III Redeemable warrants, each whole warrant exercisable for one Class A ordinary share at an exercise price of $11.50|N|AAC.WS|N|100|N|AAC+
+ABR$D|Arbor Realty Trust 6.375% Series D Cumulative Redeemable Preferred Stock, Liquidation Preference $25.00 per Share|N|ABRpD|N|100|N|ABR-D
+AME|AMETEK, Inc.|N|AME|N|100|N|AME
+AMX|America Movil, S.A.B. de C.V. American Depositary Shares (each representing the right to receive twenty (20) Series B Shares|N|AMX|N|100|N|AMX
+ATMP|iPath Select MLP ETN|Z|ATMP|N|100|N|ATMP
+BEP|Brookfield Renewable Partners L.P. Limited Partnership Units|N|BEP|N|100|N|BEP
+BF.B|Brown Forman Inc Class B Common Stock|N|BF.B|N|100|N|BF.B
+BHK|Blackrock Core Bond Trust|N|BHK|N|100|N|BHK
+BRK.B|Berkshire Hathaway Inc. New Common Stock|N|BRK.B|N|40|N|BRK.B
+EAI|Entergy Arkansas, LLC First Mortgage Bonds, 4.875% Series Due September 1, 2066|N|EAI|N|100|N|EAI
+GJH|Synthetic Fixed-Income Securities Inc 6.375% (STRATS) Cl A-1|N|GJH|N|100|N|GJH
+IRS|IRSA Inversiones Y Representaciones S.A. Global Depositary Shares (Each representing ten shares of Common Stock)|N|IRS|N|100|N|IRS
+KO|Coca-Cola Company (The) Common Stock|N|KO|N|100|N|KO
+PRT|PermRock Royalty Trust Units of Beneficial Interest|N|PRT|N|100|N|PRT
+SPY|State Street SPDR S&P 500 ETF Trust|P|SPY|Y|40|N|SPY
+ZZZTX|TXSE Test Stk 5 Common Stock|F|ZZZTX|N|40|Y|ZZZTX
+File Creation Time: 1019202610:01||||||

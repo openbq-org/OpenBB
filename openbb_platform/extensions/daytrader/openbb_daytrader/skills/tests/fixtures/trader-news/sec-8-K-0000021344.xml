@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+  <feed xmlns="http://www.w3.org/2005/Atom">
+    <author>
+      <email>webmaster@sec.gov</email>
+      <name>Webmaster</name>
+    </author>
+    <company-info>
+      <addresses>
+        <address type="mailing">
+          <city>ATLANTA</city>
+          <state>GA</state>
+          <street1>ONE COCA COLA PLAZA</street1>
+          <zip>30313</zip>
+        </address>
+        <address type="business">
+          <city>ATLANTA</city>
+          <phone>404-676-2121</phone>
+          <state>GA</state>
+          <street1>ONE COCA COLA PLAZA</street1>
+          <zip>30313</zip>
+        </address>
+      </addresses>
+      <assigned-sic>2080</assigned-sic>
+      <assigned-sic-desc>BEVERAGES</assigned-sic-desc>
+      <assigned-sic-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;SIC=2080&amp;owner=include&amp;count=10</assigned-sic-href>
+      <cik>0000021344</cik>
+      <cik-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000021344&amp;owner=include&amp;count=10</cik-href>
+      <conformed-name>COCA COLA CO</conformed-name>
+      <fiscal-year-end>1231</fiscal-year-end>
+      <state-location>GA</state-location>
+      <state-location-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;State=GA&amp;owner=include&amp;count=10</state-location-href>
+      <state-of-incorporation>DE</state-of-incorporation>
+    </company-info>
+    <entry>
+      <category label="form type" scheme="https://www.sec.gov/" term="8-K" />
+      <content type="text/xml">
+        <accession-number>0001628280-26-049922</accession-number>
+        <act>34</act>
+        <file-number>001-02217</file-number>
+        <file-number-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;filenum=001-02217&amp;owner=include&amp;count=10</file-number-href>
+        <filing-date>2026-07-28</filing-date>
+        <filing-href>https://www.sec.gov/Archives/edgar/data/21344/000162828026049922/0001628280-26-049922-index.htm</filing-href>
+        <filing-type>8-K</filing-type>
+        <film-number>261207488</film-number>
+        <form-name>Current report</form-name>
+        <items-desc>items 2.02 and 9.01</items-desc>
+        <size>2 MB</size>
+        <xbrl_href>https://www.sec.gov/cgi-bin/viewer?action=view&amp;cik=21344&amp;accession_number=0001628280-26-049922&amp;xbrl_type=f</xbrl_href>
+      </content>
+      <id>urn:tag:sec.gov,2008:accession-number=0001628280-26-049922</id>
+      <link href="https://www.sec.gov/Archives/edgar/data/21344/000162828026049922/0001628280-26-049922-index.htm" rel="alternate" type="text/html" />
+      <summary type="html"> &lt;b&gt;Filed:&lt;/b&gt; 2026-07-28 &lt;b&gt;AccNo:&lt;/b&gt; 0001628280-26-049922 &lt;b&gt;Size:&lt;/b&gt; 2 MB&lt;br&gt;Item 2.02: Results of Operations and Financial Condition&lt;br&gt;Item 9.01: Financial Statements and Exhibits</summary>
+      <title>8-K  - Current report</title>
+      <updated>2026-07-28T06:58:13-04:00</updated>
+    </entry>
+    <entry>
+      <category label="form type" scheme="https://www.sec.gov/" term="8-K" />
+      <content type="text/xml">
+        <accession-number>0001628280-26-048466</accession-number>
+        <act>34</act>
+        <file-number>001-02217</file-number>
+        <file-number-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;filenum=001-02217&amp;owner=include&amp;count=10</file-number-href>
+        <filing-date>2026-07-16</filing-date>
+        <filing-href>https://www.sec.gov/Archives/edgar/data/21344/000162828026048466/0001628280-26-048466-index.htm</filing-href>
+        <filing-type>8-K</filing-type>
+        <film-number>261180597</film-number>
+        <form-name>Current report</form-name>
+        <items-desc>item 8.01</items-desc>
+        <size>906 KB</size>
+        <xbrl_href>https://www.sec.gov/cgi-bin/viewer?action=view&amp;cik=21344&amp;accession_number=0001628280-26-048466&amp;xbrl_type=f</xbrl_href>
+      </content>
+      <id>urn:tag:sec.gov,2008:accession-number=0001628280-26-048466</id>
+      <link href="https://www.sec.gov/Archives/edgar/data/21344/000162828026048466/0001628280-26-048466-index.htm" rel="alternate" type="text/html" />
+      <summary type="html"> &lt;b&gt;Filed:&lt;/b&gt; 2026-07-16 &lt;b&gt;AccNo:&lt;/b&gt; 0001628280-26-048466 &lt;b&gt;Size:&lt;/b&gt; 906 KB&lt;br&gt;Item 8.01: Other Events</summary>
+      <title>8-K  - Current report</title>
+      <updated>2026-07-16T16:20:56-04:00</updated>
+    </entry>
+    <entry>
+      <category label="form type" scheme="https://www.sec.gov/" term="8-K" />
+      <content type="text/xml">
+        <accession-number>0001552781-26-000366</accession-number>
+        <act>34</act>
+        <file-number>001-02217</file-number>
+        <file-number-href>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;filenum=001-02217&amp;owner=include&amp;count=10</file-number-href>
+        <filing-date>2026-06-25</filing-date>
+        <filing-href>https://www.sec.gov/Archives/edgar/data/21344/000155278126000366/0001552781-26-000366-index.htm</filing-href>
+        <filing-type>8-K</filing-type>
+        <film-number>261122139</film-number>
+        <form-name>Current report</form-name>
+        <items-desc>items 5.02 and 9.01</items-desc>
+        <size>1 MB</size>
+        <xbrl_href>https://www.sec.gov/cgi-bin/viewer?action=view&amp;cik=21344&amp;accession_number=0001552781-26-000366&amp;xbrl_type=f</xbrl_href>
+      </content>
+      <id>urn:tag:sec.gov,2008:accession-number=0001552781-26-000366</id>
+      <link href="https://www.sec.gov/Archives/edgar/data/21344/000155278126000366/0001552781-26-000366-index.htm" rel="alternate" type="text/html" />
+      <summary type="html"> &lt;b&gt;Filed:&lt;/b&gt; 2026-06-25 &lt;b&gt;AccNo:&lt;/b&gt; 0001552781-26-000366 &lt;b&gt;Size:&lt;/b&gt; 1 MB&lt;br&gt;Item 5.02: Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers: Compensatory Arrangements of Certain Officers&lt;br&gt;Item 9.01: Financial Statements and Exhibits</summary>
+      <title>8-K  - Current report</title>
+      <updated>2026-06-25T16:19:25-04:00</updated>
+    </entry>
+    <id>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000021344</id>
+    <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000021344&amp;type=8-K&amp;owner=include&amp;start=0&amp;count=10" rel="alternate" type="text/html" />
+    <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000021344&amp;type=8-K&amp;owner=include&amp;start=0&amp;count=10&amp;output=atom" rel="self" type="application/atom+xml" />
+    <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000021344&amp;type=8-K%25&amp;datea=&amp;dateb=&amp;owner=include&amp;count=10&amp;output=atom&amp;start=10" rel="next" type="application/atom+xml" />
+    <title>COCA COLA CO  (0000021344)</title>
+    <updated>2026-10-13T22:33:31-04:00</updated>
+  </feed>
