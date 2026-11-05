@@ -10,6 +10,7 @@ No command here can place an order. Execution stays with the
 user's typed yes, the Allow once card).
 """
 
+import os
 from typing import Annotated, Any, Literal
 
 from fastapi import Query
@@ -358,3 +359,53 @@ def state(
 ) -> OBBject[Any]:
     """Read one file of the shared trader/ state, as the skills left it."""
     return OBBject(results=runner.read_state(name))
+
+
+_GATEWAY: list = []
+
+
+async def _broker(method: str) -> OBBject[Any]:
+    from openbb_daytrader.ibkr import BrokerError, Gateway, Settings
+
+    if not _GATEWAY:
+        settings = Settings.from_env()
+        # one id per process: openbb-api and openbb-mcp both load this router,
+        # and the ibkr MCP server holds IBKR_CLIENT_ID itself
+        settings.client_id = 100 + os.getpid() % 800
+        _GATEWAY.append(Gateway(settings))
+    try:
+        return OBBject(results=await getattr(_GATEWAY[0], method)())
+    except BrokerError as exc:
+        from openbb_core.app.model.abstract.error import OpenBBError
+
+        raise OpenBBError(str(exc)) from exc
+
+
+@router.command(
+    methods=["GET"],
+    widget_config=_widget("IBKR Account", "7. Broker", gridData={"w": 20, "h": 8}),
+    examples=[APIEx(parameters={})],
+)
+async def broker_account() -> OBBject[Any]:
+    """Interactive Brokers account summary via the local IB Gateway (read-only)."""
+    return await _broker("account")
+
+
+@router.command(
+    methods=["GET"],
+    widget_config=_widget("IBKR Positions", "7. Broker", refetchInterval=30000),
+    examples=[APIEx(parameters={})],
+)
+async def broker_positions() -> OBBject[Any]:
+    """Open positions at Interactive Brokers (read-only)."""
+    return await _broker("positions")
+
+
+@router.command(
+    methods=["GET"],
+    widget_config=_widget("IBKR Orders", "7. Broker", refetchInterval=30000),
+    examples=[APIEx(parameters={})],
+)
+async def broker_orders() -> OBBject[Any]:
+    """Open orders at Interactive Brokers, bracket legs included (read-only)."""
+    return await _broker("open_orders")

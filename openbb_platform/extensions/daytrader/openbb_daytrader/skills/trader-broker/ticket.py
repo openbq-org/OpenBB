@@ -349,12 +349,17 @@ def kind_of(order, rv):
 
 # ---------------------------------------------------------------- rendering
 
+# OpenBB desk patch: "ibkr_gateway" is the local IB Gateway MCP server
+# (openbb_daytrader.ibkr_mcp), which takes the same place_stock_order input.
+BROKER_NAMES = {"alpaca": "Alpaca", "ibkr": "Interactive Brokers",
+                "ibkr_gateway": "Interactive Brokers (IB Gateway)"}
+
 def render(order, idx, total, cfg, risk, state, today):
     ready, label, rv = status_of(order, risk, state, today)
     broker = str(cfg.get("broker", "alpaca")).lower()
     paper = cfg.get("paper", True)
     acct = "PAPER account" if paper else "LIVE ACCOUNT, REAL MONEY"
-    lines = ["ORDER %d of %d, %s, %s" % (idx, total, acct, "Interactive Brokers" if broker == "ibkr" else "Alpaca")]
+    lines = ["ORDER %d of %d, %s, %s" % (idx, total, acct, BROKER_NAMES.get(broker, "Alpaca"))]
     for part in plain_parts(order):
         lines.append("  " + part)
     if order.get("why"):
@@ -370,7 +375,8 @@ def render(order, idx, total, cfg, risk, state, today):
         for l in json.dumps(tool_input(order), indent=2).splitlines():
             lines.append("    " + l)
         if is_bracket(order):
-            lines.append("  Alpaca places the entry, then the stop-loss and the take-profit as two orders")
+            lines.append("  %s places the entry, then the stop-loss and the take-profit as two orders"
+                         % BROKER_NAMES.get(broker, "Alpaca"))
             lines.append("  that cancel each other: when one fills, the other is canceled.")
     if ready:
         lines.append("  Reply \"yes\" to place this one order, or \"no\" to skip it.")
@@ -622,7 +628,8 @@ def cmd_flatten(a):
     print("  1. trader-risk: check.py. A sell that only closes what you hold is never blocked by the daily")
     print("     limits or the entry window.")
     print("  2. ticket.py show, then the user's yes for this one order.")
-    print("  3. If the bracket's stop-loss and take-profit are still open, Alpaca holds these shares for them")
+    print("  3. If the bracket's stop-loss and take-profit are still open, %s holds these shares for them"
+          % BROKER_NAMES.get(str(cfg.get("broker", "alpaca")).lower(), "Alpaca"))
     print("     and rejects a new sell. Cancel them first: get_orders (status open, nested true), then")
     print("     cancel_order_by_id for each open leg (Needs approval). Then place_stock_order with the ticket.")
     return 0

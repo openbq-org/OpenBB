@@ -1,20 +1,31 @@
 {
   "mcpServers": {
     "openbb": {
-      "command": "openbb-mcp",
-      "args": ["--transport", "stdio"],
+      "command": "uv",
+      "args": [
+        "run",
+        "--no-project",
+        "openbb-mcp",
+        "--transport",
+        "stdio"
+      ],
       "env": {
         "OPENBB_DAYTRADER_WORKDIR": "${OPENBB_DAYTRADER_WORKDIR:-.}"
       }
     },
-    "alpaca": {
-      "command": "uvx",
-      "args": ["alpaca-mcp-server"],
+    "ibkr": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--no-project",
+        "openbb-ibkr-mcp"
+      ],
       "env": {
-        "ALPACA_API_KEY": "${ALPACA_API_KEY:-}",
-        "ALPACA_SECRET_KEY": "${ALPACA_SECRET_KEY:-}",
-        "ALPACA_PAPER_TRADE": "true",
-        "ALPACA_TOOLSETS": "account,trading,stock-data"
+        "IBKR_MODE": "${IBKR_MODE:-paper}",
+        "IBKR_PORT": "${IBKR_PORT:-}",
+        "IBKR_ALLOW_LIVE": "${IBKR_ALLOW_LIVE:-}",
+        "IBKR_ACCOUNT": "${IBKR_ACCOUNT:-}",
+        "IBKR_MAX_ORDER_USD": "${IBKR_MAX_ORDER_USD:-}"
       }
     }
   }

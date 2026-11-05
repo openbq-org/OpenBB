@@ -10,6 +10,12 @@ dependencies = [
     "openbb-core[pandas]>=2.0.0",
 ]
 
+[project.optional-dependencies]
+ibkr = ["ib_async>=2.1.0", "fastmcp>=4.0.9"]
+
+[project.scripts]
+openbb-ibkr-mcp = "openbb_daytrader.ibkr_mcp:main"
+
 [project.entry-points."openbb_core_extension"]
 daytrader = "openbb_daytrader.router:router"
 

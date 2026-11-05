@@ -23,7 +23,10 @@ desk does shows up on the user's screens.
 
 Hard rules, every phase:
 
-- Paper trading unless the user has said otherwise in this conversation.
+- Broker: Interactive Brokers through the user's IB Gateway (`ibkr` MCP
+  server, trader-broker Setup C). Paper unless `get_account_info` says
+  `"paper": false`, which only happens when the user chose REEL in the
+  launcher. Say which account it is on every ticket.
 - No order without trader-risk PASS + the user's typed yes for that exact
   ticket + the Allow once card. Follow `/trader-broker` word for word.
 - Never call `close_all_positions`, `cancel_all_orders`, options or crypto

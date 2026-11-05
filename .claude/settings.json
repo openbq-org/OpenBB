@@ -1,18 +1,14 @@
 {
   "permissions": {
     "ask": [
-      "mcp__alpaca__place_stock_order",
-      "mcp__alpaca__cancel_order_by_id",
-      "mcp__alpaca__replace_order_by_id",
-      "mcp__alpaca__close_position",
-      "mcp__alpaca__update_account_config"
+      "mcp__ibkr__place_stock_order",
+      "mcp__ibkr__cancel_order_by_id",
+      "mcp__ibkr__close_position"
     ],
     "deny": [
-      "mcp__alpaca__place_option_order",
-      "mcp__alpaca__place_crypto_order",
-      "mcp__alpaca__close_all_positions",
-      "mcp__alpaca__cancel_all_orders",
-      "mcp__alpaca__exercise_options_position"
+      "Bash(*IBKR_ALLOW_LIVE*)",
+      "Edit(.mcp.json)",
+      "Write(.mcp.json)"
     ]
   }
 }

@@ -1,3 +1,5 @@
 * linguist-vendored
 *.py linguist-vendored=false
 text eol=lf
+*.bat text eol=crlf
+*.command text eol=lf

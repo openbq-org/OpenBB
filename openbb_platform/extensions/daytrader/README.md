@@ -37,6 +37,28 @@ point them at the same folder to share the watchlist, plan, orders and risk log.
 Claude: risk PASS for that exact order, your typed yes, then the Allow once card.
 Paper trading is the default.
 
+## Broker: Interactive Brokers (IB Gateway)
+
+`pip install -e "openbb_platform/extensions/daytrader[ibkr]"` adds
+`openbb-ibkr-mcp`, an MCP server over the user's local IB Gateway / TWS
+(ib_async). Its tools mirror Alpaca's names and `place_stock_order` input, so
+trader-broker's tickets work unchanged (`"broker": "ibkr_gateway"`).
+
+| env | default | |
+| --- | --- | --- |
+| `IBKR_MODE` | `paper` | `live` also needs `IBKR_ALLOW_LIVE=yes` |
+| `IBKR_PORT` | 4002 paper / 4001 live | TWS: 7497 / 7496 |
+| `IBKR_CLIENT_ID` | 17 | the API widgets use 18 |
+| `IBKR_ACCOUNT` | first managed account | |
+| `IBKR_MAX_ORDER_USD` | none | hard cap per order |
+
+Paper mode refuses orders unless the account id starts with D (paper), and
+live mode refuses a paper account. Read-only widgets: `broker_account`,
+`broker_positions`, `broker_orders`.
+
+Patch to the vendored `trader-broker/ticket.py`: a `BROKER_NAMES` map so
+tickets name "Interactive Brokers (IB Gateway)" instead of Alpaca.
+
 SEC endpoints (news 8-Ks, analyst) need `SEC_USER_AGENT="Your Name you@example.com"`.
 
 ## Install

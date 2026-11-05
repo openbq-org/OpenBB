@@ -135,6 +135,27 @@ submits orders directly to the market. So with IBKR the final yes happens in
 IBKR as well. Set `"broker": "ibkr"` in `trader/config.json`. Set its tools
 that draft orders to Needs approval too.
 
+## Setup C: Interactive Brokers through IB Gateway (OpenBB desk default)
+
+The OpenBB desk uses this one (`"broker": "ibkr_gateway"` in
+`trader/config.json`). The `ibkr` MCP server in `.mcp.json`
+(`openbb-ibkr-mcp`, from openbb-daytrader) talks to the user's own IB Gateway
+or TWS. It works with the paper account and the real one, and its tools have
+the same names and inputs as Alpaca's (`place_stock_order`,
+`cancel_order_by_id`, `close_position`, `get_all_positions`, `get_orders`,
+`get_account_info`, `get_stock_snapshot`), so every step below is the same:
+call `mcp__ibkr__place_stock_order` with exactly the ticket's JSON.
+
+- Paper by default: IB Gateway paper port 4002, and orders are refused unless
+  the account id is a paper one (DU...). Real money needs
+  `"paper": false` in the config AND the user typing REEL in the desk
+  launcher, which sets `IBKR_MODE=live` (port 4001). Never set these yourself.
+- The order tools stay on "ask" in `.claude/settings.json`. Never move them
+  to allow.
+- `python desk.py ibkr` checks the connection. If a tool returns
+  `{"error": ...}`, show it to the user and record `result --status failed`.
+- No short sales, no options, no fractions, US stocks only.
+
 ## Steps: the entry
 
 1. `ticket.py show`. Only READY tickets go to the user. A ticket that is NOT
