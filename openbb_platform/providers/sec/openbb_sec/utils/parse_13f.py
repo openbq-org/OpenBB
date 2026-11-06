@@ -225,7 +225,7 @@ async def parse_13f_hr(filing: str, use_cache: bool = True):
         "voting_authority_none",
     ]:
         if col in df.columns and all(df[col] == 0):
-            df.drop(columns=col, inplace=True)
+            df = df.drop(columns=col)
 
     total_value = df.value.sum()
     df["weight"] = (

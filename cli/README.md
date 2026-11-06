@@ -85,6 +85,22 @@ openbb --generate-spec --server https://api.congress.gov --output congress.spec
 openbb --spec congress.spec law --congress 119 --limit 5
 ```
 
+Two flags shape the spec as it is generated:
+
+| Flag | What it does |
+|------|--------------|
+| `--api-prefix PREFIX` | Strips `PREFIX` from each path when naming commands, e.g. `--api-prefix /api/v3` names `/api/v3/klines` `klines` instead of `api.v3.klines`. Paths outside the prefix keep their full name; request URLs are unchanged. A path the prefix strips to nothing (the prefix itself, or the prefix plus only placeholders) is skipped; with an explicit `--api-prefix` a warning lists those paths. Default: the longest prefix the paths share, leaving out each path's last segment. |
+| `--overlay PATH` | Applies an [OpenAPI Overlay 1.0](https://spec.openapis.org/overlay/v1.0.0) document (YAML or JSON) to the fetched OpenAPI description before the spec is built, to correct upstream schema errors without editing generated code. Repeatable; overlays apply in order. Targets use the JSONPath subset `$`, `.name`, `['name']`, `[index]` and `*`; a target that matches nothing is reported as a warning. |
+
+```bash
+openbb --generate-spec \
+       --server https://api.binance.com \
+       --openapi-path https://raw.githubusercontent.com/binance/binance-api-swagger/master/spot_api.yaml \
+       --api-prefix /api/v3 \
+       --overlay binance.overlay.yaml \
+       --output binance.spec
+```
+
 ### Generate an installable OpenBB extension from a spec
 
 A `.spec` file is enough to dispatch commands directly. Going one step further, `--generate-extension` turns that spec into a full installable OpenBB Platform extension package — `Provider(...)` + `Fetcher` classes + a router that mirrors the upstream's namespace tree — that registers with `openbb-build` like any first-party extension. After install, every command shows up on the typed `obb.*` surface (auto-completion, `obb.reference`, `OBBject` envelopes, the works).

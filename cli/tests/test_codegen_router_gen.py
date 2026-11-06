@@ -34,6 +34,23 @@ def test_safe_segment_handles_special_chars_and_empty():
     assert rg._safe_segment("Fixed-Income") == "fixed_income"
 
 
+def test_mounted_command_paths_mirror_router_naming():
+    tree = nt.build_namespace_tree(
+        {
+            "api.v3.aggTrades": {},
+            "api.v3.ticker": {},
+            "api.v3.ticker.24hr": {},
+            "bulk-fundamentals": {},
+        }
+    )
+    assert rg.mounted_command_paths(tree) == {
+        "api.v3.aggTrades": "api.v3.aggtrades",
+        "api.v3.ticker": "api.v3.ticker.ticker",
+        "api.v3.ticker.24hr": "api.v3.ticker._24hr",
+        "bulk-fundamentals": "bulk_fundamentals",
+    }
+
+
 def test_module_name_for_joins_dotted_path():
     assert rg._module_name_for("equity") == "equity"
     assert rg._module_name_for("equity.price") == "equity_price"

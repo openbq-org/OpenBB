@@ -1986,7 +1986,11 @@ def test_format_type_string_never_produces_unbalanced_brackets():
         _format_type_string,
     )
 
-    raw = "typing.Optional[list[typing.Union[" + ", ".join(f"Item{i}" for i in range(12)) + "]]]"
+    raw = (
+        "typing.Optional[list[typing.Union["
+        + ", ".join(f"Item{i}" for i in range(12))
+        + "]]]"
+    )
     full = _format_type_string(raw)
     assert full.count("[") == full.count("]") and full.endswith("] | None")
     cut = _format_type_string(raw, char_limit=40)
@@ -2005,7 +2009,9 @@ def test_get_field_type_strips_every_module_path_in_a_container():
 
     def render(annotation, required):
         # the docs run ``get_field_type`` and then ``_format_type_string``
-        return _format_type_string(DocstringGenerator.get_field_type(annotation, required))
+        return _format_type_string(
+            DocstringGenerator.get_field_type(annotation, required)
+        )
 
     def model(name):
         return type(name, (BaseModel,), {"__module__": "openbb_fake.providers.models"})

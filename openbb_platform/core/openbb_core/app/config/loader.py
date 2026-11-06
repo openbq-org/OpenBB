@@ -79,14 +79,9 @@ output for a fully documented version.
 from __future__ import annotations
 
 import os
-import sys
+import tomllib
 from pathlib import Path
 from typing import Any
-
-if sys.version_info >= (3, 11):  # pragma: no cover — version-conditional import
-    import tomllib
-else:  # pragma: no cover — exercised only on the 3.10 backport path
-    import tomli as tomllib
 
 from openbb_core.app.constants import OPENBB_DIRECTORY
 

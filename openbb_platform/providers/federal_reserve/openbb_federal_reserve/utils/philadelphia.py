@@ -101,7 +101,7 @@ def quarter_start(year, quarter):
         year.astype(int).astype(str) + "Q" + quarter.astype(int).astype(str),
         freq="Q",
     )
-    return Series(periods.to_timestamp().date, index=year.index)  # ty: ignore[unresolved-attribute]
+    return Series(periods.to_timestamp(), index=year.index).dt.date
 
 
 def parse_two_digit_month(series):
