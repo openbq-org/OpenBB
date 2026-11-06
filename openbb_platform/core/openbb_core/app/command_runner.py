@@ -332,7 +332,6 @@ class StaticCommandRunner:
                 # added to the function signature in the router decorator
                 # If the ProviderInterface is not in use, we need to pass a copy of the
                 # kwargs dictionary before it is validated, otherwise we lose those items.
-                kwargs_copy = deepcopy(kwargs)
                 chart = kwargs.pop("chart", False)
                 kwargs_copy = deepcopy(kwargs)
                 kwargs = ParametersBuilder.build(
