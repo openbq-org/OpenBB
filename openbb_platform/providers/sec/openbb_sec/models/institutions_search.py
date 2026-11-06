@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from openbb_core.app.model.abstract.error import OpenBBError
 from openbb_core.provider.abstract.data import Data
 from openbb_core.provider.abstract.fetcher import Fetcher
 from openbb_core.provider.abstract.query_params import QueryParams
@@ -14,7 +15,11 @@ class SecInstitutionsSearchQueryParams(QueryParams):
     Source: https://sec.gov/
     """
 
-    query: str | None = Field(description="Search query.", default=None)
+    query: str | None = Field(
+        description="Search query.",
+        default=None,
+        json_schema_extra={"sec": {"x-widget_config": {"optional": False}}},
+    )
 
     use_cache: bool = Field(
         default=True,
@@ -62,6 +67,8 @@ class SecInstitutionsSearchFetcher(
         """Return the raw data from the SEC endpoint."""
         from openbb_sec.utils.helpers import get_all_ciks
 
+        if not query.query:
+            raise OpenBBError("Enter an institution name to search for.")
         institutions = await get_all_ciks(use_cache=query.use_cache)
         hp = institutions["Institution"].str.contains(query.query, case=False)
         return institutions[hp].astype(str).to_dict("records")
