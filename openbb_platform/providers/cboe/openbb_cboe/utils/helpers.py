@@ -701,7 +701,7 @@ async def _get_settlement_csv(url: str, **kwargs) -> DataFrame:
     """
     from io import StringIO
 
-    from pandas import DataFrame, read_csv
+    from pandas import DataFrame, read_csv, to_numeric
 
     response = await get_cboe_data(url, use_cache=False, **kwargs)
     data = read_csv(StringIO(response), index_col=None, parse_dates=True)
@@ -710,6 +710,9 @@ async def _get_settlement_csv(url: str, **kwargs) -> DataFrame:
         return DataFrame()
 
     data.columns = [to_snake_case(c) for c in data.columns]
+
+    if "price" in data.columns:
+        data["price"] = to_numeric(data["price"], errors="coerce")
 
     return data.rename(columns={"expiration_date": "expiration"})
 
