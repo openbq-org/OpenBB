@@ -1,5 +1,7 @@
 """Command runner module."""
 
+import asyncio
+import threading
 from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import asdict, is_dataclass
@@ -236,6 +238,30 @@ class ParametersBuilder:
         return kwargs
 
 
+# Each provider's commands run on that provider's own event loop, in its own
+# daemon thread, for the life of the process. Provider code does CPU-bound
+# work (pandas, curve fitting) in sync and async functions alike; on the
+# server's event loop one such command blocks every route until it finishes.
+# Here it blocks only its own provider, the server loop stays free, and a
+# provider's loop-bound state (asyncio locks, cached aiohttp/SQLite backends)
+# still only ever sees one loop.
+_PROVIDER_LOOPS: dict[str, asyncio.AbstractEventLoop] = {}
+_PROVIDER_LOOPS_LOCK = threading.Lock()
+
+
+def _provider_loop(name: str) -> asyncio.AbstractEventLoop:
+    """Return the named provider's event loop, starting its thread on first use."""
+    key = name.removeprefix("openbb_")
+    with _PROVIDER_LOOPS_LOCK:
+        if key not in _PROVIDER_LOOPS:
+            loop = asyncio.new_event_loop()
+            threading.Thread(
+                target=loop.run_forever, name=f"provider-{key}", daemon=True
+            ).start()
+            _PROVIDER_LOOPS[key] = loop
+        return _PROVIDER_LOOPS[key]
+
+
 class StaticCommandRunner:
     """Static Command Runner."""
 
@@ -247,7 +273,11 @@ class StaticCommandRunner:
         show_warnings: bool = True,
     ) -> OBBject:
         """Run a command and return the output."""
-        obbject = await maybe_coroutine(func, **kwargs)
+        provider = getattr(kwargs.get("provider_choices"), "provider", None)
+        loop = _provider_loop(provider or func.__module__.split(".")[0])
+        obbject = await asyncio.wrap_future(
+            asyncio.run_coroutine_threadsafe(maybe_coroutine(func, **kwargs), loop)
+        )
         if isinstance(obbject, (OBBject, OBBStream)):
             obbject.provider = getattr(
                 kwargs.get("provider_choices"),
