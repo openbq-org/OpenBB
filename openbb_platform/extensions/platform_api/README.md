@@ -10,7 +10,7 @@ Launcher and widgets builder for the OpenBB Workspace [custom backend](https://d
 pip install openbb-platform-api
 ```
 
-Python ≥ 3.10. Already included when you install [`openbb`](https://docs.openbb.co/platform/installation).
+Python ≥ 3.11. Already included when you install [`openbb`](https://docs.openbb.co/platform/installation).
 
 ### Launch OpenBB Platform
 
@@ -83,10 +83,12 @@ hooks = [
 # my_pkg/middleware.py
 from fastapi.responses import JSONResponse
 
+
 async def auth_middleware(request, call_next):
     if request.headers.get("X-API-Key") != "expected":
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     return await call_next(request)
+
 
 async def request_logger(request, call_next):
     response = await call_next(request)
@@ -190,26 +192,31 @@ from openbb_platform_api.response_models import (
 
 app = FastAPI()
 
+
 # Markdown — return a string
 @app.get("/hello")
 async def hello() -> str:
     """Tooltip from the docstring."""
     return "Hello, OpenBB!"
 
+
 # Table — return a list of records or a typed Data subclass
 @app.get("/rows")
 async def rows() -> list[dict]:
     return [{"symbol": "AAPL", "price": 150.0}]
+
 
 # Metric — single label/value/delta
 @app.get("/score")
 async def score() -> MetricResponseModel:
     return MetricResponseModel(label="Score", value=100, delta="1%")
 
+
 # Chart — return a Plotly figure JSON
 @app.get("/chart", openapi_extra={"widget_config": {"type": "chart"}})
 async def chart() -> dict:
     from plotly.graph_objs import Bar, Figure
+
     return Figure(data=[Bar(x=["A"], y=[1])]).to_plotly_json()
 ```
 
@@ -220,12 +227,16 @@ from datetime import date
 from openbb_platform_api.response_models import Data
 from pydantic import Field
 
+
 class MyRow(Data):
     when: date = Field(title="Date", description="Trading date")
-    pct:  float = Field(
+    pct: float = Field(
         title="Change",
-        json_schema_extra={"x-widget_config": {"formatterFn": "percent", "renderFn": "greenRed"}},
+        json_schema_extra={
+            "x-widget_config": {"formatterFn": "percent", "renderFn": "greenRed"}
+        },
     )
+
 
 @app.get("/data")
 async def data() -> list[MyRow]:
@@ -240,6 +251,7 @@ The model handles conversion of the document, from a bytes object, to a base64 e
 
 ```python
 from openbb_platform_api.response_models import PdfResponseModel
+
 
 @app.get("/open_pdf")
 async def open_pdf(
@@ -259,7 +271,10 @@ async def open_pdf(
     ] = "",
     user_agent: Annotated[
         Optional[str],
-        Query(description="A specific User-Agent string for the request.", title="User-Agent"),
+        Query(
+            description="A specific User-Agent string for the request.",
+            title="User-Agent",
+        ),
     ] = None,
 ) -> PdfResponseModel:
     """Open a PDF document from a URL, or local file path."""
@@ -285,8 +300,8 @@ async def open_pdf(
         pdf = response.content
 
     return PdfResponseModel(
-        filename = filename,
-        content = pdf,
+        filename=filename,
+        content=pdf,
     )
 ```
 
@@ -343,14 +358,15 @@ from pydantic import BaseModel, ConfigDict, Field
 
 # app = FastAPI()
 
-AccountTypes = Literal["General Fund", "Separately Managed", "Private Equity", "Family Office"]
+AccountTypes = Literal[
+    "General Fund", "Separately Managed", "Private Equity", "Family Office"
+]
+
 
 class GeneralIntake(BaseModel):
     """Submit a form via POST request."""
 
-    date_created: dateType = Field(
-        title="Created On", default_factory=dateType.today
-    )
+    date_created: dateType = Field(title="Created On", default_factory=dateType.today)
     first_name: str = Field(title="First Name")
     last_name: str = Field(title="Last Name")
     email: str = Field(title="Contact Email")
@@ -370,7 +386,7 @@ class GeneralIntake(BaseModel):
             "x-widget_config": {
                 "type": "button",
             },
-        }
+        },
     )
 
 
@@ -416,7 +432,7 @@ async def general_intake_post(data: GeneralIntake) -> bool:
 
 @app.get(
     "/general_intake",
-    openapi_extra= {
+    openapi_extra={
         "widget_config": {
             "form_endpoint": "/general_intake_submit",
         },
@@ -443,8 +459,10 @@ from openbb_platform_api.query_models import OmniWidgetInput
 from openbb_platform_api.response_models import OmniWidgetResponseModel
 from pydantic import Field
 
+
 class TestOmniWidgetQueryModel(OmniWidgetInput):
     """Test query model for OmniWidget."""
+
     param1: str = Field(description="A string parameter for testing")
     param2: int = Field(description="An integer parameter for testing")
     param3: bool = Field(default=False, description="A boolean parameter for testing")
@@ -456,23 +474,26 @@ class TestOmniWidgetQueryModel(OmniWidgetInput):
         + " If not defined, the model will try to infer the type based on the content.",
     )
 
+
 @app.post("/omni_widget", response_model=OmniWidgetResponseModel)
 async def create_omni_widget(item: TestOmniWidgetQueryModel):
     """This is a test endpoint for generating an OmniWidget in OpenBB Workspace."""
     # Here you would process the incoming request and return a response
     some_test_data = [
-        {"prompt": item.prompt,
-        "param1": item.param1,
-        "param2": item.param2,
-        "param3": item.param3,
-        "start_date": item.start_date,
-        "end_date": item.end_date,
-    }]
+        {
+            "prompt": item.prompt,
+            "param1": item.param1,
+            "param2": item.param2,
+            "param3": item.param3,
+            "start_date": item.start_date,
+            "end_date": item.end_date,
+        }
+    ]
 
     if item.parse_as == "chart":
         some_test_data = {
             "data": [{"type": "bar", "x": ["A", "B", "C"], "y": [1, 2, 3]}],
-            "layout": {"template": "plotly_dark", "title": {"text": "Hello Chart!"}}
+            "layout": {"template": "plotly_dark", "title": {"text": "Hello Chart!"}},
         }
     elif item.parse_as == "text":
         some_test_data = f"""

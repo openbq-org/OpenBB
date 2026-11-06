@@ -2,7 +2,7 @@
 
 import re
 import threading
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Any
@@ -2062,7 +2062,7 @@ async def render_browser(
 
 
 @asynccontextmanager
-async def lifespan(_app) -> AsyncIterator[None]:
+async def lifespan(_app) -> AsyncGenerator[None, None]:
     """Warm the proxy cache for the lifetime of the API, cleaning up on shutdown."""
     _schedule_warm()
     try:

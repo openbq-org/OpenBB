@@ -602,7 +602,7 @@ class ReferenceGenerator:
                     else str(param_type)
                 )
                 description = default.description  # type: ignore
-                json_extra = default.json_schema_extra  # type: ignore
+                json_extra = default.json_schema_extra or {}  # type: ignore
                 has_default = hasattr(default, "default") and default.default not in [
                     Parameter.empty,
                     PydanticUndefined,

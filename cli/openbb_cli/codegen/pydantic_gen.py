@@ -69,6 +69,20 @@ def safe_field_name(name: str) -> tuple[str, bool]:
     return (cleaned, cleaned != name)
 
 
+def query_field_name(name: str) -> str:
+    """Snake-case attribute name for a query parameter.
+
+    The platform exposes every query parameter in snake_case (``zoneId`` is
+    passed as ``zone_id``); the original name is kept as the field alias so
+    the upstream wire name is unchanged.
+    """
+    safe, _ = safe_field_name(name)
+    snake = re.sub(r"(?<=[a-z0-9])([A-Z])", r"_\1", safe)
+    snake = re.sub(r"(?<=[A-Z])([A-Z][a-z])", r"_\1", snake)
+    snake = re.sub(r"_+", "_", snake).lower().strip("_") or "field"
+    return f"{snake}_" if keyword.iskeyword(snake) else snake
+
+
 def class_name_from(*parts: str) -> str:
     """Join + camel-case a set of name parts into a Python class identifier."""
     words: list[str] = []
@@ -185,12 +199,20 @@ def _resolve_union(
         return "Any"
 
     rendered: list[str] = []
-    for variant in non_null:
+    for index, variant in enumerate(non_null, start=1):
+        # Untitled object variants would all get the same class name and
+        # collapse into one; number them so every shape stays distinct.
+        distinct = (
+            isinstance(variant, dict)
+            and len(non_null) > 1
+            and (variant.get("properties") or variant.get("type") == "object")
+            and not variant.get("title")
+        )
         rendered.append(
             schema_to_type(
                 variant,
                 parent_class_name=parent_class_name,
-                field_name=field_name,
+                field_name=f"{field_name}_v{index}" if distinct else field_name,
                 nested_classes=nested_classes,
                 imports=imports,
             )
@@ -314,6 +336,7 @@ def _build_field_call(
 def _resolve_field_description(
     prop: dict[str, Any],
     field_name: str | None = None,  # noqa: ARG001
+    include_choices: bool = True,
 ) -> str:
     """Pick the description text for a Pydantic Field."""
     text = prop.get("description") or prop.get("title")
@@ -327,7 +350,7 @@ def _resolve_field_description(
         if isinstance(prop.get("const"), (str, int, float, bool))
         else None
     )
-    if enum:
+    if enum and include_choices:
         rendered = ", ".join(str(v) for v in enum)
         parts.append(f"Choices: {rendered}.")
     return " ".join(parts).rstrip()
@@ -542,6 +565,87 @@ def render_function_docstring(
     return "\n".join(lines)
 
 
+_BUILTIN_TYPE_NAMES = (
+    "list",
+    "dict",
+    "set",
+    "tuple",
+    "str",
+    "int",
+    "float",
+    "bool",
+    "bytes",
+)
+
+
+_QUOTED = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"")
+
+
+def _shadowed_builtins(properties: dict[str, Any], class_name: str) -> set[str]:
+    """Builtin type names that a field would shadow inside its class's annotations.
+
+    A field named ``list`` binds ``list`` in the class body, so a later
+    ``list[...]`` annotation (its own included) fails when the class is built.
+    Returns the builtin names some field is called and some annotation uses
+    outside a string (``Literal['list']`` uses none).
+    """
+    names = {safe_field_name(raw)[0] for raw in properties} | {
+        query_field_name(raw) for raw in properties
+    }
+    candidates = names & set(_BUILTIN_TYPE_NAMES)
+    if not candidates:
+        return set()
+    annotations = " ".join(
+        schema_to_type(
+            prop if isinstance(prop, dict) else {},
+            parent_class_name=class_name,
+            field_name=safe_field_name(raw)[0],
+            nested_classes=[],
+            imports=set(),
+        )
+        for raw, prop in properties.items()
+    )
+    annotations = _QUOTED.sub("''", annotations)
+    return {name for name in candidates if re.search(rf"\b{name}\b", annotations)}
+
+
+def _unique_field_names(
+    properties: dict[str, Any], class_name: str, *, query_params: bool
+) -> dict[str, str]:
+    """Map each property name to a field name no other property of the class uses.
+
+    Names are made safe the usual way (``query_field_name`` for query
+    parameters), and a builtin some annotation needs gets a ``_`` suffix. When
+    two properties land on one name (``@id`` and ``id``), the property already
+    spelled that way keeps it and the others get ``_`` suffixes.
+    """
+    shadowed = _shadowed_builtins(properties, class_name)
+    wanted: dict[str, str] = {}
+    for raw in properties:
+        safe = query_field_name(raw) if query_params else safe_field_name(raw)[0]
+        wanted[raw] = f"{safe}_" if safe in shadowed else safe
+    taken: set[str] = set()
+    out: dict[str, str] = {}
+    for raw in sorted(properties, key=lambda r: wanted[r] != r):
+        name = wanted[raw]
+        while name in taken:
+            name = f"{name}_"
+        taken.add(name)
+        out[raw] = name
+    return {raw: out[raw] for raw in properties}
+
+
+def query_params_field_names(
+    properties: dict[str, Any], class_name: str
+) -> dict[str, str]:
+    """Map each parameter to its field name in a ``QueryParams`` class.
+
+    The names ``generate_class`` gives the fields of ``class_name`` built from
+    ``properties``, for code that reads those fields back.
+    """
+    return _unique_field_names(properties, class_name, query_params=True)
+
+
 def generate_class(
     schema: dict[str, Any],
     *,
@@ -557,9 +661,16 @@ def generate_class(
     body_lines: list[str] = []
     doc_fields: list[tuple[str, str, str | None, bool, Any, bool]] = []
     optional_object_fields: list[str] = []
+    multiple_items: dict[str, dict[str, Any]] = {}
+    field_names: dict[str, str] = {}
+    unique_names = _unique_field_names(
+        properties, class_name, query_params=base_class == "QueryParams"
+    )
 
     for raw_name, prop_schema in properties.items():
-        safe_name, needs_alias = safe_field_name(raw_name)
+        safe_name = unique_names[raw_name]
+        needs_alias = safe_name != raw_name
+        field_names[raw_name] = safe_name
         annotation = schema_to_type(
             prop_schema if isinstance(prop_schema, dict) else {},
             parent_class_name=class_name,
@@ -569,12 +680,22 @@ def generate_class(
         )
         is_required = raw_name in required_set
         prop = prop_schema if isinstance(prop_schema, dict) else {}
+        if prop.get("x-multiple-items"):
+            extra: dict[str, Any] = {"multiple_items_allowed": True}
+            if prop.get("x-choices"):
+                extra["choices"] = list(prop["x-choices"])
+            multiple_items[safe_name] = extra
         if not is_required and (prop.get("type") == "object" or "properties" in prop):
             optional_object_fields.append(safe_name)
         has_default = "default" in prop
-        if not is_required and "None" not in annotation:
+        nullable = bool(schema.get("x-null-empty"))  # response rows: null == empty
+        if (not is_required or nullable) and "None" not in annotation:
             annotation = f"{annotation} | None"
-        description = _resolve_field_description(prop, field_name=raw_name)
+        # The platform lists a query parameter's choices itself ("Choices for
+        # <provider>: ..."); repeating them in the description duplicates them.
+        description = _resolve_field_description(
+            prop, field_name=raw_name, include_choices=base_class != "QueryParams"
+        )
         breakout = _nested_object_breakout(prop)
         if breakout:
             description = (
@@ -622,6 +743,51 @@ def generate_class(
             "        return None if v == [] else v"
         )
 
+    if multiple_items:
+        imports.add("from pydantic import field_validator")
+        imports.add("from typing import Any")
+        names = ", ".join(repr(n) for n in multiple_items)
+        body_lines.append(f"\n    __json_schema_extra__ = {multiple_items!r}")
+        body_lines.append(
+            f'\n    @field_validator({names}, mode="before")\n'
+            "    @classmethod\n"
+            "    def _join_multiple_items(cls, v: Any) -> Any:\n"
+            '        """Accept a list and join it into a comma-separated string."""\n'
+            "        if isinstance(v, (list, tuple, set)):\n"
+            '            return ",".join(str(i) for i in v)\n'
+            "        return v"
+        )
+
+    if schema.get("x-null-empty"):
+        imports.add("from pydantic import model_validator")
+        imports.add("from typing import Any")
+        body_lines.append(
+            '\n    @model_validator(mode="before")\n'
+            "    @classmethod\n"
+            "    def _empty_string_is_null(cls, values: Any) -> Any:\n"
+            '        """Treat empty strings as null."""\n'
+            "        if isinstance(values, dict):\n"
+            '            return {k: (None if v == "" else v) for k, v in values.items()}\n'
+            "        return values"
+        )
+
+    required_groups = [
+        group
+        for group in schema.get("x-required-groups") or []
+        if _group_maps_to_distinct_fields(group, field_names)
+    ]
+    if required_groups:
+        imports.add("from pydantic import model_validator")
+        imports.add("from typing import Any")
+        defaults = {
+            field_names[raw]: prop["default"]
+            for raw, prop in properties.items()
+            if isinstance(prop, dict) and prop.get("default") is not None
+        }
+        body_lines.append(
+            _render_required_groups_validator(required_groups, field_names, defaults)
+        )
+
     summary = docstring or class_name
     doc_block = _render_class_docstring(summary, doc_fields)
 
@@ -636,6 +802,99 @@ def generate_class(
         nested=nested_classes,
         imports=imports,
     )
+
+
+def _group_maps_to_distinct_fields(
+    group: dict[str, Any], field_names: dict[str, str]
+) -> bool:
+    """Whether every name in a required group is a field of its own.
+
+    A name with no field, or two names that collapse to one field (``Symbol``
+    and ``symbol``), would make the group impossible to satisfy.
+    """
+    alternatives = group.get("alternatives") or []
+    names = {name for alt in alternatives for name in alt}
+    names.update(name for name in group.get("members") or [] if name in field_names)
+    if not alternatives or any(name not in field_names for name in names):
+        return False
+    return len({field_names[name] for name in names}) == len(names)
+
+
+def _render_required_groups_validator(
+    groups: list[dict[str, Any]],
+    field_names: dict[str, str],
+    defaults: dict[str, Any] | None = None,
+) -> str:
+    """Render an ``after`` model validator enforcing ``oneOf`` / ``anyOf`` groups.
+
+    Parameters
+    ----------
+    groups : list[dict]
+        Required groups in the spec form (``combinator``, ``alternatives``,
+        ``members``, ``required``), naming properties by their schema name.
+    field_names : dict[str, str]
+        Schema property name to generated field name.
+    defaults : dict[str, Any], optional
+        Field name to default value. An optional group is only checked when a
+        member is passed, and a member left at its default was not passed.
+
+    Returns
+    -------
+    str
+        The indented validator method source. ``None``, ``""`` and ``[]``
+        count as not passed.
+    """
+    defaults = defaults or {}
+    lines = [
+        '\n    @model_validator(mode="after")',
+        "    def _check_required_groups(self) -> Any:",
+        '        """Enforce the parameter combinations the API requires."""',
+    ]
+    for group in groups:
+        alternatives = tuple(
+            tuple(field_names[name] for name in alt) for alt in group["alternatives"]
+        )
+        exactly_one = group.get("combinator") == "oneOf"
+        described = " | ".join(
+            alt[0] if len(alt) == 1 else f"({', '.join(alt)})" for alt in alternatives
+        )
+        message = f"Pass {'exactly' if exactly_one else 'at least'} one of: {described}"
+        indent = "        "
+        if not group.get("required", True):
+            members = tuple(
+                field_names[name]
+                for name in group.get("members") or []
+                if name in field_names
+            )
+            if any(name in defaults for name in members):
+                pairs = tuple((name, defaults.get(name)) for name in members)
+                lines.extend(
+                    [
+                        f"{indent}if any(",
+                        f"{indent}    getattr(self, _name) not in (None, '', [])",
+                        f"{indent}    and getattr(self, _name) != _default",
+                        f"{indent}    for _name, _default in {pairs!r}",
+                        f"{indent}):",
+                    ]
+                )
+            else:
+                lines.append(
+                    f"{indent}if any(getattr(self, _name) not in (None, '', []) "
+                    f"for _name in {members!r}):"
+                )
+            indent += "    "
+        lines.extend(
+            [
+                f"{indent}_satisfied = sum(",
+                f"{indent}    all(getattr(self, _name) not in (None, '', []) for _name in _names)",
+                f"{indent}    for _names in {alternatives!r}",
+                f"{indent})",
+                f"{indent}if _satisfied {'!= 1' if exactly_one else '< 1'}:",
+                f"{indent}    raise ValueError({message!r})",
+            ]
+        )
+    lines.append("        return self")
+    return "\n".join(lines)
 
 
 def consolidate_imports(imports: set[str]) -> list[str]:
