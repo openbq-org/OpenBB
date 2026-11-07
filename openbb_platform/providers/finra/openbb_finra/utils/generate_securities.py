@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 QUERY_API_URL = "https://api.finra.org"
-MARKET_DATA_URL = "https://finra-markets.morningstar.com"
 USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
@@ -25,9 +24,6 @@ UNIVERSE_FIELDS = [
 PAGE_LIMIT = 5000
 US_COMPOSITES = ("126", "22")
 LOOKUP_BATCH = 100
-LOOKUP_INTERVAL = 0.5
-LOOKUP_ATTEMPTS = 4
-THROTTLE_WAIT = 30
 CLASS_FIELDS = [
     "security_type",
     "name",
@@ -393,110 +389,52 @@ def fetch_universe(client: Client) -> tuple[dict[str, str], dict[str, dict]]:
     return weeks, universe
 
 
-def lookup_batch(
-    client: Client, symbols: list[str], prefix: str | None = None
-) -> dict[str, list]:
-    """Return the classification of one batch, isolating symbols the service rejects.
-
-    Parameters
-    ----------
-    client : Client
-        The HTTP client.
-    symbols : list[str]
-        The FINRA symbols to look up.
-    prefix : str | None
-        The composite market to look the symbols up on. Any US market when None.
-
+def read_classes() -> dict[str, list]:
+    """Return the classifications held by the existing asset.
     Returns
-    -------
-    dict[str, list]
-        The compact classification keyed by FINRA symbol.
-
-    Raises
-    ------
-    RuntimeError
-        If the Market Data Center keeps throttling the lookups.
-    """
-    import time
-
-    for attempt in range(1, LOOKUP_ATTEMPTS + 1):
-        status, body, _ = client.request(
-            f"{MARKET_DATA_URL}/getids.jsp",
-            {"symbol": ",".join(lookup_form(symbol, prefix) for symbol in symbols)},
-        )
-        time.sleep(LOOKUP_INTERVAL)
-
-        if status == 200:
-            return read_lookup(json.loads(body).get("Records") or [], symbols, prefix)
-
-        if status != 429:
-            if len(symbols) == 1:
-                return {}
-
-            middle = len(symbols) // 2
-
-            return {
-                **lookup_batch(client, symbols[:middle], prefix),
-                **lookup_batch(client, symbols[middle:], prefix),
-            }
-
-        time.sleep(THROTTLE_WAIT * attempt)
-        client.request(f"{MARKET_DATA_URL}/finralogin.jsp")
-
-    raise RuntimeError("The FINRA Market Data Center kept throttling the lookups.")
-
-
-def fetch_classes(client: Client, universe: dict[str, dict]) -> dict[str, list]:
-    """Return the Market Data Center classification of each symbol it resolves.
-
-    Parameters
     ----------
-    client : Client
-        The HTTP client.
-    universe : dict[str, dict]
-        The FINRA symbols to classify, with their tiers.
-
-    Returns
-    -------
     dict[str, list]
-        The compact classification keyed by FINRA symbol.
-    """
-    client.request(f"{MARKET_DATA_URL}/finralogin.jsp")
-    symbols = sorted(universe)
-    classes: dict[str, list] = {}
-
-    for prefix, group in lookup_plan(universe, symbols).items():
-        for batch in batches(group):
-            classes.update(lookup_batch(client, batch, prefix))
-
-    for batch in batches([symbol for symbol in symbols if symbol not in classes]):
-        classes.update(lookup_batch(client, batch))
-
-    return classes
+    The compact classification keyed by FINRA symbol, 
+    empty when there is no readable asset"""
+    try:
+        asset = json.loads(gzip.decompress(ASSET_PATH.read_bytes()))
+    except (OSError, ValueError):
+        return {}
+    
+    return asset.get("securities") or {}
 
 
-def build(client: Client) -> dict:
+def build(client: Client, known: dict[str, list] | None = None) -> dict:
+
     """Return the security-type asset.
 
+    The Market Data Center lookup the classifications came from now redirects to
+    the FINRA Investments Explorer, so symbols are no longer classified here. A
+    symbol keeps the classification it already has, and any other symbol is left
+    unresolved.
+
     Parameters
     ----------
     client : Client
         The HTTP client.
+    known : dict[str, list] | None
+        The classifications of the existing asset, keyed by FINRA symbol.
 
     Returns
     -------
     dict
-        The latest weeks, the classification of every resolved symbol, and the
-        symbols the Market Data Center could not resolve.
+        The latest weeks, the classification of every known symbol, and the
+        symbols without one.
     """
+    known = known or {}
     weeks, universe = fetch_universe(client)
     symbols = sorted(universe)
-    classes = fetch_classes(client, universe)
+    classes = {symbol: known[symbol] for symbol in symbols if symbol in known}
 
     return {
         "weeks": weeks,
         "fields": CLASS_FIELDS,
-        "securities": dict(sorted(classes.items())),
+        "securities": classes,
         "unresolved": [symbol for symbol in symbols if symbol not in classes],
     }
 
@@ -511,7 +449,7 @@ def main() -> int:
     """
     import sys
 
-    asset = build(Client())
+    asset = build(Client(), read_classes())
     ASSET_PATH.parent.mkdir(parents=True, exist_ok=True)
     ASSET_PATH.write_bytes(
         gzip.compress(json.dumps(asset, separators=(",", ":")).encode("utf-8"), mtime=0)

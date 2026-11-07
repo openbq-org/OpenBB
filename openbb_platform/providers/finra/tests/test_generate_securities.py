@@ -43,14 +43,6 @@ class FakeClient:
 
         return self.respond(url, params, payload)
 
-
-@pytest.fixture(autouse=True)
-def _no_waiting(monkeypatch):
-    """Look up without pausing."""
-    monkeypatch.setattr(generator, "LOOKUP_INTERVAL", 0)
-    monkeypatch.setattr(generator, "THROTTLE_WAIT", 0)
-
-
 class TestHelpers:
     """The pure helpers shared with the runtime."""
 
@@ -305,106 +297,37 @@ class TestFetchUniverse:
         with pytest.raises(RuntimeError, match="T1 weekly summary with HTTP 400"):
             generator.fetch_universe(FakeClient(respond))
 
-
-def _lookup_responder(statuses=None, reject=()):
-    """Answer the Market Data Center login and lookups."""
-    queue = list(statuses or [])
-
-    def respond(url, params, payload):
-        if urlparse(url).path == "/finralogin.jsp":
-            return 200, "\n", {}
-
-        if queue:
-            return queue.pop(0), "", {}
-
-        symbols = params["symbol"].split(",")
-
-        if any(bad in symbol for symbol in symbols for bad in reject):
-            return 500, "error", {}
-
-        records = [{**AAPL, "QueryKey": symbol} for symbol in symbols]
-
-        return 200, json.dumps({"Records": records}), {}
-
-    return respond
-
-
-class TestLookups:
-    """Symbols are classified in batches, isolating rejected symbols."""
-
-    def test_classes(self):
-        """Every symbol that resolves is classified."""
-        client = FakeClient(_lookup_responder())
-        universe = {"AAPL": {"tier": "NMS Tier 1"}, "ACP$A": {"tier": "NMS Tier 2"}}
-        classes = generator.fetch_classes(client, universe)
-
-        assert set(classes) == {"AAPL", "ACP$A"}
-        assert client.calls[1][1] == {"symbol": "126:AAPL,126:ACPpA"}
-
-    def test_missed_symbols_fall_back(self):
-        """A symbol missed on its market is looked up on any US market."""
-
-        def respond(url, params, payload):
-            if urlparse(url).path == "/finralogin.jsp":
-                return 200, "\n", {}
-
-            if ":" in params["symbol"]:
-                return 200, json.dumps({"Records": []}), {}
-
-            return 200, json.dumps({"Records": [{**AAPL, "QueryKey": "WARR"}]}), {}
-
-        client = FakeClient(respond)
-        classes = generator.fetch_classes(client, {"WARR": {"tier": "OTC"}})
-
-        assert set(classes) == {"WARR"}
-        assert [call[1] for call in client.calls[1:]] == [
-            {"symbol": "22:WARR"},
-            {"symbol": "WARR"},
-        ]
-
-    def test_rejected_symbol_is_isolated(self):
-        """A symbol that fails its batch is dropped and the rest classified."""
-        client = FakeClient(_lookup_responder(reject=("BAD",)))
-        classes = generator.lookup_batch(client, ["AAPL", "BAD", "MSFT"])
-
-        assert set(classes) == {"AAPL", "MSFT"}
-
-    def test_throttled_then_served(self):
-        """A throttled batch is retried after a fresh login."""
-        client = FakeClient(_lookup_responder(statuses=[429]))
-        classes = generator.lookup_batch(client, ["AAPL"])
-
-        assert set(classes) == {"AAPL"}
-        assert any(call[0].endswith("finralogin.jsp") for call in client.calls)
-
-    def test_always_throttled(self):
-        """A batch throttled on every attempt raises."""
-        client = FakeClient(_lookup_responder(statuses=[429] * 10))
-
-        with pytest.raises(RuntimeError, match="kept throttling"):
-            generator.lookup_batch(client, ["AAPL"])
-
-
 class TestBuild:
     """The asset holds the classes, the unresolved symbols, and the weeks."""
 
     def test_build(self):
-        """Resolved and unresolved symbols are both recorded."""
-        universe = _universe_responder()
-        lookups = _lookup_responder(reject=("ACPpA",))
-
-        def respond(url, params, payload):
-            if urlparse(url).hostname == "api.finra.org":
-                return universe(url, params, payload)
-
-            return lookups(url, params, payload)
-
-        asset = generator.build(FakeClient(respond))
-
+        """Known classes are kept, new symbols are unresolved, nothing is looked up."""
+        known = {
+            "AAPL": generator.classify(AAPL),
+            "GONE": generator.classify(AAPL),
+        }
+        
+        client = FakeClient(_universe_responder())
+        asset = generator.build(client, known)
+        
         assert asset["weeks"] == {"T1": "2026-08-31"}
-        assert list(asset["securities"]) == ["AAPL"]
+        assert asset["securities"] == {"AAPL": known["AAPL"]}
         assert asset["unresolved"] == ["ACP$A"]
         assert asset["fields"] == generator.CLASS_FIELDS
+        assert not any(urlparse(call[0]).path == "/getids.jsp" for call in client.calls)
+
+    def test_read_classes(self, monkeypatch, tmp_path):
+        """The classes of the existing asset are read, and none when it is missing."""
+        target = tmp_path / "security_types.json.gz"
+        monkeypatch.setattr(generator, "ASSET_PATH", target)
+
+        assert generator.read_classes() == {}
+
+        target.write_bytes(
+            gzip.compress(json.dumps({"securities": {"A": ["ST"]}}).encode())
+        )
+
+        assert generator.read_classes() == {"A": ["ST"]}
 
     def test_main_writes_the_asset(self, monkeypatch, tmp_path, capsys):
         """The asset is written gzipped and summarized."""
@@ -413,7 +336,7 @@ class TestBuild:
         monkeypatch.setattr(
             generator,
             "build",
-            lambda client: {
+            lambda client, known: {
                 "weeks": {},
                 "fields": [],
                 "securities": {"A": []},
