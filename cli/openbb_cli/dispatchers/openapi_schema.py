@@ -121,6 +121,19 @@ def deref_parameter(spec: dict[str, Any], param: dict[str, Any]) -> dict[str, An
     schema = param.get("schema")
     if isinstance(schema, dict):
         param = {**param, "schema": deref_schema(spec, schema)}
+    content = param.get("content")
+    if isinstance(content, dict):
+        param = {
+            **param,
+            "content": {
+                media_type: (
+                    {**media, "schema": deref_schema(spec, media["schema"])}
+                    if isinstance(media, dict) and isinstance(media.get("schema"), dict)
+                    else media
+                )
+                for media_type, media in content.items()
+            },
+        }
     return param
 
 
@@ -315,7 +328,7 @@ def merge_allof(node: Any, max_depth: int = 32) -> Any:
     for member in mergeable:
         for name, subschema in (member.get("properties") or {}).items():
             properties.setdefault(name, subschema)
-        for name in member.get("required") or []:
+        for name in _required_names(member):
             if name not in required:
                 required.append(name)
 
@@ -324,11 +337,14 @@ def merge_allof(node: Any, max_depth: int = 32) -> Any:
     # outrank anything the members declare.
     for name, subschema in (siblings.get("properties") or {}).items():
         properties[name] = subschema
-    for name in siblings.get("required") or []:
+    for name in _required_names(siblings):
         if name not in required:
             required.append(name)
 
-    merged: dict[str, Any] = {**siblings, "type": "object"}
+    merged: dict[str, Any] = {
+        **{k: v for k, v in siblings.items() if k != "required"},
+        "type": "object",
+    }
     if properties:
         merged["properties"] = properties
     if required:
@@ -694,6 +710,14 @@ def _strip_placeholders(segment: str) -> str:
     return out.strip(".")
 
 
+def _required_names(schema: dict[str, Any]) -> list[str]:
+    """Return a schema's ``required`` property names, ignoring a malformed value."""
+    required = schema.get("required")
+    if not isinstance(required, list):
+        return []
+    return [name for name in required if isinstance(name, str)]
+
+
 def detect_api_prefix(spec: dict[str, Any]) -> str:
     """Compute the longest slash-segmented prefix shared by every path."""
     paths = list(spec.get("paths", {}).keys())
@@ -776,10 +800,12 @@ def build_reference(
     router_map = build_router_map(spec, api_prefix=api_prefix)
 
     paths_out: dict[str, dict[str, Any]] = {}
+    from_get: set[str] = set()
     routers_out: dict[str, dict[str, Any]] = {}
     for url, methods in spec.get("paths", {}).items():
-        op = methods.get("get") or methods.get("post")
-        if not op:
+        is_get = isinstance(methods.get("get"), dict)
+        op = methods.get("get") if is_get else methods.get("post")
+        if not is_get and not op:
             continue
         parts = [p for p in url.strip("/").split("/") if p]
         if parts[: len(prefix_parts)] == prefix_parts:
@@ -791,7 +817,12 @@ def build_reference(
         ]
         cli_path = "/" + "/".join(non_template)
         op_desc = (op.get("description") or op.get("summary") or "").strip()
-        if cli_path not in paths_out or not paths_out[cli_path].get("description"):
+        if is_get and cli_path not in from_get:
+            paths_out[cli_path] = {"description": op_desc}
+            from_get.add(cli_path)
+        elif (is_get or cli_path not in from_get) and (
+            cli_path not in paths_out or not paths_out[cli_path].get("description")
+        ):
             paths_out[cli_path] = {"description": op_desc}
         tags = op.get("tags") or []
         tag_desc = tag_descriptions.get(tags[0]) if tags else ""
@@ -926,6 +957,7 @@ def _bundle_external_refs(
     *,
     timeout: float,
     headers: dict[str, str],
+    normalize: bool = True,
 ) -> dict[str, Any]:
     """Inline same-origin external refs while preserving root-local refs."""
     max_documents = 512
@@ -974,6 +1006,7 @@ def _bundle_external_refs(
                 content_type=content_type,
             ),
             url,
+            normalize=normalize,
         )
         documents[url] = parsed
         return parsed
@@ -1102,8 +1135,13 @@ def fetch_openapi(
     path: str | None = None,
     headers: dict[str, str] | None = None,
     query_params: dict[str, str] | None = None,
+    normalize: bool = True,
 ) -> dict[str, Any]:
-    """Fetch the OpenAPI spec at ``base_url`` and return the parsed dict."""
+    """Fetch the OpenAPI spec at ``base_url`` and return the parsed dict.
+
+    ``normalize=False`` returns the document as written, without rewriting
+    OpenAPI 3.1 ``type`` arrays (see ``expand_type_arrays``).
+    """
     explicit_path = path is not None
     full_url = (
         path
@@ -1130,12 +1168,14 @@ def fetch_openapi(
                     content_type=response.headers.get("content-type", ""),
                 ),
                 full_url,
+                normalize=normalize,
             )
             return _bundle_external_refs(
                 parsed,
                 str(getattr(response, "url", full_url)),
                 timeout=timeout,
                 headers=merged_headers,
+                normalize=normalize,
             )
         except ValueError as exc:
             parse_error = exc
@@ -1155,16 +1195,19 @@ def fetch_openapi(
     embedded = _extract_embedded_spec(landing.text)
     if embedded is not None:
         return _bundle_external_refs(
-            _ensure_openapi_dict(embedded, landing_url),
+            _ensure_openapi_dict(embedded, landing_url, normalize=normalize),
             str(getattr(landing, "url", landing_url)),
             timeout=timeout,
             headers=merged_headers,
+            normalize=normalize,
         )
 
     _raise_fetch_failure(response, parse_error, full_url)
 
 
-def _ensure_openapi_dict(parsed: Any, source_url: str) -> dict[str, Any]:
+def _ensure_openapi_dict(
+    parsed: Any, source_url: str, *, normalize: bool = True
+) -> dict[str, Any]:
     """Reject parsed bodies that aren't a JSON object (and thus can't be an OpenAPI doc)."""
     if not isinstance(parsed, dict):
         raise ValueError(
@@ -1173,7 +1216,7 @@ def _ensure_openapi_dict(parsed: Any, source_url: str) -> dict[str, Any]:
             "Pass --openapi-path to point at the real spec endpoint "
             "(e.g. /swagger/v1/swagger.json)."
         )
-    return expand_type_arrays(parsed)
+    return expand_type_arrays(parsed) if normalize else parsed
 
 
 def expand_type_arrays(node: Any) -> Any:

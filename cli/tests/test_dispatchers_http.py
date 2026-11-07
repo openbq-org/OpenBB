@@ -1,6 +1,7 @@
 """Tests for openbb_cli.dispatchers.http — HttpDispatcher against openbb-platform-api."""
 
 import json
+import re
 
 import httpx
 import pytest
@@ -2957,5 +2958,291 @@ async def test_dispatch_date_snapshot_skipped_when_limit_zero_or_invalid():
         await d.dispatch(Request(command="ds", params={"limit": "not-a-number"}))
         # No-limit also short-circuits via the ``raw_limit is None`` path.
         await d.dispatch(Request(command="ds", params={}))
+    finally:
+        await d.aclose()
+
+
+def test_partition_params_sends_json_list_style_as_json_array():
+    d = HttpDispatcher(
+        "http://test",
+        spec_doc={
+            "commands": {
+                "ticker.price": {
+                    "parameters": [
+                        {
+                            "name": "symbols",
+                            "in": "query",
+                            "is_list": True,
+                            "list_style": "json",
+                        }
+                    ]
+                }
+            }
+        },
+    )
+    for value in (["BTCUSDT", "ETHUSDT"], "BTCUSDT,ETHUSDT", '["BTCUSDT","ETHUSDT"]'):
+        query, _, _ = d._partition_params("ticker.price", {"symbols": value})
+        assert query == {"symbols": '["BTCUSDT","ETHUSDT"]'}
+
+
+def _sigmets_dispatcher(handler):
+    transport = httpx.MockTransport(handler)
+    client = httpx.AsyncClient(transport=transport, base_url="http://t")
+    templates = ["/sigmets/{atsu}/{date}", "/sigmets/{atsu}", "/sigmets"]
+    return HttpDispatcher(
+        "http://t",
+        client=client,
+        command_methods={"sigmets": "get"},
+        command_url_paths={"sigmets": templates},
+        spec_doc={
+            "commands": {
+                "sigmets": {
+                    "url_path": "/sigmets",
+                    "url_templates": templates,
+                    "template_query_params": {
+                        "/sigmets/{atsu}/{date}": [],
+                        "/sigmets/{atsu}": [],
+                        "/sigmets": ["date", "limit"],
+                    },
+                    "parameters": [
+                        {"name": "atsu", "in": "path"},
+                        {"name": "date", "in": "path"},
+                        {"name": "limit", "in": "query", "default": 500},
+                    ],
+                }
+            }
+        },
+    )
+
+
+@pytest.mark.asyncio
+async def test_dispatch_sends_only_the_query_params_the_chosen_url_declares():
+    captured = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(str(request.url))
+        return httpx.Response(200, json={})
+
+    d = _sigmets_dispatcher(handler)
+    try:
+        await d.dispatch(
+            Request(command="sigmets", params={"date": "2026-10-18", "limit": 500})
+        )
+        await d.dispatch(
+            Request(
+                command="sigmets",
+                params={"atsu": "KKCI", "date": "2026-10-18", "limit": 500},
+            )
+        )
+        await d.dispatch(Request(command="sigmets", params={"limit": 500}))
+    finally:
+        await d.aclose()
+    assert captured == [
+        "http://t/sigmets?date=2026-10-18&limit=500",
+        "http://t/sigmets/KKCI/2026-10-18",
+        "http://t/sigmets?limit=500",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_dispatch_spec_without_template_query_params_keeps_query_fallback():
+    captured = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(str(request.url))
+        return httpx.Response(200, json={})
+
+    d = _sigmets_dispatcher(handler)
+    del d._spec_doc["commands"]["sigmets"]["template_query_params"]
+    try:
+        await d.dispatch(Request(command="sigmets", params={"date": "2026-10-18"}))
+        await d.dispatch(
+            Request(command="sigmets", params={"atsu": "KKCI", "date": "2026-10-18"})
+        )
+    finally:
+        await d.aclose()
+    assert captured == [
+        "http://t/sigmets?date=2026-10-18",
+        "http://t/sigmets/KKCI/2026-10-18",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_dispatch_argparse_boolean_default_does_not_pick_or_block_a_url():
+    captured = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(str(request.url))
+        return httpx.Response(200, json={})
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.AsyncClient(transport=transport, base_url="http://t")
+    templates = ["/v/{n}/{flag}", "/v"]
+    d = HttpDispatcher(
+        "http://t",
+        client=client,
+        command_methods={"v": "get"},
+        command_url_paths={"v": templates},
+        spec_doc={
+            "commands": {
+                "v": {
+                    "url_templates": templates,
+                    "template_query_params": {"/v/{n}/{flag}": [], "/v": ["q"]},
+                    "parameters": [
+                        {"name": "n", "in": "path"},
+                        {"name": "flag", "in": "path", "type": "boolean"},
+                        {"name": "q", "in": "query"},
+                    ],
+                }
+            }
+        },
+    )
+    try:
+        await d.dispatch(Request(command="v", params={"flag": False, "q": "a"}))
+        await d.dispatch(Request(command="v", params={"n": 3, "flag": True}))
+    finally:
+        await d.aclose()
+    assert captured == ["http://t/v?q=a", "http://t/v/3/true"]
+
+
+@pytest.mark.asyncio
+async def test_dispatch_rejects_path_values_that_form_no_url_without_a_request():
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise AssertionError(f"unexpected request to {request.url}")
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.AsyncClient(transport=transport, base_url="http://t")
+    d = HttpDispatcher(
+        "http://t",
+        client=client,
+        command_methods={"cwas": "get"},
+        command_url_paths={"cwas": ["/cwas/{id}", "/cwas/{id}/{date}/{seq}"]},
+    )
+    try:
+        resp = await d.dispatch(
+            Request(command="cwas", params={"id": "ZAB", "date": "2026-10-18"})
+        )
+    finally:
+        await d.aclose()
+    assert not resp.ok
+    assert "do not form a URL" in resp.error.message
+
+
+def test_partition_params_json_list_from_argparse_lists_and_typed_items():
+    d = HttpDispatcher(
+        "http://test",
+        spec_doc={
+            "commands": {
+                "orders": {
+                    "parameters": [
+                        {
+                            "name": "symbols",
+                            "in": "query",
+                            "is_list": True,
+                            "list_style": "json",
+                        },
+                        {
+                            "name": "ids",
+                            "in": "query",
+                            "is_list": True,
+                            "list_style": "json",
+                            "type": "integer",
+                        },
+                    ]
+                }
+            }
+        },
+    )
+    cases = [
+        ({"symbols": ['["BTCUSDT","ETHUSDT"]']}, {"symbols": '["BTCUSDT","ETHUSDT"]'}),
+        ({"symbols": ["BTCUSDT,ETHUSDT"]}, {"symbols": '["BTCUSDT","ETHUSDT"]'}),
+        ({"symbols": ["BTCUSDT", "ETHUSDT"]}, {"symbols": '["BTCUSDT","ETHUSDT"]'}),
+        ({"ids": [1, 2]}, {"ids": "[1,2]"}),
+        ({"ids": "1,2"}, {"ids": "[1,2]"}),
+        ({"symbols": ""}, {}),
+        ({"symbols": [""]}, {}),
+        ({"symbols": ["  "]}, {}),
+    ]
+    for params, expected in cases:
+        query, _, _ = d._partition_params("orders", params)
+        assert query == expected, params
+
+
+def test_shape_result_keeps_a_single_positional_row_whole():
+    from openbb_cli.dispatchers.http import _shape_result
+
+    cmd_spec = {
+        "response_schema": {
+            "type": "array",
+            "items": {"type": "array", "items": {"type": "string"}},
+        }
+    }
+    assert _shape_result([[1, "a", "b"]], cmd_spec) == [[1, "a", "b"]]
+    assert _shape_result([[1, "a"], [2, "b"]], cmd_spec) == [[1, "a"], [2, "b"]]
+
+
+def test_check_required_groups_ignores_optional_members_at_their_default():
+    from openbb_cli.dispatchers.http import _check_required_groups
+
+    cmd_spec = {
+        "parameters": [
+            {"name": "symbol"},
+            {"name": "isin"},
+            {"name": "limit", "default": 10},
+        ],
+        "required_groups": [
+            {
+                "combinator": "oneOf",
+                "alternatives": [["symbol"], ["isin"]],
+                "members": ["symbol", "isin", "limit"],
+                "required": False,
+            }
+        ],
+    }
+    _check_required_groups(cmd_spec, {"limit": 10, "index": "idx1"})
+    _check_required_groups(cmd_spec, {"symbol": "A", "limit": 5})
+    with pytest.raises(
+        ValueError, match=re.escape("Pass exactly one of: symbol | isin")
+    ):
+        _check_required_groups(cmd_spec, {"limit": 5})
+
+
+@pytest.mark.asyncio
+async def test_dispatch_enforces_required_groups_without_a_request():
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise AssertionError(f"unexpected request to {request.url}")
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.AsyncClient(transport=transport, base_url="http://t")
+    d = HttpDispatcher(
+        "http://t",
+        client=client,
+        command_methods={"ticker": "get"},
+        command_url_paths={"ticker": "/ticker"},
+        spec_doc={
+            "commands": {
+                "ticker": {
+                    "url_path": "/ticker",
+                    "parameters": [
+                        {"name": "symbol", "in": "query"},
+                        {"name": "symbols", "in": "query"},
+                    ],
+                    "required_groups": [
+                        {
+                            "combinator": "oneOf",
+                            "alternatives": [["symbol"], ["symbols"]],
+                            "members": ["symbol", "symbols"],
+                            "required": True,
+                        }
+                    ],
+                }
+            }
+        },
+    )
+    try:
+        for params in ({}, {"symbol": "A", "symbols": "B"}):
+            resp = await d.dispatch(Request(command="ticker", params=params))
+            assert not resp.ok
+            assert "Pass exactly one of: symbol | symbols" in resp.error.message
     finally:
         await d.aclose()

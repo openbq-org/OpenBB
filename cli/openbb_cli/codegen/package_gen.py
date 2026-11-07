@@ -31,6 +31,7 @@ from openbb_cli.codegen.router_gen import (
     GeneratedRouter,
     GeneratedRouters,
     generate_routers,
+    mounted_command_paths,
 )
 from openbb_cli.codegen.test_gen import GeneratedTestModule, generate_provider_tests
 
@@ -68,6 +69,7 @@ class GeneratedPackage:
     base_url: str = ""
     commands_by_provider: dict[str, list[str]] = field(default_factory=dict)
     test_modules: list[GeneratedTestModule] = field(default_factory=list)
+    command_paths: dict[str, str] = field(default_factory=dict)
 
     def write(self) -> Path:
         """Materialize the project on disk under ``self.root``.
@@ -195,7 +197,7 @@ class GeneratedPackage:
                 None,
             )
             model = fetcher.model_name if fetcher else "Returns OBBject"
-            return dotted, model
+            return self.command_paths.get(dotted, dotted), model
         return None
 
     def _providers_section(self, ns: str) -> str:
@@ -220,8 +222,9 @@ class GeneratedPackage:
         groups: dict[str, list[tuple[str, str]]] = {}
         for prov, dotted_paths in self.commands_by_provider.items():
             for dotted in sorted(dotted_paths):
-                top = dotted.split(".", 1)[0]
-                groups.setdefault(top, []).append((dotted, prov))
+                mounted = self.command_paths.get(dotted, dotted)
+                top = mounted.split(".", 1)[0]
+                groups.setdefault(top, []).append((mounted, prov))
         for top in sorted(groups):
             lines.append(f"### `obb.{ns}.{top}`\n")
             for dotted, prov in groups[top]:
@@ -647,6 +650,7 @@ def generate_packages(
         base_url=base_url,
         commands_by_provider=commands_by_provider,
         test_modules=test_modules,
+        command_paths=mounted_command_paths(full_tree),
     )
     return GeneratedPackageSet(packages=[package])
 
