@@ -40,6 +40,7 @@ from openbb_platform_api.service.agents_service import (
 from openbb_platform_api.service.apps_service import (
     get_additional_apps,
     has_additional_apps,
+    load_default_apps,
 )
 from openbb_platform_api.service.widgets_service import get_widgets_json
 from openbb_platform_api.utils.network import check_port, get_user_settings
@@ -133,12 +134,9 @@ _apply_configured_middleware()
 WIDGETS_PATH = kwargs.pop("widgets-json", None)
 APPS_PATH = kwargs.pop("apps-json", None)
 EDITABLE = kwargs.pop("editable", None) is True or WIDGETS_PATH is not None
-DEFAULT_APPS_PATH = (
-    Path(__file__)
-    .absolute()
-    .parents[1]
-    .joinpath("assets")
-    .joinpath("default_apps.json")
+DEFAULT_APPS_PATH = os.environ.get(
+    "OPENBB_DEFAULT_APPS_PATH",
+    Path(__file__).absolute().parents[1] / "assets" / "default_apps.json",
 )
 AGENTS_PATH = kwargs.pop("agents-json", None)
 build = kwargs.pop("build", True)
@@ -272,8 +270,7 @@ if not has_root_apps:
                 templates_file.write(json.dumps([]))
 
         if os.path.exists(DEFAULT_APPS_PATH):
-            with open(DEFAULT_APPS_PATH, encoding="utf-8") as f:
-                default_templates = json.load(f)
+            default_templates = load_default_apps(DEFAULT_APPS_PATH)
 
         if has_additional_apps(app):
             additional_apps = await get_additional_apps(app)
