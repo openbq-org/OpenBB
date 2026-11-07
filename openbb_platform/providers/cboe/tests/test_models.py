@@ -1071,6 +1071,57 @@ class TestOptionsChains:
         assert set(result.result.option_type) == {"call", "put"}
         assert result.result.dte
 
+    def test_transform_parses_digit_bearing_roots(self, raw_options_chain):
+        """Roots containing digits, like B1SPY, still parse from the fixed suffix."""
+        rows = raw_options_chain["data"]["options"]
+        digit_root = dict(rows[0])
+        digit_root["option"] = "B1" + rows[0]["option"]
+        raw_options_chain["data"]["options"] = [*rows, digit_root]
+
+        query = CboeOptionsChainsFetcher.transform_query({"symbol": "CLX"})
+        result = CboeOptionsChainsFetcher.transform_data(query, raw_options_chain)
+
+        parsed = {
+            symbol: (expiration, strike, option_type, underlying)
+            for symbol, expiration, strike, option_type, underlying in zip(
+                result.result.contract_symbol,
+                result.result.expiration,
+                result.result.strike,
+                result.result.option_type,
+                result.result.underlying_symbol,
+            )
+        }
+        base = parsed[rows[0]["option"]]
+        derived = parsed[digit_root["option"]]
+
+        assert derived[0] == base[0]
+        assert derived[1] == base[1]
+        assert derived[2] == base[2]
+        assert derived[3] == "B1CLX"
+
+    def test_transform_skips_non_occ_contracts(self, raw_options_chain):
+        """Rows that are not OCC option symbols are skipped."""
+        rows = raw_options_chain["data"]["options"]
+        invalid = dict(rows[0])
+        invalid["option"] = "NOT_AN_OCC_SYMBOL"
+        raw_options_chain["data"]["options"] = [*rows, invalid]
+
+        query = CboeOptionsChainsFetcher.transform_query({"symbol": "CLX"})
+        result = CboeOptionsChainsFetcher.transform_data(query, raw_options_chain)
+
+        assert invalid["option"] not in result.result.contract_symbol
+        assert len(result.result.contract_symbol) == len(rows)
+
+    def test_transform_rejects_payloads_without_valid_contracts(
+        self, raw_options_chain
+    ):
+        """A payload with no OCC symbols raises EmptyDataError."""
+        raw_options_chain["data"]["options"] = [{"option": "NOT_AN_OCC_SYMBOL"}]
+
+        query = CboeOptionsChainsFetcher.transform_query({"symbol": "CLX"})
+        with pytest.raises(EmptyDataError):
+            CboeOptionsChainsFetcher.transform_data(query, raw_options_chain)
+
     def test_normalizes_underlying_percentages(self, raw_options_chain):
         """The underlying percent-change fields are normalized in the metadata."""
         raw_options_chain["data"]["percent_change"] = 2.0
