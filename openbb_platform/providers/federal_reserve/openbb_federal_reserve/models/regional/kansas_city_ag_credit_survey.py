@@ -12,12 +12,11 @@ from pydantic import Field
 
 _TABLES = {
     "land_values": (
-        "https://www.kansascityfed.org/Ag%20Credit/documents/7623/landvalues.xlsx",
+        7623,
         "Sheet1",
     ),
     "credit_conditions": (
-        "https://www.kansascityfed.org/Ag%20Credit/documents/7620"
-        "/creditconditions.xlsx",
+        7620,
         "Sheet1",
     ),
 }
@@ -83,12 +82,13 @@ class FederalReserveKansasCityAgCreditSurveyFetcher(
             seconds_until_next_release,
         )
         from openbb_federal_reserve.utils.kansas_city import fetch_kansas_city
+        from openbb_federal_reserve.utils.kansas_city_ag import resolve_kc_ag_url
 
-        url = _TABLES[query.table][0]
+        document_id = _TABLES[query.table][0]
         content = cached(
             ("kansas_city_ag_credit_survey", query.table),
             lambda: seconds_until_next_release("quarterly"),
-            lambda: fetch_kansas_city(url),
+            lambda: fetch_kansas_city(resolve_kc_ag_url(document_id)),
         )
         if not content:
             raise EmptyDataError("The request was returned empty.")
