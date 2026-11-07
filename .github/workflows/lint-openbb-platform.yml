@@ -6,8 +6,6 @@ env:
 on:
   pull_request:
     types: [opened, synchronize, edited]
-  merge_group:
-    types: [checks_requested]
 
 concurrency:
   group: ${{ github.event_name }}-${{ github.repository }}-${{ github.ref }}
