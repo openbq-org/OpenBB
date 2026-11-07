@@ -184,3 +184,41 @@ async def test_unauthorized_handler(monkeypatch):
     err = UnauthorizedError("nope")
     resp = await ExceptionHandlers.unauthorized(_make_request(), err)
     assert resp.status_code == 502
+
+
+@pytest.mark.asyncio
+async def test_validation_handler_missing_fetcher_param_is_routed_to_query(monkeypatch):
+    monkeypatch.setattr(
+        "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
+    )
+
+    class FetcherQueryParams(BaseModel):
+        category: str
+
+    try:
+        FetcherQueryParams()  # type: ignore[call-arg]
+    except ValidationError as error:
+        response = await ExceptionHandlers.validation(_make_request(), error)
+    else:
+        raise AssertionError("FetcherQueryParams should require category")
+
+    assert response.status_code == 422
+    assert json.loads(response.body)["detail"][0]["loc"] == ["query", "category"]
+
+
+@pytest.mark.asyncio
+async def test_validation_handler_preserves_explicit_body_location(monkeypatch):
+    monkeypatch.setattr(
+        "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
+    )
+
+    class QueryParamsError(Exception):
+        title = "QueryParams"
+
+        def errors(self, include_url=False):
+            return [{"type": "missing", "loc": ("body", "category"), "msg": "Field required"}]
+
+    response = await ExceptionHandlers.validation(_make_request(), QueryParamsError("bad"))  # type: ignore[arg-type]
+
+    assert response.status_code == 422
+    assert json.loads(response.body)["detail"][0]["loc"] == ["body", "category"]
