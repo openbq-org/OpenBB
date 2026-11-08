@@ -259,6 +259,30 @@ class TestErsLivestockAndMeatDomesticDataUtils:
         assert calls == [(ZIP_MEDIA, PRODUCT_PAGE)]
         assert any(r["column"] == "Total Production (Million pounds)" for r in records)
 
+    def test_afetch_table_string_member(self, monkeypatch):
+        """afetch_table reads a catalog member configured as a string."""
+        calls = []
+        buffer = BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            archive.writestr(f"{ZIP_DIR}/LivestockPrices.csv", LIVESTOCK_PRICES_CSV)
+        content = buffer.getvalue()
+
+        async def fake_afetch_ers_file(media_path, product=None, ttl=None):
+            calls.append((media_path, product))
+            return content
+
+        monkeypatch.setattr(
+            "openbb_government_us.usda.utils.ers_client.afetch_ers_file",
+            fake_afetch_ers_file,
+        )
+        records = asyncio.run(
+            ers_livestock_and_meat_domestic_data.afetch_table("livestock_prices")
+        )
+
+        assert calls == [(ZIP_MEDIA, PRODUCT_PAGE)]
+        assert len(records) == 3
+        assert {record["period"] for record in records} == {"January", "February"}
+
 
 class TestLivestockAndMeatDomesticData:
     """Tests for the LivestockAndMeatDomesticData model."""
