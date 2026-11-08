@@ -67,7 +67,11 @@ class EiaCatalogBuildHook(BuildHookInterface):
                     " (api.eia.gov/v2, requires EIA_API_KEY or the OpenBB"
                     " 'eia_api_key' credential)..."
                 )
-                env = {**os.environ, "PYTHONUNBUFFERED": "1"}
+                env = {
+                    **os.environ,
+                    "PYTHONUNBUFFERED": "1",
+                    "PYTHONIOENCODING": "utf-8",
+                }
                 proc = subprocess.Popen(  # noqa: S603
                     [sys.executable, str(_GENERATE_CATALOG), "--asset-only"],
                     cwd=str(_ROOT),
@@ -75,6 +79,8 @@ class EiaCatalogBuildHook(BuildHookInterface):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
+                    encoding="utf-8",
+                    errors="replace",
                     bufsize=1,
                 )
                 assert proc.stdout is not None  # noqa: S101
