@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import ast
+import re
+
+import pytest
 
 from openbb_cli.codegen import fetcher_gen as fg
 
@@ -147,9 +150,9 @@ def test_query_params_schema_handles_list_param_with_choices():
     }
     out = fg._query_params_schema(cmd, provider_name="fmp")
     tickers = out["properties"]["tickers"]
-    assert tickers["type"] == "array"
-    assert tickers["items"] == {"type": "string"}
-    assert tickers["enum"] == ["AAPL", "MSFT"]
+    assert tickers["type"] == "string"
+    assert tickers["x-multiple-items"] is True
+    assert tickers["x-choices"] == ["AAPL", "MSFT"]
     assert tickers["description"] == "Tickers."
 
 
@@ -245,7 +248,7 @@ def test_data_schema_descends_into_obbject_anyof_array_items():
     }
 
 
-def test_data_schema_descends_into_oneof_inside_results():
+def test_data_schema_merges_oneof_variants_inside_results():
     response = {
         "properties": {
             "results": {
@@ -260,7 +263,7 @@ def test_data_schema_descends_into_oneof_inside_results():
         }
     }
     out = fg._data_schema({"response_schema": response})
-    assert out["properties"] == {"a": {"type": "string"}}
+    assert out["properties"] == {"a": {"type": "string"}, "b": {"type": "integer"}}
 
 
 def test_data_schema_returns_top_level_for_multi_field_non_obbject_response():
@@ -389,11 +392,12 @@ def test_data_schema_top_level_array_of_scalars_unwraps_to_value_field():
     }
 
 
-def test_data_schema_descends_into_single_array_among_scalar_siblings():
-    """Multi-property row with exactly one array property → descend into
-    the array's items, mirroring runtime ``unpack_response`` behavior
-    (single array among scalar siblings = the data, siblings = metadata).
-    The auction-shaped wrapper dissolves to the inner ``details`` shape.
+def test_data_schema_does_not_unwrap_inside_a_row():
+    """Envelopes are unwrapped down to the rows, and no further.
+
+    ``ambs -> auctions`` are single-property wrappers; the auctions are the
+    rows (that is what ``unpack_response`` returns), so a row that happens to
+    hold one array of records (``details``) keeps all of its own fields.
     """
     response = {
         "type": "object",
@@ -422,14 +426,43 @@ def test_data_schema_descends_into_single_array_among_scalar_siblings():
         },
     }
     out = fg._data_schema({"response_schema": response})
-    # Descended ambs → auctions (single-property envelopes) → auction items
-    # (multi-property with one array sibling ``details``) → details items.
-    assert "flag" in out.get("properties", {})
-    assert "auctionStatus" not in out.get("properties", {})
+    assert set(out["properties"]) == {
+        "auctionStatus",
+        "operationId",
+        "operationDate",
+        "details",
+    }
 
 
-def test_data_schema_descends_oneOf_to_first_concrete_variant():
-    """Top-level ``oneOf`` (after envelope strip) selects the first dict variant."""
+def test_row_with_several_arrays_is_not_unwrapped_into_one_of_them():
+    """An alert has ``affectedZones`` (strings) and ``references`` (records): it is the row."""
+    alert = {
+        "type": "object",
+        "properties": {
+            "id": {"type": "string"},
+            "affectedZones": {"type": "array", "items": {"type": "string"}},
+            "references": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {"identifier": {"type": "string"}},
+                },
+            },
+        },
+    }
+    response = {
+        "type": "object",
+        "properties": {
+            "@graph": {"type": "array", "items": alert},
+            "title": {"type": "string"},
+        },
+    }
+    out = fg._data_schema({"response_schema": response})
+    assert set(out["properties"]) == {"id", "affectedZones", "references"}
+
+
+def test_data_schema_merges_oneOf_variants_after_envelope_strip():
+    """A ``oneOf`` of object shapes models every variant, not just the first."""
     response = {
         "type": "object",
         "properties": {
@@ -445,7 +478,7 @@ def test_data_schema_descends_oneOf_to_first_concrete_variant():
         },
     }
     out = fg._data_schema({"response_schema": response})
-    assert out.get("properties") == {"a": {"type": "string"}}
+    assert out.get("properties") == {"a": {"type": "string"}, "b": {"type": "integer"}}
 
 
 def test_unwrap_schema_envelopes_returns_empty_for_non_dict_input():
@@ -1096,3 +1129,968 @@ def test_generate_fetcher_module_required_cookie_reaches_the_request():
     assert "_cookies['xero-session'] = _cred_xero_session" in src
     assert "cookies=_cookies" in src
     ast.parse(src)
+
+
+def test_query_field_name_snake_cases_with_wire_alias():
+    from openbb_cli.codegen.pydantic_gen import generate_class, query_field_name
+
+    assert query_field_name("zoneId") == "zone_id"
+    assert query_field_name("User-Agent") == "user_agent"
+    assert query_field_name("HTTPStatus") == "http_status"
+    src = generate_class(
+        {
+            "type": "object",
+            "properties": {"zoneId": {"type": "string"}},
+            "required": ["zoneId"],
+        },
+        class_name="Q",
+        base_class="QueryParams",
+    ).source
+    assert "zone_id: str = Field(" in src and "zoneId" in src
+
+
+def test_response_shape_is_decided_by_the_schema_only():
+    arr = {
+        "type": "array",
+        "items": {"type": "object", "properties": {"a": {"type": "string"}}},
+    }
+    # exactly one array property -> its items are the rows, whatever the siblings
+    env = {
+        "properties": {
+            "@context": {"anyOf": [{"type": "array"}, {"type": "object"}]},
+            "title": {"type": "string"},
+            "features": arr,
+        }
+    }
+    assert fg._response_shape(env) == ("features", "list")
+    # items declared without ``type: array`` still count as an array
+    assert fg._response_shape({"properties": {"x": {"items": {"type": "object"}}}}) == (
+        "x",
+        "list",
+    )
+    # two arrays: ambiguous, so the object itself is the row
+    two = {"properties": {"a": arr, "b": arr, "c": {"type": "string"}}}
+    assert fg._response_shape(two) == (None, "single")
+    assert 'kind="single"' in fg._unpack_hint({"response_schema": two})
+    assert (
+        fg._unpack_hint({"response_schema": env})
+        == ", rows_key='features', kind='list'"
+    )
+
+
+def test_unpack_response_follows_schema_hint_and_keeps_everything():
+    from openbb_cli.dispatchers._unpack import unpack_response
+
+    payload = {
+        "@context": ["u"],
+        "title": "t",
+        "features": [{"id": 1}],
+        "other": [{"z": 1}],
+    }
+    rows, meta = unpack_response(payload, rows_key="features", kind="list")
+    assert rows == [{"id": 1}]
+    assert meta == {"@context": ["u"], "title": "t", "other": [{"z": 1}]}
+    rows, meta = unpack_response(payload, kind="single")
+    assert rows == [payload] and meta == {}
+    # GeoJSON features are returned as the schema defines them: untouched
+    feat = {
+        "type": "FeatureCollection",
+        "features": [{"type": "Feature", "properties": {"a": 1}}],
+    }
+    assert (
+        unpack_response(feat, rows_key="features", kind="list")[0] == feat["features"]
+    )
+
+
+def test_response_shape_uses_item_types_to_pick_among_arrays_and_unpacks_maps():
+    obj = {"type": "object", "properties": {"id": {"type": "string"}}}
+    graph = {"type": "array", "items": obj}
+    urls = {"type": "array", "items": {"type": "string"}}
+    # station list: objects in ``@graph``, the same stations as URLs beside it
+    assert fg._response_shape(
+        {"properties": {"@graph": graph, "observationStations": urls}}
+    ) == ("@graph", "list")
+    # two arrays of objects stay ambiguous: the object is the row (an observation)
+    assert fg._response_shape(
+        {"properties": {"a": graph, "b": graph, "t": {"type": "string"}}}
+    ) == (None, "single")
+    # a lone free-form map unpacks to key/value rows
+    mapped = {
+        "properties": {
+            "@context": {"type": "array"},
+            "locations": {"type": "object", "additionalProperties": {"type": "string"}},
+        }
+    }
+    assert fg._response_shape(mapped) == ("locations", "map")
+    row = fg._unwrap_schema_envelopes(mapped)
+    assert set(row["properties"]) == {"key", "value"}
+
+    from openbb_cli.dispatchers._unpack import unpack_response
+
+    rows, meta = unpack_response(
+        {"@context": [], "locations": {"A": "x", "B": None}},
+        rows_key="locations",
+        kind="map",
+    )
+    assert rows == [
+        {"key": "A", "value": "x"},
+        {"key": "B", "value": None},
+    ] and meta == {"@context": []}
+
+
+def test_merge_object_variants_unions_fields_enums_and_required():
+    status = {"type": "string", "enum": ["Released", "Cancelled"]}
+    schema = {
+        "anyOf": [
+            {
+                "properties": {
+                    "id": {"type": "string"},
+                    "status": status,
+                    "x": {"type": "integer"},
+                },
+                "required": ["id", "x"],
+            },
+            # results shape: ``status`` is the plain string "Results" (no enum), has its own fields
+            {
+                "properties": {
+                    "id": {"type": "string"},
+                    "status": {"type": "string"},
+                    "totals": {"type": "number"},
+                },
+                "required": ["id"],
+            },
+        ]
+    }
+    out = fg._merge_object_variants(schema)
+    assert set(out["properties"]) == {"id", "status", "x", "totals"}
+    # an enum in one variant and the plain type in another admits both
+    assert "enum" not in out["properties"]["status"]
+    # a field is required only if every variant requires it
+    assert out["required"] == ["id"]
+    # same-typed enums are unioned
+    a = {"type": "string", "enum": ["A", "B"]}
+    b = {"type": "string", "enum": ["B", "C"]}
+    assert fg._merge_prop_schemas(a, b)["enum"] == ["A", "B", "C"]
+    # not a union of 2+ objects -> no merge
+    assert (
+        fg._merge_object_variants({"anyOf": [{"type": "string"}, {"type": "null"}]})
+        is None
+    )
+
+
+def test_scalar_array_beside_other_fields_is_a_field_not_the_rows():
+    soma = {
+        "type": "object",
+        "properties": {
+            "soma": {
+                "type": "object",
+                "properties": {
+                    "asOfDate": {"type": "string"},
+                    "wam": {"type": "number"},
+                    "securityTypes": {"type": "array", "items": {"type": "string"}},
+                },
+            }
+        },
+    }
+    out = fg._data_schema({"response_schema": soma})
+    assert set(out["properties"]) == {"asOfDate", "wam", "securityTypes"}
+    # ...but a scalar array standing alone (beside JSON-LD keys) is the rows
+    types = {
+        "type": "object",
+        "properties": {
+            "@context": {"type": "array"},
+            "eventTypes": {"type": "array", "items": {"type": "string"}},
+        },
+    }
+    assert set(fg._data_schema({"response_schema": types})["properties"]) == {"value"}
+
+
+def test_oneof_of_wrapper_variants_models_the_rows_inside_each():
+    def variant(key, field):
+        return {
+            "properties": {
+                key: {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "details": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {field: {"type": "string"}},
+                            },
+                        },
+                    },
+                }
+            }
+        }
+
+    response = {
+        "type": "object",
+        "properties": {
+            "guidesheet": {
+                "type": "object",
+                "oneOf": [
+                    variant("si", "cusip"),
+                    variant("wi", "cusip"),
+                    variant("fs", "formLine"),
+                ],
+            }
+        },
+    }
+    out = fg._data_schema({"response_schema": response})
+    assert set(out["properties"]) == {"cusip", "formLine"}
+    # one-field *rows* in a union are not wrappers
+    flat = {
+        "oneOf": [
+            {"properties": {"a": {"type": "string"}}},
+            {"properties": {"b": {"type": "string"}}},
+        ]
+    }
+    assert fg._wrapper_choice_rows(flat) is None
+
+
+_KLINES_RESPONSE = {
+    "type": "array",
+    "items": {
+        "type": "array",
+        "items": {"oneOf": [{"type": "integer"}, {"type": "string"}]},
+    },
+}
+
+
+def test_response_shape_marks_array_of_arrays_as_tuples():
+    assert fg._response_shape(_KLINES_RESPONSE) == (None, "tuples")
+    assert fg._response_shape({"type": "array", "items": {"items": {}}}) == (
+        None,
+        "tuples",
+    )
+    assert fg._response_shape({"type": "array", "items": {"type": "object"}}) == (
+        None,
+        "records",
+    )
+    union_items = {"oneOf": [{"type": "object"}, {"type": "array"}]}
+    assert fg._response_shape({"type": "array", "items": union_items}) == (
+        None,
+        None,
+    )
+
+
+def test_unpack_hint_for_array_of_arrays():
+    assert fg._unpack_hint({"response_schema": _KLINES_RESPONSE}) == ', kind="tuples"'
+
+
+def test_data_schema_array_of_arrays_is_one_row_per_inner_array():
+    out = fg._data_schema({"response_schema": _KLINES_RESPONSE})
+    assert out == {
+        "type": "object",
+        "properties": {"value": _KLINES_RESPONSE["items"]},
+        "required": ["value"],
+    }
+
+
+def test_generate_fetcher_module_types_tuple_rows_as_lists():
+    spec = fg.FetcherCommandSpec(
+        name="klines",
+        cmd_spec={
+            "url_path": "/api/v3/klines",
+            "method": "get",
+            "parameters": [],
+            "request_body_schema": None,
+            "response_schema": _KLINES_RESPONSE,
+        },
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+    src = fg.generate_fetcher_module(spec).source
+    assert "value: list[int | str]" in src
+    assert 'unpack_response(_payload, kind="tuples")' in src
+    ast.parse(src)
+
+
+_GROUP = {
+    "combinator": "oneOf",
+    "alternatives": [["symbol"], ["symbols"]],
+    "members": ["symbol", "symbols"],
+    "required": True,
+}
+
+
+def _grouped_cmd_spec(groups):
+    return {
+        "url_path": "/api/v3/ticker",
+        "method": "get",
+        "parameters": [
+            {"name": "symbol", "in": "query", "type": "string"},
+            {"name": "symbols", "in": "query", "type": "string"},
+        ],
+        "required_groups": groups,
+        "request_body_schema": None,
+        "response_schema": {"type": "object", "properties": {"x": {"type": "string"}}},
+    }
+
+
+def test_query_params_schema_carries_required_groups():
+    schema = fg._query_params_schema(_grouped_cmd_spec([_GROUP]), "prov")
+    assert schema["x-required-groups"] == [_GROUP]
+
+
+def test_query_params_schema_drops_groups_naming_missing_fields():
+    stale = {**_GROUP, "alternatives": [["symbol"], ["gone"]]}
+    schema = fg._query_params_schema(_grouped_cmd_spec([stale]), "prov")
+    assert "x-required-groups" not in schema
+
+
+def test_generate_fetcher_module_enforces_required_groups():
+    spec = fg.FetcherCommandSpec(
+        name="ticker",
+        cmd_spec=_grouped_cmd_spec([_GROUP]),
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+    src = fg.generate_fetcher_module(spec).source
+    model = _exec_query_params(src, "TickerQueryParams")
+    model(symbol="BTCUSDT")
+    with pytest.raises(
+        ValueError, match=re.escape("Pass exactly one of: symbol | symbols")
+    ):
+        model()
+
+
+def _exec_query_params(src: str, class_name: str):
+    """Exec a generated fetcher module with its package-relative imports stubbed."""
+    import re
+    import sys
+    import types
+
+    assert re.search(r"^from pydantic import .*\bmodel_validator\b", src, re.M)
+    utils = types.ModuleType("_generated_utils")
+    from openbb_cli.dispatchers import _unpack
+
+    utils.__dict__.update(_unpack.__dict__)
+    sys.modules["_generated_utils"] = utils
+    try:
+        namespace: dict = {}
+        exec(  # noqa: S102
+            src.replace("from ....utils import", "from _generated_utils import"),
+            namespace,
+        )
+        return namespace[class_name]
+    finally:
+        sys.modules.pop("_generated_utils", None)
+
+
+def test_generate_streaming_fetcher_module_enforces_required_groups():
+    cmd_spec = _grouped_cmd_spec([_GROUP])
+    cmd_spec["response_schemas"] = {"200": {"text/event-stream": {}}}
+    spec = fg.FetcherCommandSpec(
+        name="ticker",
+        cmd_spec=cmd_spec,
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+    out = fg.generate_fetcher_module(spec)
+    assert out.is_streaming
+    model = _exec_query_params(out.source, "TickerQueryParams")
+    with pytest.raises(ValueError, match="Pass exactly one of"):
+        model(symbol="A", symbols="B")
+
+
+def test_generated_fetchers_url_encode_the_query():
+    spec = fg.FetcherCommandSpec(
+        name="klines",
+        cmd_spec=_grouped_cmd_spec([]),
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+    src = fg.generate_fetcher_module(spec).source
+    assert "_query_string = encode_query(_query_dict)" in src
+    assert "get_querystring" not in src
+
+
+def test_json_list_param_is_sent_as_a_json_array():
+    cmd_spec = _grouped_cmd_spec([])
+    cmd_spec["parameters"][1].update(is_list=True, list_style="json")
+    spec = fg.FetcherCommandSpec(
+        name="ticker",
+        cmd_spec=cmd_spec,
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+    src = fg.generate_fetcher_module(spec).source
+    assert '_query_dict["symbols"] = json_array(_query_dict["symbols"])' in src or (
+        "_query_dict['symbols'] = json_array(_query_dict['symbols'])" in src
+    )
+    assert re.search(r"^from \.\.\.\.utils import .*\bjson_array\b", src, re.M)
+    assert (
+        '"multiple_items_allowed": True' in src
+        or "'multiple_items_allowed': True" in src
+    )
+    ast.parse(src)
+
+
+def test_list_param_lines_json_style():
+    lines = fg._list_param_lines("symbols", "json")
+    assert lines == [
+        "        if isinstance(_query_dict.get('symbols'), str):",
+        "            _query_dict['symbols'] = json_array(_query_dict['symbols'])",
+    ]
+
+
+def _merged_cmd_spec(**extra):
+    return {
+        "url_path": "/aviation/sigmets",
+        "url_templates": [
+            "/aviation/sigmets/{atsu}/{issueDate}",
+            "/aviation/sigmets/{atsu}",
+            "/aviation/sigmets",
+        ],
+        "template_query_params": {
+            "/aviation/sigmets/{atsu}/{issueDate}": [],
+            "/aviation/sigmets/{atsu}": [],
+            "/aviation/sigmets": ["issueDate", "limit"],
+        },
+        "method": "get",
+        "parameters": [
+            {"name": "atsu", "in": "path", "type": "string", "required": False},
+            {"name": "issueDate", "in": "path", "type": "string", "required": False},
+            {"name": "limit", "in": "query", "type": "integer", "default": 500},
+        ],
+        "request_body_schema": None,
+        "response_schema": {"type": "object", "properties": {"x": {"type": "string"}}},
+        **extra,
+    }
+
+
+def _merged_spec(**extra):
+    return fg.FetcherCommandSpec(
+        name="aviation.sigmets",
+        cmd_spec=_merged_cmd_spec(**extra),
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+
+
+def test_url_choices_only_for_merged_commands():
+    attributes = {"atsu": "atsu", "issueDate": "issue_date", "limit": "limit"}
+    assert fg.url_choices_for({"url_path": "/x/{a}"}, "", attributes) is None
+    choices = fg.url_choices_for(_merged_cmd_spec(), "/api", attributes)
+    assert choices.templates == [
+        ("/api/aviation/sigmets/{atsu}/{issueDate}", ("atsu", "issueDate"), ()),
+        ("/api/aviation/sigmets/{atsu}", ("atsu",), ()),
+        ("/api/aviation/sigmets", (), ("issueDate", "limit")),
+    ]
+    assert choices.names == ["atsu", "issueDate", "limit"]
+    assert choices.defaults == {}
+
+
+def test_url_choices_leave_out_urls_with_placeholders_that_have_no_field():
+    cmd_spec = _merged_cmd_spec()
+    cmd_spec["url_templates"].append("/aviation/sigmets/key/{key}")
+    choices = fg.url_choices_for(
+        cmd_spec, "", {"atsu": "atsu", "issueDate": "issue_date", "limit": "limit"}
+    )
+    assert all("{key}" not in template for template, _, _ in choices.templates)
+    assert fg.url_choices_for(cmd_spec, "", {"limit": "limit"}) is None
+
+
+def test_url_choices_from_a_spec_without_template_query_params_keep_query_params():
+    cmd_spec = _merged_cmd_spec()
+    del cmd_spec["template_query_params"]
+    choices = fg.url_choices_for(
+        cmd_spec, "", {"atsu": "atsu", "issueDate": "issue_date", "limit": "limit"}
+    )
+    assert all(query == ("limit",) for _, _, query in choices.templates)
+
+
+class _FakeResponse:
+    status = 200
+    headers = {"Content-Type": "application/json"}
+
+    async def read(self):
+        return b"[]"
+
+    def get_encoding(self):
+        return "utf-8"
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        return False
+
+
+class _FakeSession:
+    def __init__(self, urls):
+        self.urls = urls
+
+    async def request(self, method, url, **kwargs):
+        self.urls.append(url)
+        return _FakeResponse()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        return False
+
+
+def _exec_fetcher(src: str, class_name: str, urls: list[str]):
+    """Exec a generated module with a fake HTTP session that records each URL."""
+    import sys
+    import types
+
+    from openbb_cli.dispatchers import _unpack
+
+    utils = types.ModuleType("_generated_utils")
+    utils.__dict__.update(_unpack.__dict__)
+    sys.modules["_generated_utils"] = utils
+    try:
+        namespace: dict = {}
+        exec(  # noqa: S102
+            src.replace("from ....utils import", "from _generated_utils import"),
+            namespace,
+        )
+    finally:
+        sys.modules.pop("_generated_utils", None)
+
+    async def fake_session(*args, **kwargs):
+        return _FakeSession(urls)
+
+    namespace["get_async_requests_session"] = fake_session
+    return namespace[class_name]
+
+
+def test_merged_command_fetcher_requests_the_url_that_fits():
+    import asyncio
+
+    src = fg.generate_fetcher_module(_merged_spec()).source
+    assert "_path, _used, _query_names = choose_url_template(" in src
+    urls: list[str] = []
+    fetcher = _exec_fetcher(src, "AviationSigmetsFetcher", urls)
+    for params in (
+        {},
+        {"issue_date": "2026-10-18"},
+        {"atsu": "KKCI"},
+        {"atsu": "KKCI", "issue_date": "2026-10-18"},
+        {"atsu": "KKCI", "limit": 5},
+    ):
+        query = fetcher.transform_query(params)
+        asyncio.run(fetcher.aextract_data(query, {}))
+    assert urls == [
+        "https://x/aviation/sigmets?limit=500",
+        "https://x/aviation/sigmets?issueDate=2026-10-18&limit=500",
+        "https://x/aviation/sigmets/KKCI",
+        "https://x/aviation/sigmets/KKCI/2026-10-18",
+        "https://x/aviation/sigmets/KKCI",
+    ]
+
+
+def test_merged_command_query_params_reject_values_that_form_no_url():
+    src = fg.generate_fetcher_module(
+        _merged_spec(
+            template_query_params={
+                "/aviation/sigmets/{atsu}/{issueDate}": [],
+                "/aviation/sigmets/{atsu}": [],
+                "/aviation/sigmets": ["limit"],
+            }
+        )
+    ).source
+    model = _exec_query_params(src, "AviationSigmetsQueryParams")
+    with pytest.raises(
+        ValueError, match=r"Path parameters \(issue_date\) do not form a URL"
+    ):
+        model(issue_date="2026-10-18")
+    model(atsu="KKCI")
+
+
+def test_single_url_fetcher_code_is_unchanged_by_template_support():
+    cmd_spec = _merged_cmd_spec()
+    del cmd_spec["url_templates"], cmd_spec["template_query_params"]
+    cmd_spec["url_path"] = "/aviation/sigmets/{atsu}"
+    spec = fg.FetcherCommandSpec(
+        name="aviation.sigmets",
+        cmd_spec=cmd_spec,
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+    src = fg.generate_fetcher_module(spec).source
+    assert "choose_url_template" not in src
+    assert re.search(
+        r"_path = ['\"]/aviation/sigmets/\{atsu\}['\"]\.format\(atsu=getattr\(query, ['\"]atsu['\"]\)\)",
+        src,
+    )
+
+
+def test_streaming_fetcher_builds_path_from_placeholders():
+    cmd_spec = _merged_cmd_spec(response_schemas={"200": {"text/event-stream": {}}})
+    spec = fg.FetcherCommandSpec(
+        name="aviation.sigmets",
+        cmd_spec=cmd_spec,
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+    out = fg.generate_fetcher_module(spec)
+    assert out.is_streaming
+    assert '_url = f"https://x{_path}"' in out.source
+    assert "_path, _used, _query_names = choose_url_template(" in out.source
+    ast.parse(out.source)
+
+
+def test_json_list_param_converts_items_to_their_type():
+    lines = fg._list_param_lines("orderIds", "json", "integer")
+    assert lines[1] == (
+        "            _query_dict['orderIds'] = json_array(_query_dict['orderIds'], 'integer')"
+    )
+
+
+def test_required_group_members_with_empty_values_are_not_sent():
+    import asyncio
+
+    cmd_spec = _grouped_cmd_spec([_GROUP])
+    cmd_spec["parameters"][1].update(is_list=True, list_style="json")
+    spec = fg.FetcherCommandSpec(
+        name="ticker",
+        cmd_spec=cmd_spec,
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+    urls: list[str] = []
+    fetcher = _exec_fetcher(
+        fg.generate_fetcher_module(spec).source, "TickerFetcher", urls
+    )
+    query = fetcher.transform_query({"symbol": "BTCUSDT", "symbols": ""})
+    asyncio.run(fetcher.aextract_data(query, {}))
+    assert urls == ["https://x/api/v3/ticker?symbol=BTCUSDT"]
+
+
+def test_json_list_choices_are_not_checked_as_comma_items():
+    cmd_spec = _grouped_cmd_spec([])
+    cmd_spec["parameters"][1].update(
+        is_list=True, list_style="json", choices=["SPOT", "MARGIN"]
+    )
+    schema = fg._query_params_schema(cmd_spec, "prov")
+    assert "x-choices" not in schema["properties"]["symbols"]
+
+
+def test_null_empty_marker_does_not_become_a_field_named_properties():
+    """GeoJSON features have a field literally named ``properties``."""
+    schema = {
+        "type": "object",
+        "properties": {
+            "id": {"type": "string"},
+            "properties": {
+                "type": "object",
+                "properties": {"name": {"type": "string"}},
+            },
+        },
+    }
+    marked = fg._mark_null_empty(schema)
+    assert set(marked["properties"]) == {"id", "properties"}
+    assert marked["x-null-empty"] is True
+    assert marked["properties"]["properties"]["x-null-empty"] is True
+
+
+def test_array_of_records_with_a_nested_record_list_models_the_records():
+    """Petstore ``/pet/findByStatus``: Pet rows, not their ``tags``."""
+    pet = {
+        "type": "object",
+        "properties": {
+            "id": {"type": "integer"},
+            "name": {"type": "string"},
+            "tags": {
+                "type": "array",
+                "items": {"type": "object", "properties": {"id": {}, "name": {}}},
+            },
+            "status": {"type": "string"},
+        },
+    }
+    out = fg._data_schema({"response_schema": {"type": "array", "items": pet}})
+    assert list(out["properties"]) == ["id", "name", "tags", "status"]
+
+
+def test_module_name_for_keyword_command_gets_a_suffix():
+    assert fg._module_name_from_command("class") == "class_"
+    assert fg._module_name_from_command("data.import") == "data_import"
+    assert fg._module_name_from_command("24hr") == "_24hr"
+
+
+def _per_url_cmd_spec():
+    item = {
+        "type": "object",
+        "properties": {"id": {"type": "integer"}, "owner": {"type": "string"}},
+        "required": ["id"],
+    }
+    listing = {
+        "type": "object",
+        "properties": {
+            "pets": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "name": {"type": "string"},
+                    },
+                    "required": ["id", "name"],
+                },
+            },
+            "total": {"type": "integer"},
+        },
+    }
+    return {
+        "url_path": "/pets",
+        "url_templates": ["/pets/{petId}", "/pets"],
+        "template_query_params": {"/pets/{petId}": [], "/pets": []},
+        "template_response_schemas": {"/pets/{petId}": item},
+        "method": "get",
+        "parameters": [{"name": "petId", "in": "path", "type": "integer"}],
+        "request_body_schema": None,
+        "response_schema": listing,
+    }
+
+
+def test_merged_command_data_model_covers_every_url():
+    out = fg._merged_data_schema(_per_url_cmd_spec())
+    assert list(out["properties"]) == ["id", "name", "owner"]
+    assert out["required"] == ["id"]
+
+
+def test_merged_command_unpacks_with_the_hint_of_the_url_it_used():
+    import asyncio
+
+    spec = fg.FetcherCommandSpec(
+        name="pets",
+        cmd_spec=_per_url_cmd_spec(),
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+    src = fg.generate_fetcher_module(spec).source
+    assert ".get(tuple(sorted(_used)), {})" in src
+    urls: list[str] = []
+    fetcher = _exec_fetcher(src, "PetsFetcher", urls)
+    bodies = iter(
+        [
+            b'{"id": 1, "owner": "ann"}',
+            b'{"pets": [{"id": 1, "name": "a"}, {"id": 2, "name": "b"}], "total": 2}',
+        ]
+    )
+
+    async def read(self):
+        return next(bodies)
+
+    original = _FakeResponse.read
+    _FakeResponse.read = read
+    try:
+        item = asyncio.run(
+            fetcher.aextract_data(fetcher.transform_query({"pet_id": 1}), {})
+        )
+        listing = asyncio.run(fetcher.aextract_data(fetcher.transform_query({}), {}))
+    finally:
+        _FakeResponse.read = original
+    assert item["rows"] == [{"id": 1, "owner": "ann"}]
+    assert listing["rows"] == [{"id": 1, "name": "a"}, {"id": 2, "name": "b"}]
+    assert listing["metadata"] == {"total": 2}
+    assert urls == ["https://x/pets/1", "https://x/pets"]
+
+
+def _extract_with_body(fetcher, params, body: bytes):
+    import asyncio
+
+    async def read(self):
+        return body
+
+    original = _FakeResponse.read
+    _FakeResponse.read = read
+    try:
+        query = fetcher.transform_query(params)
+        return asyncio.run(fetcher.aextract_data(query, {}))
+    finally:
+        _FakeResponse.read = original
+
+
+def test_array_of_records_fetcher_keeps_a_single_record_whole():
+    order = {"type": "object", "properties": {"symbol": {"type": "string"}}}
+    order_list = {
+        "type": "object",
+        "properties": {
+            "orderListId": {"type": "integer"},
+            "orders": {"type": "array", "items": order},
+        },
+        "required": ["orderListId"],
+    }
+    spec = fg.FetcherCommandSpec(
+        name="allOrderList",
+        cmd_spec={
+            "url_path": "/allOrderList",
+            "method": "get",
+            "parameters": [],
+            "request_body_schema": None,
+            "response_schema": {"type": "array", "items": order_list},
+        },
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+    src = fg.generate_fetcher_module(spec).source
+    assert 'kind="records"' in src
+    fetcher = _exec_fetcher(src, "AllOrderListFetcher", [])
+    out = _extract_with_body(
+        fetcher, {}, b'[{"orderListId": 7, "orders": [{"symbol": "BTCUSDT"}]}]'
+    )
+    assert out["rows"] == [{"orderListId": 7, "orders": [{"symbol": "BTCUSDT"}]}]
+
+
+def test_merged_data_model_takes_every_type_a_field_is_declared_with():
+    cmd_spec = _per_url_cmd_spec()
+    cmd_spec["template_response_schemas"]["/pets/{petId}"]["properties"]["name"] = {
+        "type": "array",
+        "items": {"type": "string"},
+    }
+    cmd_spec["response_schema"]["properties"]["pets"]["items"]["properties"]["name"][
+        "description"
+    ] = "Pet name."
+    out = fg._merged_data_schema(cmd_spec)
+    assert out["properties"]["name"] == {
+        "anyOf": [
+            {"type": "string", "description": "Pet name."},
+            {"type": "array", "items": {"type": "string"}},
+        ],
+        "description": "Pet name.",
+    }
+
+
+def _flag_spec(**extra_params):
+    return fg.FetcherCommandSpec(
+        name="flags",
+        cmd_spec={
+            "url_path": "/flags/{active}",
+            "method": "get",
+            "parameters": [
+                {"name": "active", "in": "path", "type": "boolean", "required": True},
+                *extra_params.values(),
+            ],
+            "request_body_schema": None,
+            "response_schema": {"type": "object", "properties": {"ok": {}}},
+        },
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+
+
+def test_single_url_fetcher_sends_boolean_path_values_lowercase():
+    src = fg.generate_fetcher_module(_flag_spec()).source
+    assert "wire_value" in _utils_import(src)
+    urls: list[str] = []
+    fetcher = _exec_fetcher(src, "FlagsFetcher", urls)
+    _extract_with_body(fetcher, {"active": True}, b'{"ok": 1}')
+    assert urls == ["https://x/flags/true"]
+
+
+def test_renamed_query_field_is_read_back_under_its_field_name():
+    spec = fg.FetcherCommandSpec(
+        name="items",
+        cmd_spec={
+            "url_path": "/items/{ID}",
+            "method": "get",
+            "parameters": [
+                {"name": "ID", "in": "path", "type": "string", "required": True},
+                {"name": "id", "in": "query", "type": "string"},
+            ],
+            "request_body_schema": None,
+            "response_schema": {"type": "object", "properties": {"ok": {}}},
+        },
+        base_url="https://x",
+        api_prefix="",
+        provider_name="prov",
+    )
+    src = fg.generate_fetcher_module(spec).source
+    urls: list[str] = []
+    fetcher = _exec_fetcher(src, "ItemsFetcher", urls)
+    _extract_with_body(fetcher, {"ID": "A1", "id": "x"}, b'{"ok": 1}')
+    assert urls == ["https://x/items/A1?id=x"]
+
+
+def test_merged_data_model_keeps_one_type_when_urls_differ_only_in_docs():
+    cmd_spec = _per_url_cmd_spec()
+    item = cmd_spec["template_response_schemas"]["/pets/{petId}"]
+    item["properties"]["name"] = {"type": "string", "example": "rex"}
+    out = fg._merged_data_schema(cmd_spec)
+    assert out["properties"]["name"] == {"type": "string"}
+
+
+def test_streaming_fetcher_sends_boolean_path_values_lowercase():
+    spec = _flag_spec()
+    spec.cmd_spec["response_schemas"] = {"200": {"text/event-stream": {}}}
+    out = fg.generate_fetcher_module(spec)
+    assert out.is_streaming
+    assert "wire_value" in _utils_import(out.source)
+    assert "active=wire_value(getattr(query, 'active'))" in out.source
+    ast.parse(out.source)
+
+
+def test_fetcher_without_boolean_path_values_does_not_import_wire_value():
+    spec = _flag_spec()
+    spec.cmd_spec["parameters"][0]["type"] = "string"
+    assert "wire_value" not in fg.generate_fetcher_module(spec).source
+    spec.cmd_spec["response_schemas"] = {"200": {"text/event-stream": {}}}
+    assert "wire_value" not in fg.generate_fetcher_module(spec).source
+
+
+def _utils_import(source: str) -> str:
+    return next(line for line in source.splitlines() if "from ....utils import" in line)
+
+
+def test_merged_data_model_counts_doc_and_nullable_variants_as_one():
+    cmd_spec = _per_url_cmd_spec()
+    obj = {"type": "object", "properties": {"url": {"type": "string"}}}
+    listing_row = cmd_spec["response_schema"]["properties"]["pets"]["items"]
+    listing_row["properties"]["photo"] = {**obj, "example": {"url": "a"}}
+    item = cmd_spec["template_response_schemas"]["/pets/{petId}"]
+    item["properties"]["photo"] = {
+        "anyOf": [{**obj, "example": {"url": "b"}}, {"type": "null"}]
+    }
+    cmd_spec["url_templates"].append("/pets/{petId}/tags")
+    cmd_spec["template_query_params"]["/pets/{petId}/tags"] = []
+    cmd_spec["template_response_schemas"]["/pets/{petId}/tags"] = {
+        "type": "object",
+        "properties": {
+            "id": {"type": "integer"},
+            "photo": {"type": "array", "items": {"type": "string"}},
+        },
+    }
+    photo = fg._merged_data_schema(cmd_spec)["properties"]["photo"]
+    assert photo == {
+        "anyOf": [
+            {**obj, "example": {"url": "a"}},
+            {"type": "array", "items": {"type": "string"}},
+        ],
+        "example": {"url": "a"},
+    }
+
+
+def test_merged_data_model_ignores_nested_nullability_differences():
+    cmd_spec = _per_url_cmd_spec()
+    row = cmd_spec["response_schema"]["properties"]["pets"]["items"]
+    row["properties"]["owner"] = {
+        "type": "object",
+        "properties": {"city": {"type": "string"}},
+    }
+    item = cmd_spec["template_response_schemas"]["/pets/{petId}"]
+    item["properties"]["owner"] = {
+        "type": "object",
+        "properties": {"city": {"anyOf": [{"type": "string"}, {"type": "null"}]}},
+    }
+    owner = fg._merged_data_schema(cmd_spec)["properties"]["owner"]
+    assert owner == row["properties"]["owner"]

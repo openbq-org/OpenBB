@@ -56,7 +56,7 @@ async def get_as_filed_widget_rows(
         ).reset_index()
         ordered_periods = [p for p in period_order if p in data.columns]
         data = data[[*id_columns, *ordered_periods]]
-        data = data.fillna("--")
+        data = data.astype(object).where(data.notna(), "--")
     else:
         drop_columns = {
             "tag",

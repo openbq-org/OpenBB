@@ -146,7 +146,7 @@ def create_surface(
         "open_interest",
         "volume",
     ]
-    df = df[[c for c in dict.fromkeys(columns) if c in df.columns]]
+    df = df[[c for c in dict.fromkeys(columns) if c in df.columns]].copy()
     metric_title = METRIC_TITLES.get(metric, metric.replace("_", " ").title())
     label = f"{symbol} {OPTION_TYPE_LABELS[option_type]} {metric_title} Surface"
 
