@@ -296,21 +296,17 @@ class TestImfPortVolumeQueryParams:
         q = ImfPortVolumeQueryParams(port_code="Honolulu - HI")
         assert q.port_code == "port1"
 
-    def test_validate_port_code_snake_match_raises_keyerror(self, monkeypatch):
-        """The snake-cased branch is buggy and raises ``KeyError`` (covers 114-123).
-
-        Notes
-        -----
-        ``port_id_map[idx]`` looks up the snake-cased value's position with an integer
-        in a dict keyed by port codes; pydantic surfaces this as a ``ValidationError``
-        wrapping the underlying ``KeyError``.
-        """
+    def test_validate_port_code_snake_match_picks_value(self, monkeypatch):
+        """A snake-cased port name resolves to its port code."""
         _patch_port_helpers(
             monkeypatch,
-            port_id_choices=[{"label": "Hello", "value": "x"}],
+            port_id_choices=[
+                {"label": "Rotterdam", "value": "port1114"},
+                {"label": "Singapore", "value": "port1201"},
+            ],
         )
-        with pytest.raises(Exception):
-            ImfPortVolumeQueryParams(port_code="hello")
+        q = ImfPortVolumeQueryParams(port_code="rotterdam,singapore")
+        assert q.port_code == "port1114,port1201"
 
     def test_validate_port_code_first_part_match(self, monkeypatch):
         """First-segment match falls through to the final elif (covers 125-134)."""
