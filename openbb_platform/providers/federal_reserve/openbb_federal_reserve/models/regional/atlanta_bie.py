@@ -12,7 +12,7 @@ from pydantic import Field
 
 URL = (
     "https://www.atlantafed.org/-/media/Project/Atlanta/FRBA/Documents"
-    "/research/inflationproject/bie/data/bie.xlsx"
+    "/research-and-data/data/business-inflation-expectations/bie-data.xlsx"
 )
 
 _SURVEY_SHEET = "BIE Survey results"

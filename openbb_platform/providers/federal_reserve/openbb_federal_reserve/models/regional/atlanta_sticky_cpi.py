@@ -12,7 +12,7 @@ from pydantic import Field
 
 URL = (
     "https://www.atlantafed.org/-/media/Project/Atlanta/FRBA/Documents"
-    "/datafiles/research/inflationproject/stickprice/stickyprice.xlsx"
+    "/research-and-data/data/sticky-price/sticky-price-data.xlsx"
 )
 
 _NA_VALUES = ["na", ".", "#N/A", "#N/A N/A"]
