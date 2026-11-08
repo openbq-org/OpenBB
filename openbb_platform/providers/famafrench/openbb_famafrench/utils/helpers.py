@@ -754,15 +754,9 @@ def get_international_portfolio(
 
     if all_data_items_required is False and measure != "ratios":
         dfs = [
-            df
-            for df, meta in zip(dfs, dfs_meta)
-            if "Not Reqd" not in meta["description"]
+            df for df, meta in zip(dfs, dfs_meta) if "Not Reqd" in meta["description"]
         ]
-        dfs_meta = [
-            meta
-            for meta in dfs_meta
-            if meta.get("description", "").endswith("Not Reqd")
-        ]
+        dfs_meta = [meta for meta in dfs_meta if "Not Reqd" in meta["description"]]
     elif all_data_items_required is True:
         dfs = [
             df for df, meta in zip(dfs, dfs_meta) if "Required" in meta["description"]
