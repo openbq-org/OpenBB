@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import keyword
 import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -56,9 +57,18 @@ class GeneratedRouters:
 
 
 def _safe_segment(name: str) -> str:
-    """Lower-case + replace non-alphanumerics with underscores."""
-    cleaned = re.sub(r"[^0-9a-zA-Z]+", "_", name).strip("_")
-    return cleaned.lower() or "ns"
+    """Lower-case + replace non-alphanumerics with underscores.
+
+    A result that starts with a digit gets a leading underscore and a Python
+    keyword gets a trailing one (as pydantic_gen does for field names), so it
+    stays a valid function and module identifier.
+    """
+    cleaned = (re.sub(r"[^0-9a-zA-Z]+", "_", name).strip("_") or "ns").lower()
+    if cleaned[0].isdigit():
+        cleaned = f"_{cleaned}"
+    elif keyword.iskeyword(cleaned):
+        cleaned = f"{cleaned}_"
+    return cleaned
 
 
 def _module_name_for(path: str) -> str:
@@ -85,6 +95,36 @@ def _model_name_for(path: str) -> str:
         for seg in seg
         if seg
     )
+
+
+def mounted_command_paths(root: NamespaceNode) -> dict[str, str]:
+    """Map each command's dotted spec path to the path it mounts at under ``obb``.
+
+    Segments are normalized the same way as router modules and functions, and a
+    command that is also a namespace mounts on its own router, named after itself.
+
+    Parameters
+    ----------
+    root : NamespaceNode
+        The synthetic root node returned by ``build_namespace_tree``.
+
+    Returns
+    -------
+    dict[str, str]
+        ``{dotted_spec_path: dotted_mounted_path}`` for every command in the tree.
+    """
+    out: dict[str, str] = {}
+    pending = list(root.children.values())
+    while pending:
+        node = pending.pop()
+        pending.extend(node.children.values())
+        if node.cmd_spec is None:
+            continue
+        parts = [_safe_segment(p) for p in node.full_path.split(".") if p]
+        if node.is_namespace:
+            parts.append(_safe_segment(node.name))
+        out[node.full_path] = ".".join(parts)
+    return out
 
 
 def generate_routers(

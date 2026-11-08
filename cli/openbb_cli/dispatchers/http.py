@@ -7,7 +7,7 @@ import inspect
 import json
 import re
 import warnings
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from time import perf_counter_ns
 from typing import Any
 
@@ -15,7 +15,12 @@ import httpx
 from openbb_core.app.model.abstract.warning import OpenBBWarning
 
 from openbb_cli.auth import AuthContext, AuthDecision, AuthHook
-from openbb_cli.dispatchers._unpack import unpack_response
+from openbb_cli.dispatchers._unpack import (
+    choose_url_template,
+    json_array,
+    unpack_response,
+    wire_value,
+)
 from openbb_cli.dispatchers.openapi_schema import (
     PROVIDER_SECTION_SPLIT_RE,
     PROVIDER_TAG_RE,
@@ -489,10 +494,64 @@ def _wrap_plotly_figure(
     )
 
 
-def _shape_result(payload: Any) -> Any:
+def _returns_tuples(cmd_spec: dict[str, Any] | None) -> bool:
+    """Whether a command's response is an array of arrays (positional rows)."""
+    schema = (cmd_spec or {}).get("response_schema")
+    if not isinstance(schema, dict) or schema.get("type") != "array":
+        return False
+    items = schema.get("items")
+    return isinstance(items, dict) and (
+        items.get("type") == "array" or "items" in items
+    )
+
+
+def _check_required_groups(cmd_spec: dict[str, Any], params: dict[str, Any]) -> None:
+    """Raise ``ValueError`` when ``params`` break a command's required groups.
+
+    Same rule as the generated ``_check_required_groups`` validator: ``None``,
+    ``""`` and ``[]`` count as not passed, and an optional group only applies
+    when one of its members is passed with a value other than its default.
+    """
+    defaults = {
+        p["name"]: p["default"]
+        for p in command_parameters(cmd_spec)
+        if isinstance(p, dict) and p.get("name") and p.get("default") is not None
+    }
+
+    def present(name: str) -> bool:
+        return params.get(name) not in (None, "", [])
+
+    def changed(name: str) -> bool:
+        return present(name) and (
+            name not in defaults or params[name] != defaults[name]
+        )
+
+    for group in cmd_spec.get("required_groups") or []:
+        if not group.get("required", True) and not any(
+            changed(name) for name in group.get("members") or []
+        ):
+            continue
+        alternatives = group.get("alternatives") or []
+        met = sum(all(present(name) for name in alt) for alt in alternatives)
+        exactly_one = group.get("combinator") == "oneOf"
+        if (met != 1) if exactly_one else (met < 1):
+            described = " | ".join(
+                alt[0] if len(alt) == 1 else f"({', '.join(alt)})"
+                for alt in alternatives
+            )
+            raise ValueError(
+                f"Pass {'exactly' if exactly_one else 'at least'} one of: {described}"
+            )
+
+
+def _shape_result(payload: Any, cmd_spec: dict[str, Any] | None = None) -> Any:
     """Apply the same envelope unwrap codegen does, then return a tidy result."""
     if not isinstance(payload, (dict, list)):
         return payload
+    if _returns_tuples(cmd_spec) and isinstance(payload, list):
+        return [
+            row.get("value", row) for row in unpack_response(payload, kind="tuples")[0]
+        ]
     rows, metadata = unpack_response(payload)
     if not rows and not metadata:
         return payload
@@ -557,8 +616,13 @@ class HttpDispatcher:
 
         When multiple URL templates exist for the command (overloads merged at
         spec-build time), pick the one with the most path placeholders that are
-        all satisfied by ``params``; fall back to the shortest template otherwise.
+        all satisfied by ``params`` and that takes every other path value passed
+        as a query parameter. Path values that fit no template raise
+        ``ValueError`` instead of being sent as query parameters.
         """
+        _check_required_groups(
+            (self._spec_doc.get("commands") or {}).get(command) or {}, params
+        )
         templates = self._command_url_paths.get(command)
         if not templates:
             return self._url_for(command), self._apply_param_transforms(
@@ -566,6 +630,8 @@ class HttpDispatcher:
             )
 
         ordered = sorted(templates, key=lambda t: -t.count("{"))
+        if len(ordered) > 1:
+            return self._resolve_merged_url(command, ordered, params)
         chosen: str | None = None
         for template in ordered:
             placeholders = _PATH_TEMPLATE_RE.findall(template)
@@ -586,10 +652,62 @@ class HttpDispatcher:
             value = params.get(key)
             if value is None:
                 return match.group(0)
-            return str(value)
+            return str(wire_value(value))
 
         path = _PATH_TEMPLATE_RE.sub(_substitute, chosen)
         remaining = {k: v for k, v in params.items() if k not in consumed}
+        return f"{self._base_url}{path}", self._apply_param_transforms(
+            command, remaining
+        )
+
+    def _resolve_merged_url(
+        self, command: str, templates: list[str], params: dict[str, Any]
+    ) -> tuple[str, dict[str, Any]]:
+        """Resolve a merged command's URL the way its generated fetcher does.
+
+        Path values that fit no template raise ``ValueError``; the chosen URL's
+        own path values, and the other URLs' parameters it does not declare,
+        are left out of the query. A spec without ``template_query_params``
+        (built before it existed) lets every URL take any other parameter as a
+        query parameter, as such specs always did.
+        """
+        cmd_spec = (self._spec_doc.get("commands") or {}).get(command) or {}
+        spec_params = [p for p in command_parameters(cmd_spec) if isinstance(p, dict)]
+        declared = cmd_spec.get("template_query_params")
+        names = [p["name"] for p in spec_params if p.get("name")]
+
+        def query_names_for(template: str, keys: tuple[str, ...]) -> tuple[str, ...]:
+            if isinstance(declared, dict):
+                return tuple(declared.get(template) or ())
+            return tuple(name for name in names if name not in keys)
+
+        choices = [
+            (template, keys, query_names_for(template, keys))
+            for template in templates
+            for keys in [tuple(_PATH_TEMPLATE_RE.findall(template))]
+        ]
+        placeholders = {name for _, keys, _ in choices for name in keys}
+        defaults = {
+            p["name"]: (
+                p["default"]
+                if p.get("default") is not None
+                else (False if p.get("type") == "boolean" else None)
+            )
+            for p in spec_params
+            if p.get("name") in placeholders
+        }
+        path, used, query_names = choose_url_template(
+            choices,
+            {name: params.get(name) for name in placeholders},
+            None,
+            {k: v for k, v in defaults.items() if v is not None},
+        )
+        url_names = placeholders | {n for _, _, names in choices for n in names}
+        remaining = {
+            k: v
+            for k, v in params.items()
+            if k not in used and not (k in url_names and k not in query_names)
+        }
         return f"{self._base_url}{path}", self._apply_param_transforms(
             command, remaining
         )
@@ -629,8 +747,8 @@ class HttpDispatcher:
                 timestamp=timestamp,
                 duration_ns=duration_ns,
             )
-        shaped = _shape_result(payload)
         cmd_spec = (self._spec_doc.get("commands") or {}).get(command) or {}
+        shaped = _shape_result(payload, cmd_spec)
         column_types = _row_column_types(cmd_spec)
         column_metadata = _row_column_metadata(cmd_spec)
 
@@ -750,6 +868,7 @@ class HttpDispatcher:
         cmd_spec = (self._spec_doc.get("commands") or {}).get(command) or {}
         locations: dict[str, tuple[str, str]] = {}
         delimiters: dict[str, str] = {}
+        json_lists: dict[str, str] = {}
         for p in command_parameters(cmd_spec):
             if isinstance(p, dict) and p.get("name"):
                 spec_name = p["name"]
@@ -763,6 +882,8 @@ class HttpDispatcher:
                     locations[key] = (loc, spec_name)
                     if p.get("is_list") and delimiter:
                         delimiters[key] = delimiter
+                    if p.get("is_list") and p.get("list_style") == "json":
+                        json_lists[key] = p.get("type") or "string"
         query: dict[str, Any] = {}
         body: dict[str, Any] = {}
         headers: dict[str, Any] = {}
@@ -777,6 +898,15 @@ class HttpDispatcher:
                 out_value = value
                 if name in delimiters and isinstance(value, (list, tuple)):
                     out_value = delimiters[name].join(str(v) for v in value)
+                elif name in json_lists and isinstance(value, (list, tuple)):
+                    if len(value) == 1 and isinstance(value[0], str):
+                        out_value = json_array(value[0], json_lists[name])
+                    else:
+                        out_value = json.dumps(list(value), separators=(",", ":"))
+                elif name in json_lists and isinstance(value, str):
+                    out_value = json_array(value, json_lists[name])
+                if name in json_lists and out_value is None:
+                    continue
                 query[name] = out_value
         return query, body, headers
 
@@ -818,7 +948,7 @@ class HttpDispatcher:
         wire_request = request
         if time_axis is not None or fetch_all:
             wire_request = _request_with_page_size_limit(request)
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
         start_ns = perf_counter_ns()
         try:
             url, body_or_query = self._resolve_url(

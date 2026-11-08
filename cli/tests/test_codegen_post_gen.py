@@ -632,6 +632,31 @@ def test_generate_post_command_module_with_path_params_emits_format_call():
     assert "'/x/{slug}'.format(slug=slug)" in out.source
 
 
+def test_post_module_sends_boolean_path_values_lowercase():
+    spec = pg.PostCommandSpec(
+        name="x.y",
+        cmd_spec={
+            "url_path": "/x/{active}",
+            "method": "post",
+            "parameters": [
+                {"name": "active", "in": "path", "type": "boolean", "required": True},
+            ],
+            "request_body_schema": {"type": "object", "properties": {}},
+            "response_schema": {"type": "object"},
+        },
+        base_url="https://api.example.com",
+        api_prefix="",
+        provider_name="tools",
+    )
+    out = pg.generate_post_command_module(spec)
+    assert "'/x/{active}'.format(active=wire_value(active))" in out.source
+    assert "wire_value" in next(
+        line for line in out.source.splitlines() if "from ....utils import" in line
+    )
+    spec.cmd_spec["parameters"][0]["type"] = "string"
+    assert "wire_value" not in pg.generate_post_command_module(spec).source
+
+
 def test_generate_post_command_module_with_credentials_renders_cred_block():
     spec = pg.PostCommandSpec(
         name="x.y",
@@ -977,3 +1002,72 @@ def test_envelope_inner_schema_single_scalar_array_is_not_an_envelope():
         "tags": {"type": "array", "items": {"type": "string"}},
     }
     assert pg._envelope_inner_schema({"type": "object"}, props) is None
+
+
+def test_merged_post_command_chooses_url_and_keeps_path_values_out_of_query():
+    spec = pg.PostCommandSpec(
+        name="search",
+        cmd_spec={
+            "url_path": "/search",
+            "url_templates": ["/search/{index}", "/search"],
+            "template_query_params": {"/search/{index}": [], "/search": ["limit"]},
+            "method": "post",
+            "parameters": [
+                {"name": "index", "in": "path", "type": "string", "required": False},
+                {"name": "limit", "in": "query", "type": "integer", "required": False},
+            ],
+            "request_body_schema": {
+                "type": "object",
+                "properties": {"q": {"type": "string"}},
+            },
+            "response_schema": {"type": "object"},
+        },
+        base_url="https://api.example.com",
+        api_prefix="",
+        provider_name="tools",
+    )
+    src = pg.generate_post_command_module(spec).source
+    assert "_path, _used, _query_names = choose_url_template(" in src
+    assert "if _name in _used or _name not in _query_names" in src
+    assert (
+        "from ....utils import choose_url_template" in src
+        or "choose_url_template," in src
+    )
+    ast.parse(src)
+
+
+def test_post_command_sends_json_list_query_param_as_json_array():
+    spec = pg.PostCommandSpec(
+        name="orders",
+        cmd_spec={
+            "url_path": "/orders",
+            "method": "post",
+            "parameters": [
+                {
+                    "name": "symbols",
+                    "in": "query",
+                    "type": "string",
+                    "is_list": True,
+                    "list_style": "json",
+                },
+            ],
+            "request_body_schema": {
+                "type": "object",
+                "properties": {"q": {"type": "string"}},
+            },
+            "response_schema": {"type": "object"},
+        },
+        base_url="https://api.example.com",
+        api_prefix="",
+        provider_name="tools",
+    )
+    src = pg.generate_post_command_module(spec).source
+    assert (
+        "_value = json_array(symbols if isinstance(symbols, str) else _json.dumps(list(symbols)))"
+        in src
+    )
+    ast.parse(src)
+
+
+def test_post_module_name_for_keyword_command_gets_a_suffix():
+    assert pg._module_name_from_command("import") == "import_"

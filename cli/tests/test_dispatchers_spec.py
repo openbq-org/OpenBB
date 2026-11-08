@@ -9,13 +9,17 @@ import pytest
 from openbb_cli.dispatchers.spec import (
     SPEC_VERSION,
     SpecCommandError,
+    _explode_object_parameter,
+    _merge_overload_entries,
     _normalize_parameter,
+    _required_groups,
     build_command_spec,
     build_spec_document,
     command_parameters,
     load_spec,
     parse_command_argv,
     parser_from_command_spec,
+    unnamed_paths,
     write_spec,
 )
 
@@ -172,6 +176,35 @@ def test_build_spec_document_carries_metadata():
     assert "x" in doc["commands"]
     assert "x" in doc["routers"]
     assert "/x" in doc["reference"]["paths"]
+
+
+def test_build_spec_document_explicit_api_prefix_only_changes_naming():
+    """Paths outside the prefix keep full names; the recorded prefix stays shared."""
+    openapi = {
+        "paths": {
+            "/api/v3/klines": {"get": {"operationId": "k", "parameters": []}},
+            "/api/v3/ticker/price": {"get": {"operationId": "p", "parameters": []}},
+            "/sapi/v1/system/status": {"get": {"operationId": "s", "parameters": []}},
+        }
+    }
+    doc = build_spec_document(openapi, base_url="http://h", api_prefix="/api/v3")
+    assert set(doc["commands"]) == {"klines", "ticker.price", "sapi.v1.system.status"}
+    assert doc["commands"]["klines"]["url_path"] == "/api/v3/klines"
+    assert doc["api_prefix"] == ""
+    assert doc["routers"]["ticker"] == "menu"
+    assert "/ticker/price" in doc["reference"]["paths"]
+
+
+def test_build_spec_document_default_api_prefix_is_detected():
+    openapi = {
+        "paths": {
+            "/api/v3/klines": {"get": {"operationId": "k", "parameters": []}},
+            "/sapi/v1/system/status": {"get": {"operationId": "s", "parameters": []}},
+        }
+    }
+    doc = build_spec_document(openapi, base_url="http://h")
+    assert set(doc["commands"]) == {"api.v3.klines", "sapi.v1.system.status"}
+    assert doc["api_prefix"] == ""
 
 
 def test_write_then_load_round_trip(tmp_path):
@@ -673,6 +706,34 @@ def test_parse_command_argv_returns_command_and_params():
     cmd, params = parse_command_argv(spec_doc, ["equity.quote", "--symbol", "AAPL"])
     assert cmd == "equity.quote"
     assert params == {"symbol": "AAPL"}
+
+
+def test_parse_command_argv_leaves_omitted_boolean_group_members_unset():
+    spec_doc = _spec_with(
+        {
+            "tickers": {
+                "url_path": "/tickers",
+                "method": "get",
+                "parameters": [
+                    {"name": "symbol", "type": "string"},
+                    {"name": "all", "type": "boolean"},
+                    {"name": "verbose", "type": "boolean"},
+                ],
+                "required_groups": [
+                    {
+                        "combinator": "oneOf",
+                        "alternatives": [["symbol"], ["all"]],
+                        "members": ["symbol", "all"],
+                        "required": True,
+                    }
+                ],
+            }
+        }
+    )
+    _, params = parse_command_argv(spec_doc, ["tickers", "--symbol", "BTC"])
+    assert params == {"symbol": "BTC", "verbose": False}
+    _, params = parse_command_argv(spec_doc, ["tickers", "--no-all"])
+    assert params == {"all": False, "verbose": False}
 
 
 def test_parse_command_argv_empty_argv_raises():
@@ -1588,3 +1649,734 @@ def test_description_stating_a_delimited_list_makes_the_param_an_array():
         }
     )
     assert arr["list_style"] == "multi"
+
+
+def _selection_param(**overrides):
+    param = {
+        "name": "selection",
+        "in": "query",
+        "required": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "symbol": {"type": "string", "example": "BNBUSDT"},
+                "symbols": {"type": "string"},
+            },
+            "oneOf": [{"required": ["symbol"]}, {"required": ["symbols"]}],
+        },
+    }
+    param.update(overrides)
+    return param
+
+
+def test_explode_object_parameter_splits_properties_and_reads_groups():
+    exploded, groups = _explode_object_parameter(_selection_param())
+    assert [p["name"] for p in exploded] == ["symbol", "symbols"]
+    assert all(p["in"] == "query" and p["required"] is False for p in exploded)
+    assert exploded[0]["schema"] == {"type": "string", "example": "BNBUSDT"}
+    assert groups == [
+        {
+            "combinator": "oneOf",
+            "alternatives": [["symbol"], ["symbols"]],
+            "members": ["symbol", "symbols"],
+            "required": True,
+        }
+    ]
+
+
+def test_explode_object_parameter_required_properties_need_a_required_param():
+    param = _selection_param()
+    param["schema"] = {**param["schema"], "required": ["symbol"]}
+    exploded, _ = _explode_object_parameter(param)
+    assert [p["required"] for p in exploded] == [True, False]
+    exploded, groups = _explode_object_parameter({**param, "required": False})
+    assert [p["required"] for p in exploded] == [False, False]
+    assert groups[0]["required"] is False
+
+
+def test_explode_object_parameter_reads_per_property_examples():
+    exploded, _ = _explode_object_parameter(
+        _selection_param(example={"symbols": '["A"]'})
+    )
+    assert "example" not in exploded[0]
+    assert exploded[1]["example"] == '["A"]'
+
+
+def test_explode_object_parameter_merges_allof_members():
+    param = _selection_param(
+        schema={
+            "allOf": [
+                {"type": "object", "properties": {"a": {"type": "string"}}},
+                {"type": "object", "properties": {"b": {"type": "integer"}}},
+            ]
+        }
+    )
+    exploded, groups = _explode_object_parameter(param)
+    assert [p["name"] for p in exploded] == ["a", "b"]
+    assert groups == []
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"in": "path"},
+        {"style": "deepObject"},
+        {"explode": False},
+        {"schema": {"type": "string"}},
+        {"schema": {"type": "object", "additionalProperties": True}},
+        {"schema": {"type": "array", "properties": {"a": {}}}},
+        {"schema": None},
+    ],
+)
+def test_explode_object_parameter_leaves_other_parameters_alone(overrides):
+    assert _explode_object_parameter(_selection_param(**overrides)) is None
+
+
+def test_required_groups_reads_one_of_and_any_of():
+    schema = {
+        "properties": {"a": {}, "b": {}, "c": {}},
+        "oneOf": [{"required": ["a"]}, {"required": ["b", "c"], "title": "both"}],
+        "anyOf": [{"required": ["c"]}, {"required": ["a"]}],
+    }
+    groups = _required_groups(schema, required=False)
+    assert [(g["combinator"], g["alternatives"]) for g in groups] == [
+        ("oneOf", [["a"], ["b", "c"]]),
+        ("anyOf", [["c"], ["a"]]),
+    ]
+    assert all(g["required"] is False for g in groups)
+
+
+@pytest.mark.parametrize(
+    "alternatives",
+    [
+        [{"required": ["a"]}, {"required": ["a"], "not": {"required": ["b"]}}],
+        [{"required": ["a"]}, {"required": ["missing"]}],
+        [{"required": ["a"]}, {"required": []}],
+        [{"required": ["a"]}, "a"],
+        [],
+    ],
+)
+def test_required_groups_skips_combinators_it_cannot_enforce(alternatives):
+    schema = {"properties": {"a": {}, "b": {}}, "oneOf": alternatives}
+    assert _required_groups(schema, required=True) == []
+
+
+def _exploded_openapi(extra_params=None):
+    return {
+        "openapi": "3.0.2",
+        "paths": {
+            "/api/v3/ticker": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "windowSize",
+                            "in": "query",
+                            "schema": {"type": "string"},
+                        },
+                        *(extra_params or []),
+                        _selection_param(),
+                    ],
+                    "responses": {"200": {"description": "ok"}},
+                }
+            }
+        },
+    }
+
+
+def test_build_command_spec_expands_object_param_and_records_groups():
+    cmd = build_command_spec(_exploded_openapi(), api_prefix="/api/v3")["ticker"]
+    assert [p["name"] for p in cmd["parameters"]] == ["windowSize", "symbol", "symbols"]
+    symbol = cmd["parameters"][1]
+    assert symbol["required"] is False
+    assert symbol["example"] == "BNBUSDT"
+    assert cmd["required_groups"][0]["alternatives"] == [["symbol"], ["symbols"]]
+    assert list(cmd)[:5] == [
+        "url_path",
+        "method",
+        "description",
+        "parameters",
+        "required_groups",
+    ]
+
+
+def test_build_command_spec_keeps_explicit_param_over_exploded_property():
+    explicit = {"name": "symbol", "in": "query", "schema": {"type": "integer"}}
+    cmd = build_command_spec(_exploded_openapi([explicit]), api_prefix="/api/v3")[
+        "ticker"
+    ]
+    names = [p["name"] for p in cmd["parameters"]]
+    assert names == ["windowSize", "symbol", "symbols"]
+    assert cmd["parameters"][1]["type"] == "integer"
+
+
+def test_build_command_spec_drops_groups_naming_filtered_params():
+    openapi = _exploded_openapi()
+    param = openapi["paths"]["/api/v3/ticker"]["get"]["parameters"][1]
+    param["schema"]["properties"]["chart"] = param["schema"]["properties"].pop(
+        "symbols"
+    )
+    param["schema"]["oneOf"] = [{"required": ["symbol"]}, {"required": ["chart"]}]
+    cmd = build_command_spec(openapi, api_prefix="/api/v3")["ticker"]
+    assert [p["name"] for p in cmd["parameters"]] == ["windowSize", "symbol"]
+    assert "required_groups" not in cmd
+
+
+def test_build_command_spec_omits_groups_key_without_object_params():
+    openapi = _exploded_openapi()
+    openapi["paths"]["/api/v3/ticker"]["get"]["parameters"].pop()
+    assert (
+        "required_groups"
+        not in build_command_spec(openapi, api_prefix="/api/v3")["ticker"]
+    )
+
+
+def test_merge_overload_entries_relaxes_groups_missing_from_a_variant():
+    group = {
+        "combinator": "oneOf",
+        "alternatives": [["symbol"], ["symbols"]],
+        "members": ["symbol", "symbols"],
+        "required": True,
+    }
+    entry = {"url_path": "/x", "method": "get", "parameters": []}
+    merged = _merge_overload_entries(
+        [{**entry, "required_groups": [group]}, {**entry, "url_path": "/x/{id}"}]
+    )
+    assert merged["required_groups"] == [{**group, "required": False}]
+    both = _merge_overload_entries(
+        [
+            {**entry, "required_groups": [group]},
+            {**entry, "url_path": "/x/{id}", "required_groups": [dict(group)]},
+        ]
+    )
+    assert both["required_groups"] == [group]
+    assert "required_groups" not in _merge_overload_entries(
+        [entry, {**entry, "url_path": "/x/{id}"}]
+    )
+
+
+def test_build_command_spec_explicit_param_wins_in_either_order():
+    explicit = {"name": "symbol", "in": "query", "schema": {"type": "integer"}}
+    for order in ("explicit_first", "object_first"):
+        openapi = _exploded_openapi()
+        params = openapi["paths"]["/api/v3/ticker"]["get"]["parameters"]
+        if order == "explicit_first":
+            params.insert(1, explicit)
+        else:
+            params.append(explicit)
+        cmd = build_command_spec(openapi, api_prefix="/api/v3")["ticker"]
+        names = [p["name"] for p in cmd["parameters"]]
+        assert sorted(names) == ["symbol", "symbols", "windowSize"], order
+        symbol = next(p for p in cmd["parameters"] if p["name"] == "symbol")
+        assert symbol["type"] == "integer", order
+        assert "required_groups" not in cmd, order
+
+
+def test_build_command_spec_path_item_object_param_yields_to_operation_param():
+    openapi = _exploded_openapi()
+    path = openapi["paths"]["/api/v3/ticker"]
+    path["parameters"] = [path["get"]["parameters"].pop()]
+    path["get"]["parameters"].append(
+        {
+            "name": "symbol",
+            "in": "query",
+            "required": True,
+            "schema": {"type": "integer"},
+        }
+    )
+    cmd = build_command_spec(openapi, api_prefix="/api/v3")["ticker"]
+    assert sorted(p["name"] for p in cmd["parameters"]) == [
+        "symbol",
+        "symbols",
+        "windowSize",
+    ]
+    assert next(p for p in cmd["parameters"] if p["name"] == "symbol")["required"]
+
+
+def test_build_command_spec_drops_skipped_names_from_group_members():
+    openapi = _exploded_openapi(
+        [{"name": "limit", "in": "query", "schema": {"type": "integer"}}]
+    )
+    selection = openapi["paths"]["/api/v3/ticker"]["get"]["parameters"][-1]
+    selection["schema"]["properties"]["limit"] = {"type": "integer"}
+    cmd = build_command_spec(openapi, api_prefix="/api/v3")["ticker"]
+    assert cmd["required_groups"][0]["members"] == ["symbol", "symbols"]
+
+
+def test_explode_object_parameter_drops_defaults_the_groups_must_see():
+    param = _selection_param()
+    props = param["schema"]["properties"]
+    props["symbol"]["default"] = "BTCUSDT"
+    props["limit"] = {"type": "integer", "default": 100}
+    exploded, _ = _explode_object_parameter(param)
+    by_name = {p["name"]: p["schema"] for p in exploded}
+    assert "default" not in by_name["symbol"]
+    assert by_name["limit"]["default"] == 100
+    exploded, _ = _explode_object_parameter({**param, "required": False})
+    assert all("default" not in p["schema"] for p in exploded)
+
+
+def test_explode_object_parameter_keeps_defaults_without_groups():
+    param = _selection_param(
+        schema={
+            "type": "object",
+            "properties": {"limit": {"type": "integer", "default": 100}},
+        },
+        required=False,
+    )
+    exploded, groups = _explode_object_parameter(param)
+    assert groups == []
+    assert exploded[0]["schema"]["default"] == 100
+
+
+def test_explode_object_parameter_reads_examples_map_and_schema_examples():
+    exploded, _ = _explode_object_parameter(
+        _selection_param(examples={"one": {"value": {"symbols": '["A"]'}}})
+    )
+    assert exploded[1]["example"] == '["A"]'
+    param = _selection_param()
+    param["schema"] = {**param["schema"], "examples": [{"symbol": "ETHUSDT"}]}
+    exploded, _ = _explode_object_parameter(param)
+    assert exploded[0]["example"] == "ETHUSDT"
+
+
+def test_explode_optional_object_records_its_required_list_as_a_group():
+    param = _selection_param(
+        required=False,
+        schema={
+            "type": "object",
+            "properties": {
+                "startDate": {"type": "string"},
+                "endDate": {"type": "string"},
+            },
+            "required": ["startDate", "endDate"],
+        },
+    )
+    exploded, groups = _explode_object_parameter(param)
+    assert [p["required"] for p in exploded] == [False, False]
+    assert groups == [
+        {
+            "combinator": "anyOf",
+            "alternatives": [["startDate", "endDate"]],
+            "members": ["startDate", "endDate"],
+            "required": False,
+        }
+    ]
+
+
+def _json_array_openapi(param):
+    return {
+        "openapi": "3.0.2",
+        "paths": {
+            "/x": {
+                "get": {
+                    "parameters": [param],
+                    "responses": {"200": {"description": "ok"}},
+                }
+            }
+        },
+        "components": {
+            "schemas": {"Symbols": {"type": "array", "items": {"type": "string"}}}
+        },
+    }
+
+
+def test_content_json_array_param_is_a_json_list():
+    param = {
+        "name": "symbols",
+        "in": "query",
+        "content": {
+            "application/json": {
+                "schema": {"$ref": "#/components/schemas/Symbols"},
+                "example": ["BTCUSDT", "ETHUSDT"],
+            }
+        },
+    }
+    [normalized] = build_command_spec(_json_array_openapi(param), api_prefix="")["x"][
+        "parameters"
+    ]
+    assert normalized["is_list"] is True
+    assert normalized["list_style"] == "json"
+    assert normalized["type"] == "string"
+    assert normalized["example"] == ["BTCUSDT", "ETHUSDT"]
+
+
+def test_content_media_type_json_array_schema_is_a_json_list():
+    param = {
+        "name": "symbols",
+        "in": "query",
+        "schema": {
+            "type": "string",
+            "contentMediaType": "application/json",
+            "contentSchema": {"type": "array", "items": {"type": "integer"}},
+        },
+    }
+    normalized = _normalize_parameter(param)
+    assert normalized["is_list"] is True
+    assert normalized["list_style"] == "json"
+    assert normalized["type"] == "integer"
+
+
+def test_json_content_that_is_not_an_array_is_left_alone():
+    param = {
+        "name": "filter",
+        "in": "query",
+        "content": {"application/json": {"schema": {"type": "object"}}},
+    }
+    normalized = _normalize_parameter(param)
+    assert normalized["is_list"] is False
+    assert "list_style" not in normalized
+
+
+def _sigmets_openapi():
+    def op(*params):
+        return {
+            "get": {
+                "parameters": list(params),
+                "responses": {"200": {"description": "ok"}},
+            }
+        }
+
+    def path(name):
+        return {
+            "name": name,
+            "in": "path",
+            "required": True,
+            "schema": {"type": "string"},
+        }
+
+    def query(name):
+        return {"name": name, "in": "query", "schema": {"type": "string"}}
+
+    return {
+        "openapi": "3.0.2",
+        "paths": {
+            "/aviation/sigmets": op(query("atsu"), query("date"), query("start")),
+            "/aviation/sigmets/{atsu}": op(path("atsu")),
+            "/aviation/sigmets/{atsu}/{date}": op(path("atsu"), path("date")),
+            "/aviation/cwsus/{cwsuId}/cwas": op(path("cwsuId")),
+            "/aviation/cwsus/{cwsuId}/cwas/{date}/{sequence}": op(
+                path("cwsuId"), path("date"), path("sequence")
+            ),
+        },
+    }
+
+
+def test_merge_records_each_templates_query_params():
+    commands = build_command_spec(_sigmets_openapi(), api_prefix="")
+    assert commands["aviation.sigmets"]["template_query_params"] == {
+        "/aviation/sigmets/{atsu}/{date}": [],
+        "/aviation/sigmets/{atsu}": [],
+        "/aviation/sigmets": ["atsu", "date", "start"],
+    }
+    assert commands["aviation.cwsus.cwas"]["template_query_params"] == {
+        "/aviation/cwsus/{cwsuId}/cwas/{date}/{sequence}": [],
+        "/aviation/cwsus/{cwsuId}/cwas": [],
+    }
+    assert (
+        "template_query_params"
+        not in build_command_spec(
+            _json_array_openapi(
+                {"name": "q", "in": "query", "schema": {"type": "string"}}
+            ),
+            api_prefix="",
+        )["x"]
+    )
+
+
+def test_merge_requires_a_param_only_when_every_variant_requires_it():
+    commands = build_command_spec(_sigmets_openapi(), api_prefix="")
+    required = {
+        p["name"]: p["required"] for p in commands["aviation.sigmets"]["parameters"]
+    }
+    assert required["atsu"] is False
+    cwas = {
+        p["name"]: p["required"] for p in commands["aviation.cwsus.cwas"]["parameters"]
+    }
+    assert cwas == {"cwsuId": True, "date": False, "sequence": False}
+
+
+def test_json_array_detection_only_applies_to_query_params():
+    param = {
+        "name": "ids",
+        "in": "path",
+        "required": True,
+        "content": {"application/json": {"schema": {"type": "array", "items": {}}}},
+    }
+    normalized = _normalize_parameter(param)
+    assert normalized["is_list"] is False
+    assert "list_style" not in normalized
+
+
+def test_exploded_group_member_gets_no_synthesized_json_default():
+    param = _selection_param(
+        required=False,
+        schema={
+            "type": "object",
+            "required": ["symbol"],
+            "properties": {
+                "symbol": {"type": "string"},
+                "format": {"type": "string", "enum": ["json", "xml", "csv"]},
+            },
+        },
+    )
+    openapi = _exploded_openapi()
+    openapi["paths"]["/api/v3/ticker"]["get"]["parameters"][-1] = param
+    cmd = build_command_spec(openapi, api_prefix="/api/v3")["ticker"]
+    fmt = next(p for p in cmd["parameters"] if p["name"] == "format")
+    assert fmt["default"] is None
+
+
+def _mixed_method_openapi():
+    pet = {"type": "object", "properties": {"id": {"type": "integer"}}}
+    pid = {
+        "name": "petId",
+        "in": "path",
+        "required": True,
+        "schema": {"type": "integer"},
+    }
+    ok = {"200": {"description": "ok"}}
+    return {
+        "openapi": "3.0.2",
+        "paths": {
+            "/pet": {
+                "post": {
+                    "requestBody": {"content": {"application/json": {"schema": pet}}},
+                    "responses": ok,
+                }
+            },
+            "/pet/{petId}": {"get": {"parameters": [pid], "responses": ok}},
+            "/pets": {"get": {"responses": ok}},
+            "/pets/{petId}": {"get": {"parameters": [pid], "responses": ok}},
+        },
+    }
+
+
+def test_build_command_spec_does_not_merge_across_http_methods():
+    commands = build_command_spec(_mixed_method_openapi(), api_prefix="")
+    assert commands["pet"]["method"] == "get"
+    assert commands["pet"]["url_path"] == "/pet/{petId}"
+    assert "url_templates" not in commands["pet"]
+    assert commands["pet_post"]["method"] == "post"
+    assert commands["pet_post"]["url_path"] == "/pet"
+    assert commands["pets"]["url_templates"] == ["/pets/{petId}", "/pets"]
+
+
+def test_split_command_is_listed_in_routers_and_reference():
+    doc = build_spec_document(_mixed_method_openapi(), base_url="http://h")
+    assert doc["routers"]["pet_post"] == "command"
+    assert "/pet_post" in doc["reference"]["paths"]
+
+
+def test_build_command_spec_splits_get_and_post_on_one_path():
+    ok = {"200": {"description": "ok"}}
+    openapi = {
+        "paths": {"/orders": {"get": {"responses": ok}, "post": {"responses": ok}}}
+    }
+    commands = build_command_spec(openapi, api_prefix="")
+    assert commands["orders"]["method"] == "get"
+    assert commands["orders_post"]["method"] == "post"
+    assert commands["orders_post"]["url_path"] == "/orders"
+
+
+def test_split_post_name_skips_a_name_another_url_takes():
+    ok = {"200": {"description": "ok"}}
+    order_id = {"name": "id", "in": "path", "required": True, "schema": {}}
+    since = {"name": "since", "in": "query", "required": True, "schema": {}}
+    openapi = {
+        "paths": {
+            "/orders/{id}": {"get": {"parameters": [order_id], "responses": ok}},
+            "/orders": {"post": {"responses": ok}},
+            "/orders_post": {"get": {"parameters": [since], "responses": ok}},
+        }
+    }
+    commands = build_command_spec(openapi, api_prefix="")
+    assert commands["orders_post"]["method"] == "get"
+    assert commands["orders_post"]["url_path"] == "/orders_post"
+    assert commands["orders_post"]["parameters"][0]["required"] is True
+    assert commands["orders_post2"]["method"] == "post"
+    assert commands["orders_post2"]["url_path"] == "/orders"
+
+
+def test_split_get_command_reference_keeps_the_get_description():
+    openapi = _mixed_method_openapi()
+    openapi["paths"]["/pet"]["post"]["description"] = "Add a pet."
+    openapi["paths"]["/pet/{petId}"]["get"]["description"] = "Find a pet by id."
+    doc = build_spec_document(openapi, base_url="http://h")
+    assert doc["reference"]["paths"]["/pet"]["description"] == "Find a pet by id."
+    assert doc["reference"]["paths"]["/pet_post"]["description"] == "Add a pet."
+
+
+def test_unnamed_paths_lists_paths_the_prefix_strips_to_nothing():
+    ok = {"get": {"responses": {"200": {"description": "ok"}}}}
+    openapi = {
+        "paths": {
+            "/v1/accounts": ok,
+            "/v1/accounts/{id}": ok,
+            "/v1/accounts/{id}/orders": ok,
+        }
+    }
+    assert unnamed_paths(openapi, api_prefix="/v1/accounts") == [
+        "/v1/accounts",
+        "/v1/accounts/{id}",
+    ]
+    assert unnamed_paths(openapi, api_prefix="/v1") == []
+
+
+def test_explode_object_parameter_ignores_a_required_flag_that_is_not_a_list():
+    param = {
+        "name": "filter",
+        "in": "query",
+        "schema": {
+            "type": "object",
+            "required": True,
+            "properties": {"a": {"type": "string"}},
+        },
+    }
+    exploded, groups = _explode_object_parameter(param)
+    assert [(p["name"], p["required"]) for p in exploded] == [("a", False)]
+    assert groups == []
+
+
+def test_post_operations_with_different_bodies_stay_separate_commands():
+    ok = {"200": {"description": "ok"}}
+    pet = {"type": "object", "properties": {"name": {"type": "string"}}}
+    body = {"requestBody": {"content": {"application/json": {"schema": pet}}}}
+    pid = {"name": "petId", "in": "path", "required": True, "schema": {}}
+    status = {"name": "status", "in": "query", "schema": {}}
+    openapi = {
+        "paths": {
+            "/pet": {"post": {**body, "responses": ok}},
+            "/pet/{petId}": {
+                "get": {"parameters": [pid], "responses": ok},
+                "post": {"parameters": [pid, status], "responses": ok},
+            },
+            "/pets": {"post": {**body, "responses": ok}},
+            "/pets/{petId}": {"post": {**body, "parameters": [pid], "responses": ok}},
+        }
+    }
+    commands = build_command_spec(openapi, api_prefix="")
+    assert commands["pet"]["url_path"] == "/pet/{petId}"
+    assert commands["pet_post"]["url_path"] == "/pet"
+    assert commands["pet_post"]["request_body_schema"] is not None
+    assert commands["pet_post2"]["url_path"] == "/pet/{petId}"
+    assert commands["pet_post2"]["request_body_schema"] is None
+    assert commands["pets"]["url_templates"] == ["/pets/{petId}", "/pets"]
+
+
+def test_get_command_reference_ignores_post_text_when_get_has_none():
+    openapi = _mixed_method_openapi()
+    openapi["paths"]["/pet"]["post"]["description"] = "Add a pet."
+    doc = build_spec_document(openapi, base_url="http://h")
+    assert doc["reference"]["paths"]["/pet"]["description"] == ""
+    assert doc["reference"]["paths"]["/pet_post"]["description"] == "Add a pet."
+
+
+def test_unnamed_paths_leaves_out_paths_that_have_no_name_anyway():
+    ok = {"get": {"responses": {"200": {"description": "ok"}}}}
+    openapi = {"paths": {"/": ok, "/{id}": ok, "/v1": ok, "/v1/x": ok}}
+    assert unnamed_paths(openapi, api_prefix="/v1") == ["/v1"]
+
+
+def test_explode_object_parameter_ignores_a_non_list_required_inside_allof():
+    member = {"type": "object", "required": True, "properties": {"a": {}}}
+    param = {"name": "filter", "in": "query", "schema": {"allOf": [member]}}
+    exploded, groups = _explode_object_parameter(param)
+    assert [p["name"] for p in exploded] == ["a"]
+    assert groups == []
+
+
+def test_post_bodies_that_differ_only_in_docs_still_merge():
+    import datetime
+
+    ok = {"200": {"description": "ok"}}
+
+    def body(title, example):
+        schema = {
+            "title": title,
+            "type": "object",
+            "required": ["b", "a"] if title == "One" else ["a", "b"],
+            "properties": {"a": {"type": "string", "example": example}, "b": {}},
+        }
+        return {"requestBody": {"content": {"application/json": {"schema": schema}}}}
+
+    pid = {"name": "id", "in": "path", "required": True, "schema": {}}
+    openapi = {
+        "paths": {
+            "/x": {
+                "post": {**body("One", datetime.date(2024, 1, 31)), "responses": ok}
+            },
+            "/x/{id}": {
+                "post": {**body("Two", "b"), "parameters": [pid], "responses": ok}
+            },
+        }
+    }
+    commands = build_command_spec(openapi, api_prefix="")
+    assert list(commands) == ["x"]
+    assert commands["x"]["url_templates"] == ["/x/{id}", "/x"]
+
+
+def test_split_post_commands_each_keep_their_own_reference_text():
+    ok = {"200": {"description": "ok"}}
+    pet = {"type": "object", "properties": {"name": {"type": "string"}}}
+    pid = {"name": "petId", "in": "path", "required": True, "schema": {}}
+    openapi = {
+        "paths": {
+            "/pet": {
+                "post": {
+                    "requestBody": {"content": {"application/json": {"schema": pet}}},
+                    "responses": ok,
+                }
+            },
+            "/pet/{petId}": {
+                "post": {
+                    "description": "Updates a pet by id.",
+                    "parameters": [pid],
+                    "responses": ok,
+                }
+            },
+        }
+    }
+    doc = build_spec_document(openapi, base_url="http://h")
+    assert doc["commands"]["pet"]["url_path"] == "/pet"
+    assert doc["reference"]["paths"]["/pet"]["description"] == ""
+    assert doc["reference"]["paths"]["/pet_post"]["description"] == (
+        "Updates a pet by id."
+    )
+
+
+def test_get_command_with_a_post_sibling_keeps_its_base_url_reference_text():
+    ok = {"200": {"description": "ok"}}
+    pid = {"name": "petId", "in": "path", "required": True, "schema": {}}
+    openapi = {
+        "paths": {
+            "/pets": {
+                "get": {"description": "List all pets.", "responses": ok},
+                "post": {"description": "Create a pet.", "responses": ok},
+            },
+            "/pets/{petId}": {
+                "get": {
+                    "description": "Info for a pet.",
+                    "parameters": [pid],
+                    "responses": ok,
+                }
+            },
+        }
+    }
+    doc = build_spec_document(openapi, base_url="http://h")
+    assert doc["reference"]["paths"]["/pets"]["description"] == "List all pets."
+    assert doc["reference"]["paths"]["/pets_post"]["description"] == "Create a pet."
+
+
+def test_merge_keeps_each_urls_response_schema_when_it_differs():
+    openapi = _mixed_method_openapi()
+    item = {"type": "object", "properties": {"id": {"type": "integer"}}}
+    listing = {"type": "array", "items": item}
+
+    def content(schema):
+        return {"200": {"content": {"application/json": {"schema": schema}}}}
+
+    openapi["paths"]["/pets"]["get"]["responses"] = content(listing)
+    openapi["paths"]["/pets/{petId}"]["get"]["responses"] = content(item)
+    pets = build_command_spec(openapi, api_prefix="")["pets"]
+    assert pets["response_schema"] == listing
+    assert pets["template_response_schemas"] == {"/pets/{petId}": item}

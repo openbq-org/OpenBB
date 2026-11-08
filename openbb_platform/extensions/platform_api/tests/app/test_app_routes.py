@@ -14,6 +14,8 @@ import json
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 
 def test_root_serves_landing_page_html(tmp_path):
     """The root handler reads ``assets/landing_page.html`` and returns
@@ -439,6 +441,83 @@ def test_app_get_agents_json_merges_additional_agents():
     body = _json.loads(response.body)
     # The stub agents route returns ``{"x": {"endpoints": {}}}``.
     assert body == {"x": {"endpoints": {}}}
+
+
+@pytest.mark.parametrize(
+    "catalogue, defaults",
+    [
+        ('[{"id": "example-app"}]', [{"id": "example-app"}]),
+        ('[{"layout": [{"i": "example-app"}]}]', [{"layout": [{"i": "example-app"}]}]),
+        (
+            '[{"tabs": {"main": {"layout": [{"i": "example-app"}]}}}]',
+            [{"tabs": {"main": {"layout": [{"i": "example-app"}]}}}],
+        ),
+        ("[]", []),
+        ("missing", []),
+        ("directory", []),
+        ("", []),
+        (b"\xff", []),
+        ("not JSON", []),
+        ("null", []),
+        ('{"id": "example-app"}', []),
+        ('["not an app"]', []),
+        ('[{"id": ["invalid"]}]', []),
+        ('[{"layout": "invalid"}]', []),
+        ('[{"layout": [42]}]', []),
+        ('[{"layout": [{"i": 42}]}]', []),
+        ('[{"tabs": ["invalid"]}]', []),
+        ('[{"tabs": {"main": "invalid"}}]', []),
+        ('[{"id": "example-app"}, {"layout": [42]}]', []),
+    ],
+)
+def test_default_apps_override_preserves_user_and_extension_apps(
+    tmp_path, monkeypatch, catalogue, defaults
+):
+    """Invalid default catalogues must not interfere with other app sources."""
+    import asyncio
+
+    default_path = tmp_path / "default_apps.json"
+    if catalogue == "directory":
+        default_path.mkdir()
+    elif isinstance(catalogue, bytes):
+        default_path.write_bytes(catalogue)
+    elif catalogue != "missing":
+        default_path.write_text(catalogue)
+    monkeypatch.setenv("OPENBB_DEFAULT_APPS_PATH", str(default_path))
+    module = _reload_app_module_with_argv(["openbb-api"])
+    assert str(default_path) == module.DEFAULT_APPS_PATH
+
+    user_app = {"id": "user-app"}
+    extension_app = {"id": "extension-app"}
+    apps_path = tmp_path / "apps.json"
+    apps_path.write_text(json.dumps([user_app]))
+    widgets = {"user-app": {}, "example-app": {}, "extension-app": {}}
+
+    with (
+        patch.object(module, "APPS_PATH", str(apps_path)),
+        patch.object(module, "get_widgets", AsyncMock(return_value=widgets)),
+        patch.object(module, "widgets_json", widgets),
+        patch.object(module, "has_additional_apps", return_value=True),
+        patch.object(
+            module,
+            "get_additional_apps",
+            AsyncMock(return_value={"/provider/": [extension_app]}),
+        ),
+    ):
+        response = asyncio.run(module.get_apps_json())
+
+    assert json.loads(response.body) == [user_app, *defaults, extension_app]
+
+
+def test_default_apps_path_uses_bundled_catalogue_without_override(monkeypatch):
+    """No environment override must preserve the installed examples path."""
+    from pathlib import Path
+
+    monkeypatch.delenv("OPENBB_DEFAULT_APPS_PATH", raising=False)
+    module = _reload_app_module_with_argv(["openbb-api"])
+    assert (
+        Path(module.__file__).absolute().parents[1] / "assets" / "default_apps.json"
+    ) == module.DEFAULT_APPS_PATH
 
 
 def test_app_get_apps_json_extends_with_non_empty_additional_apps_list(tmp_path):

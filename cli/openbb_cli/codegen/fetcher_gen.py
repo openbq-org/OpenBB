@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import keyword
 import re
 from dataclasses import dataclass, field
 from typing import Any, cast
@@ -16,6 +18,7 @@ from openbb_cli.codegen.pydantic_gen import (
     consolidate_imports,
     generate_class,
     query_field_name,
+    query_params_field_names,
     render_function_docstring,
 )
 
@@ -121,7 +124,8 @@ def _module_name_from_command(name: str) -> str:
         safe = "command"
     if safe[0].isdigit():
         safe = f"_{safe}"
-    return safe.lower()
+    safe = safe.lower()
+    return f"{safe}_" if keyword.iskeyword(safe) else safe
 
 
 _COORDINATE_NAME_RE = re.compile(r"(^|[^a-z])(lat|lon|lng|latitude|longitude)", re.I)
@@ -142,14 +146,14 @@ def _mark_null_empty(node: Any) -> Any:
         return [_mark_null_empty(n) for n in node]
     if not isinstance(node, dict):
         return node
-    out = {
-        k: (
-            v
-            if k in ("enum", "const", "default", "example", "examples")
-            else _mark_null_empty(v)
-        )
-        for k, v in node.items()
-    }
+    out: dict[str, Any] = {}
+    for k, v in node.items():
+        if k in ("enum", "const", "default", "example", "examples"):
+            out[k] = v
+        elif k in ("properties", "patternProperties") and isinstance(v, dict):
+            out[k] = {name: _mark_null_empty(schema) for name, schema in v.items()}
+        else:
+            out[k] = _mark_null_empty(v)
     if out.get("type") == "object" or "properties" in out:
         out["x-null-empty"] = True
     return out
@@ -209,7 +213,7 @@ def _query_params_schema(
             prop_schema = {"type": "string", "x-multiple-items": True}
             if description:
                 prop_schema["description"] = description
-            if raw.get("choices"):
+            if raw.get("choices") and raw.get("list_style") != "json":
                 prop_schema["x-choices"] = list(raw["choices"])
             if raw.get("default") is not None:
                 prop_schema["default"] = raw["default"]
@@ -231,10 +235,16 @@ def _query_params_schema(
             properties[body_name] = body_prop
             if body_name in body_required:
                 required.append(body_name)
+    required_groups = [
+        group
+        for group in cmd_spec.get("required_groups") or []
+        if all(name in properties for alt in group["alternatives"] for name in alt)
+    ]
     return {
         "type": "object",
         "properties": properties,
         "required": required,
+        **({"x-required-groups": required_groups} if required_groups else {}),
     }
 
 
@@ -329,6 +339,11 @@ def _unwrap_schema_envelopes(schema: Any) -> dict[str, Any]:
         return {}
     typed: dict[str, Any] = schema
     if typed.get("type") == "array":
+        kind = _response_shape(typed)[1]
+        if kind == "tuples":
+            return _wrap_scalar_as_value(typed["items"])
+        if kind == "records":
+            return _final_row_schema(typed["items"])
         return _unwrap_schema_envelopes(typed.get("items"))
     choice_rows = _wrapper_choice_rows(typed)
     if choice_rows is not None:
@@ -520,11 +535,16 @@ def _response_shape(response: Any) -> tuple[str | None, str | None]:
     only array, or the only one whose items are objects; every other property
     is metadata), ``"map"`` when the only property is a free-form
     ``{key: value}`` map (one row per entry), ``"single"`` when the object is
-    itself the row, else ``(None, None)``. The data model and the generated
-    ``unpack_response`` call both use this, so they cannot disagree.
+    itself the row, ``"tuples"`` when the response is an array of arrays (each
+    inner array is one positional row), ``"records"`` when it is an array of
+    objects (each object is one row), else ``(None, None)``. The data model
+    and the generated ``unpack_response`` call both use this, so they cannot
+    disagree.
     """
-    if not isinstance(response, dict) or response.get("type") == "array":
+    if not isinstance(response, dict):
         return None, None
+    if response.get("type") == "array":
+        return None, _array_row_kind(response.get("items"))
     props = response.get("properties")
     if not isinstance(props, dict) or not props or "results" in props:
         return None, None
@@ -547,6 +567,17 @@ def _response_shape(response: Any) -> tuple[str | None, str | None]:
     if _single_prop_inner_schema(props) is not None:
         return None, None  # a one-property wrapper object: unwrapped by the model too
     return None, "single"
+
+
+def _array_row_kind(items: Any) -> str | None:
+    """``"tuples"`` for array items that are arrays, ``"records"`` for objects."""
+    if not isinstance(items, dict):
+        return None
+    if items.get("type") == "array" or "items" in items:
+        return "tuples"
+    if items.get("type") == "object" or "properties" in items:
+        return "records"
+    return None
 
 
 def _envelope_inner_schema(
@@ -599,13 +630,124 @@ def _single_prop_inner_schema(props: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
+def _merged_data_schema(cmd_spec: dict[str, Any]) -> dict[str, Any]:
+    """Row schema of a command, covering every URL of a merged command.
+
+    The fields of each URL's row schema are combined. A field declared
+    differently by several URLs takes every distinct declaration
+    (``_merge_prop_schemas``) and keeps the first one's docs; declarations
+    that differ only in docs or nullability count as one (``_shape_key``). A
+    field stays required only when every URL's row schema requires it.
+    """
+    base = _data_schema(cmd_spec)
+    variants = cmd_spec.get("template_response_schemas") or {}
+    if not variants:
+        return base
+    schemas = [base] + [
+        _data_schema({"response_schema": schema}) for schema in variants.values()
+    ]
+    declarations: dict[str, list[Any]] = {}
+    for schema in schemas:
+        for name, prop in (schema.get("properties") or {}).items():
+            seen = declarations.setdefault(name, [])
+            if all(_shape_key(prop) != _shape_key(other) for other in seen):
+                seen.append(prop)
+    properties: dict[str, Any] = {}
+    for name, distinct in declarations.items():
+        first = distinct[0]
+        if len(distinct) == 1 or not all(isinstance(d, dict) for d in distinct):
+            properties[name] = first
+            continue
+        merged = first
+        for other in distinct[1:]:
+            merged = _merge_prop_schemas(merged, other)
+        docs = {k: first[k] for k in ("description", "title", "example") if k in first}
+        properties[name] = {**merged, **docs}
+    if not properties:
+        return base
+    required = set.intersection(*(set(s.get("required") or []) for s in schemas))
+    return {
+        **base,
+        "type": "object",
+        "properties": properties,
+        "required": [name for name in properties if name in required],
+    }
+
+
+_DOC_KEYS = frozenset({"description", "example", "examples", "title"})
+
+
+def _shape(schema: Any) -> Any:
+    """Return ``schema`` without docs or nullability, at every level.
+
+    Descriptions, examples, titles and ``nullable`` are dropped, and an
+    ``anyOf`` / ``oneOf`` of one schema and ``null`` becomes that schema.
+    """
+    if isinstance(schema, list):
+        return [_shape(v) for v in schema]
+    if not isinstance(schema, dict):
+        return schema
+    out: dict[str, Any] = {}
+    for key, value in schema.items():
+        if key in ("properties", "patternProperties") and isinstance(value, dict):
+            out[key] = {name: _shape(sub) for name, sub in value.items()}
+        elif key not in _DOC_KEYS and key != "nullable":
+            out[key] = _shape(value)
+    for combinator in ("anyOf", "oneOf"):
+        variants = out.get(combinator)
+        if not isinstance(variants, list):
+            continue
+        non_null = [
+            v for v in variants if not (isinstance(v, dict) and v.get("type") == "null")
+        ]
+        if len(non_null) == 1 and len(non_null) < len(variants):
+            return non_null[0]
+    return out
+
+
+def _shape_key(schema: Any) -> str:
+    """Compare key for a field schema (see ``_shape``)."""
+    return json.dumps(_shape(schema), sort_keys=True, default=str)
+
+
+def _unpack_kwargs(response_schema: Any) -> dict[str, Any]:
+    """``unpack_response`` keyword arguments for one response schema."""
+    key, kind = _response_shape(response_schema)
+    if kind is None:
+        return {}
+    if kind in ("single", "tuples", "records"):
+        return {"kind": kind}
+    return {"rows_key": key, "kind": kind}
+
+
+def _template_unpack_hints(
+    cmd_spec: dict[str, Any], url_choices: UrlChoices | None
+) -> dict[tuple[str, ...], dict[str, Any]] | None:
+    """Per-URL ``unpack_response`` hints, keyed by each URL's sorted placeholders.
+
+    ``None`` unless the URLs of a merged command declare different response
+    shapes, in which case the generated code picks the hint for the URL it used.
+    """
+    variants = cmd_spec.get("template_response_schemas") or {}
+    if not url_choices or not variants:
+        return None
+    base = cmd_spec.get("response_schema")
+    hints: dict[tuple[str, ...], dict[str, Any]] = {}
+    for template in cmd_spec.get("url_templates") or []:
+        names = tuple(sorted(_path_template_keys(template)))
+        hints[names] = _unpack_kwargs(variants.get(template, base))
+    if len({repr(h) for h in hints.values()}) < 2:
+        return None
+    return hints
+
+
 def _unpack_hint(cmd_spec: dict[str, Any]) -> str:
     """Extra ``unpack_response`` arguments derived from the response schema."""
     key, kind = _response_shape(cmd_spec.get("response_schema"))
     if kind is None:
         return ""
-    if kind == "single":
-        return ', kind="single"'
+    if kind in ("single", "tuples", "records"):
+        return f', kind="{kind}"'
     return f", rows_key={key!r}, kind={kind!r}"
 
 
@@ -635,7 +777,7 @@ def _is_scalar_schema(schema: dict[str, Any]) -> bool:
 
 
 def _wrap_scalar_as_value(schema: dict[str, Any]) -> dict[str, Any]:
-    """Promote a scalar schema to ``{type: object, properties: {value: scalar}}``."""
+    """Promote a schema to ``{type: object, properties: {value: schema}}``."""
     return {
         "type": "object",
         "properties": {"value": schema},
@@ -673,6 +815,7 @@ def _query_dict_construction(
     creds: dict[str, dict[str, str]],
     path_params: list[str],
     provider_name: str,
+    field_names: dict[str, str] | None = None,
 ) -> str:
     """Compose the ``query_dict = {...}`` block emitted in ``aextract_data``.
 
@@ -691,13 +834,13 @@ def _query_dict_construction(
         The Python source for the ``query_dict`` assignment.
     """
     body_props = (cmd_spec.get("request_body_schema") or {}).get("properties") or {}
-    excluded = {query_field_name(n) for n in (*path_params, *body_props)}
+    excluded = {_field_name(field_names, n) for n in (*path_params, *body_props)}
     range_params = [
         p
         for p in (cmd_spec.get("parameters") or [])
         if isinstance(p, dict) and p.get("_socrata_op") in {"date_min", "date_max"}
     ]
-    excluded.update(query_field_name(p["name"]) for p in range_params)
+    excluded.update(_field_name(field_names, p["name"]) for p in range_params)
     if excluded:
         excluded_literal = (
             "{" + ", ".join(repr(name) for name in sorted(excluded)) + "}"
@@ -725,7 +868,7 @@ def _query_dict_construction(
         lines.append(f"        if {var}:")
         lines.append(f"            _query_dict[{wire_name!r}] = {var}")
     if range_params:
-        lines.extend(_socrata_where_clause_lines(range_params))
+        lines.extend(_socrata_where_clause_lines(range_params, field_names))
         date_column = next(
             (p["_socrata_column"] for p in range_params if p.get("_socrata_column")),
             None,
@@ -741,8 +884,23 @@ def _query_dict_construction(
             and param.get("in", "query") == "query"
         ):
             lines.extend(
-                _list_param_lines(param["name"], param.get("list_style") or "multi")
+                _list_param_lines(
+                    param["name"],
+                    param.get("list_style") or "multi",
+                    param.get("type") or "string",
+                )
             )
+    group_members = list(
+        dict.fromkeys(
+            name
+            for group in cmd_spec.get("required_groups") or []
+            for name in group.get("members") or []
+        )
+    )
+    if group_members:
+        lines.append(f"        for _name in {tuple(group_members)!r}:")
+        lines.append('            if _query_dict.get(_name) in ("", []):')
+        lines.append("                _query_dict.pop(_name, None)")
     rename_pairs: list[tuple[str, str]] = []
     for param in cmd_spec.get("parameters") or []:
         if not isinstance(param, dict):
@@ -763,13 +921,22 @@ def _query_dict_construction(
 _LIST_DELIMITERS = {"csv": ",", "space": " ", "pipe": "|"}
 
 
-def _list_param_lines(wire_name: str, style: str) -> list[str]:
+def _list_param_lines(
+    wire_name: str, style: str, item_type: str = "string"
+) -> list[str]:
     """Emit lines turning the model's comma-joined string into the wire format.
 
-    ``multi`` becomes a list (``get_querystring`` repeats the key); the other
-    styles are re-joined with the delimiter the upstream API expects.
+    ``multi`` becomes a list (``encode_query`` repeats the key), ``json``
+    becomes a JSON array, and the other styles are re-joined with the
+    delimiter the upstream API expects.
     """
     key = repr(wire_name)
+    if style == "json":
+        type_arg = "" if item_type == "string" else f", {item_type!r}"
+        return [
+            f"        if isinstance(_query_dict.get({key}), str):",
+            f"            _query_dict[{key}] = json_array(_query_dict[{key}]{type_arg})",
+        ]
     lines = [
         f"        if isinstance(_query_dict.get({key}), str):",
         f"            _items = [i.strip() for i in _query_dict[{key}].split(',') if i.strip()]",
@@ -782,14 +949,238 @@ def _list_param_lines(wire_name: str, style: str) -> list[str]:
     return lines
 
 
-def _socrata_where_clause_lines(range_params: list[dict[str, Any]]) -> list[str]:
+@dataclass
+class UrlChoices:
+    """The URLs of a merged command, as generated code needs them.
+
+    Parameters
+    ----------
+    templates : list of tuple
+        ``(template, path_names, query_names)`` per URL, most placeholders
+        first, as ``choose_url_template`` takes them.
+    names : list of str
+        Every placeholder and declared query parameter across the URLs.
+    attributes : dict[str, str]
+        Wire name to the attribute holding its value.
+    defaults : dict[str, Any]
+        Placeholder defaults that must not pick a URL by themselves.
+    """
+
+    templates: list[tuple[str, tuple[str, ...], tuple[str, ...]]]
+    names: list[str]
+    attributes: dict[str, str]
+    defaults: dict[str, Any]
+
+    @property
+    def placeholders(self) -> list[str]:
+        """Every placeholder name, in first-seen order."""
+        return list(
+            dict.fromkeys(name for _, names, _ in self.templates for name in names)
+        )
+
+
+def url_choices_for(
+    cmd_spec: dict[str, Any],
+    api_prefix: str,
+    attributes: dict[str, str],
+) -> UrlChoices | None:
+    """Collect the URLs of a merged command whose placeholders all have attributes.
+
+    ``attributes`` maps each wire name the generated code can read to its
+    attribute name. URLs with a placeholder outside it (a credential-named or
+    undeclared segment) are left out, since no value can fill them. ``None``
+    when fewer than two URLs remain. A spec written before
+    ``template_query_params`` existed lets every URL take every query
+    parameter, as before.
+    """
+    templates = cmd_spec.get("url_templates") or []
+    if len(templates) < 2:
+        return None
+    params = filter_user_params(cmd_spec.get("parameters") or [])
+    declared = cmd_spec.get("template_query_params")
+    legacy = tuple(p["name"] for p in params if p.get("in", "query") != "path")
+    choices = []
+    for template in templates:
+        path_names = tuple(_path_template_keys(template))
+        if not all(name in attributes for name in path_names):
+            continue
+        query_names = (
+            tuple(n for n in declared.get(template) or () if n in attributes)
+            if isinstance(declared, dict)
+            else tuple(n for n in legacy if n in attributes)
+        )
+        choices.append(
+            (_resolve_url_path(api_prefix, template), path_names, query_names)
+        )
+    if len(choices) < 2:
+        return None
+    names = list(
+        dict.fromkeys(
+            name
+            for _, path_names, query_names in choices
+            for name in (*path_names, *query_names)
+        )
+    )
+    placeholders = {name for _, path_names, _ in choices for name in path_names}
+    defaults = {
+        p["name"]: p["default"]
+        for p in params
+        if p.get("name") in placeholders and p.get("default") is not None
+    }
+    return UrlChoices(
+        templates=choices,
+        names=names,
+        attributes={name: attributes[name] for name in names},
+        defaults=defaults,
+    )
+
+
+def query_params_fields(
+    cmd_spec: dict[str, Any], provider_name: str, class_name: str
+) -> dict[str, str]:
+    """Each parameter's field name in a command's generated ``QueryParams``."""
+    return query_params_field_names(
+        _query_params_schema(cmd_spec, provider_name)["properties"], class_name
+    )
+
+
+def _query_field_names(spec: FetcherCommandSpec) -> dict[str, str]:
+    """``query_params_fields`` for the ``QueryParams`` class of ``spec``."""
+    return query_params_fields(
+        spec.cmd_spec, spec.provider_name, f"{class_name_from(spec.name)}QueryParams"
+    )
+
+
+def _field_name(field_names: dict[str, str] | None, name: str) -> str:
+    """Return the ``QueryParams`` field that holds parameter ``name``."""
+    return (field_names or {}).get(name) or query_field_name(name)
+
+
+def boolean_params(cmd_spec: dict[str, Any]) -> set[str]:
+    """Names of the command's boolean parameters."""
+    return {
+        p["name"]
+        for p in cmd_spec.get("parameters") or []
+        if isinstance(p, dict) and p.get("name") and p.get("type") == "boolean"
+    }
+
+
+def _url_template_choices(spec: FetcherCommandSpec) -> UrlChoices | None:
+    """``url_choices_for`` with the generated ``QueryParams`` fields as attributes."""
+    return url_choices_for(spec.cmd_spec, spec.api_prefix, _query_field_names(spec))
+
+
+def render_choose_url_call(
+    choices: UrlChoices, owner: str | None, indent: str
+) -> list[str]:
+    """Render a ``choose_url_template(...)`` call.
+
+    Values are read off ``owner`` (``query``, ``self``), or from local
+    variables named after the attributes when ``owner`` is ``None``.
+    """
+    values = ", ".join(
+        f"{name!r}: "
+        + (
+            f"getattr({owner}, {choices.attributes[name]!r})"
+            if owner
+            else choices.attributes[name]
+        )
+        for name in choices.placeholders
+    )
+    labels = {name: choices.attributes[name] for name in choices.placeholders}
+    return [
+        f"{indent}choose_url_template(",
+        f"{indent}    {tuple(choices.templates)!r},",
+        f"{indent}    {{{values}}},",
+        f"{indent}    {labels!r},",
+        f"{indent}    {choices.defaults!r},",
+        f"{indent})",
+    ]
+
+
+def _path_lines(
+    url_path_template: str,
+    path_params: list[str],
+    url_choices: UrlChoices | None,
+    field_names: dict[str, str] | None = None,
+    booleans: set[str] | frozenset[str] = frozenset(),
+) -> list[str]:
+    """Emit the ``_path = ...`` assignment for ``aextract_data``.
+
+    A command with several URLs picks one at call time with
+    ``choose_url_template``; ``_used`` and ``_query_names`` record the names its
+    placeholders used and the query parameters it declares. A boolean path
+    value goes through ``wire_value``, so it is sent as ``true`` / ``false``.
+    """
+    if url_choices:
+        call = render_choose_url_call(url_choices, "query", "        ")
+        call[0] = "        _path, _used, _query_names = choose_url_template("
+        return call
+    if path_params:
+        sub_args = ", ".join(
+            (
+                f"{p}=wire_value(getattr(query, {_field_name(field_names, p)!r}))"
+                if p in booleans
+                else f"{p}=getattr(query, {_field_name(field_names, p)!r})"
+            )
+            for p in path_params
+        )
+        return [f"        _path = {url_path_template!r}.format({sub_args})"]
+    return [f"        _path = {url_path_template!r}"]
+
+
+def _consumed_path_lines(url_choices: UrlChoices | None) -> list[str]:
+    """Emit lines dropping what the chosen URL does not send as query parameters.
+
+    That is its own path values, other URLs' parameters it does not declare
+    (a list URL's ``limit`` default on an item URL), and empty values.
+    """
+    if not url_choices:
+        return []
+    return [
+        f"        for _name in {tuple(url_choices.names)!r}:",
+        "            if (",
+        "                _name in _used",
+        "                or _name not in _query_names",
+        '                or _query_dict.get(_name) in ("", [])',
+        "            ):",
+        "                _query_dict.pop(_name, None)",
+    ]
+
+
+def _url_template_validator(url_choices: UrlChoices) -> str:
+    """Render a ``QueryParams`` validator rejecting path values that form no URL."""
+    call = "\n".join(render_choose_url_call(url_choices, "self", "        "))
+    return (
+        '\n    @model_validator(mode="after")\n'
+        "    def _check_url_template(self) -> Any:\n"
+        '        """Allow only path-parameter combinations that form one of the URLs."""\n'
+        f"{call}\n"
+        "        return self\n"
+    )
+
+
+def _has_json_list_param(cmd_spec: dict[str, Any]) -> bool:
+    """Whether any query parameter is sent as a JSON-encoded array."""
+    return any(
+        isinstance(p, dict)
+        and p.get("is_list")
+        and p.get("list_style") == "json"
+        and p.get("in", "query") == "query"
+        for p in filter_user_params(cmd_spec.get("parameters") or [])
+    )
+
+
+def _socrata_where_clause_lines(
+    range_params: list[dict[str, Any]], field_names: dict[str, str] | None = None
+) -> list[str]:
     """Compose runtime lines that fold Socrata range params into ``$where``."""
     field_lookups: list[str] = []
     for param in range_params:
         wire_name = param["name"]
         column = param["_socrata_column"]
         op = ">=" if param["_socrata_op"] == "date_min" else "<="
-        py_field = query_field_name(wire_name)
+        py_field = _field_name(field_names, wire_name)
         var = f"_range_{py_field}"
         field_lookups.append(
             f"        {var} = getattr(query, {py_field!r}, None)\n"
@@ -892,7 +1283,9 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
     fetcher_class = f"{model_name}Fetcher"
 
     qp_schema = _query_params_schema(spec.cmd_spec, spec.provider_name)
-    data_schema = _with_body_field(_data_schema(spec.cmd_spec) or {"type": "object"})
+    data_schema = _with_body_field(
+        _merged_data_schema(spec.cmd_spec) or {"type": "object"}
+    )
 
     qp_generated = generate_class(
         qp_schema,
@@ -909,6 +1302,20 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
 
     creds = credentials_from_command(spec.cmd_spec)
     path_params = _path_template_keys(spec.cmd_spec.get("url_path") or "")
+    url_choices = _url_template_choices(spec)
+    if url_choices:
+        qp_generated.source = (
+            qp_generated.source.rstrip("\n")
+            + "\n"
+            + _url_template_validator(url_choices)
+        )
+        qp_generated.imports.update(
+            {
+                "from pydantic import model_validator",
+                "from typing import Any",
+                "from ....utils import choose_url_template",
+            }
+        )
 
     imports = {
         "import base64",
@@ -918,11 +1325,14 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
         "from openbb_core.provider.abstract.data import Data",
         "from openbb_core.provider.abstract.fetcher import Fetcher",
         "from openbb_core.provider.abstract.query_params import QueryParams",
-        "from openbb_core.provider.utils.helpers import "
-        "get_async_requests_session, get_querystring",
+        "from openbb_core.provider.utils.helpers import get_async_requests_session",
         "from pydantic import BaseModel, Field",
-        "from ....utils import safe_json_loads, unpack_response",
+        "from ....utils import encode_query, safe_json_loads, unpack_response",
     }
+    if _has_json_list_param(spec.cmd_spec):
+        imports.add("from ....utils import json_array")
+    if not url_choices and boolean_params(spec.cmd_spec) & set(path_params):
+        imports.add("from ....utils import wire_value")
     imports.update(qp_generated.collect_imports())
     imports.update(data_generated.collect_imports())
 
@@ -934,8 +1344,13 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
     description = (spec.cmd_spec.get("description") or f"Fetch {spec.name}.").strip()
 
     cred_lines = _credential_lookup_lines(creds, spec.provider_name)
+    field_names = _query_field_names(spec)
     query_block = _query_dict_construction(
-        spec.cmd_spec, creds, path_params, spec.provider_name
+        spec.cmd_spec,
+        creds,
+        [] if url_choices else path_params,
+        spec.provider_name,
+        field_names,
     )
     header_block = _header_dict_construction(creds, spec.headers)
     cookie_block = _cookie_dict_construction(creds)
@@ -950,6 +1365,7 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
             method=method,
             url_path_template=full_url_path,
             base_url=base_url,
+            path_params=path_params,
             cred_lines=cred_lines,
             query_block=query_block,
             header_block=header_block,
@@ -989,7 +1405,13 @@ def generate_fetcher_module(spec: FetcherCommandSpec) -> GeneratedFetcher:
         imports=consolidate_imports(imports),
         column_metadata=_column_metadata_from_data_schema(data_schema),
     )
-    if hint:
+    template_hints = _template_unpack_hints(spec.cmd_spec, url_choices)
+    if template_hints:
+        source = source.replace(
+            "unpack_response(_payload)",
+            f"unpack_response(_payload, **{template_hints!r}.get(tuple(sorted(_used)), {{}}))",
+        )
+    elif hint:
         source = source.replace(
             "unpack_response(_payload)", f"unpack_response(_payload{hint})"
         )
@@ -1015,6 +1437,7 @@ def _render_streaming_fetcher_source(
     method: str,
     url_path_template: str,
     base_url: str,
+    path_params: list[str],
     cred_lines: list[str],
     query_block: str,
     header_block: str,
@@ -1041,6 +1464,8 @@ def _render_streaming_fetcher_source(
         URL path with placeholders intact.
     base_url : str
         Upstream API root, no trailing slash.
+    path_params : list of str
+        Placeholder names in ``url_path_template``.
     cred_lines : list of str
         Credential-extraction source lines.
     query_block : str
@@ -1087,15 +1512,24 @@ def _render_streaming_fetcher_source(
     parts: list[str] = []
     parts.append(f'"""Streaming fetcher for {spec.name} — generated from spec."""')
     parts.append("")
-    parts.append("from collections.abc import AsyncIterator")
-    parts.append("from typing import Any")
-    parts.append("")
-    parts.append("import httpx")
-    parts.append("")
-    parts.append("from openbb_core.provider.abstract.data import Data")
-    parts.append("from openbb_core.provider.abstract.fetcher import Fetcher")
-    parts.append("from openbb_core.provider.abstract.query_params import QueryParams")
-    parts.append("from openbb_core.provider.utils.helpers import get_querystring")
+    imports = {
+        "from collections.abc import AsyncIterator",
+        "from typing import Any",
+        "import httpx",
+        "from openbb_core.provider.abstract.data import Data",
+        "from openbb_core.provider.abstract.fetcher import Fetcher",
+        "from openbb_core.provider.abstract.query_params import QueryParams",
+        "from ....utils import encode_query",
+    }
+    url_choices = _url_template_choices(spec)
+    booleans = boolean_params(spec.cmd_spec)
+    if _has_json_list_param(spec.cmd_spec):
+        imports.add("from ....utils import json_array")
+    if not url_choices and booleans & set(path_params):
+        imports.add("from ....utils import wire_value")
+    for cls in qp_classes:
+        imports.update(cls.imports)
+    parts.extend(consolidate_imports(imports))
     parts.append("")
     parts.append("")
     for cls in qp_classes:
@@ -1123,10 +1557,20 @@ def _render_streaming_fetcher_source(
     )
     parts.append(aextract_doc)
     parts.extend(cred_lines)
+    parts.extend(
+        _path_lines(
+            url_path_template,
+            path_params,
+            url_choices,
+            _query_field_names(spec),
+            booleans,
+        )
+    )
     parts.append(query_block)
-    parts.append("        _query_string = get_querystring(_query_dict, [])")
+    parts.extend(_consumed_path_lines(url_choices))
+    parts.append("        _query_string = encode_query(_query_dict)")
     parts.append(
-        f'        _url = f"{base_url}{url_path_template}"'
+        f'        _url = f"{base_url}{{_path}}"'
         ' + ("?" + _query_string if _query_string else "")'
     )
     parts.append(header_block)
@@ -1315,6 +1759,9 @@ def _render_fetcher_source(
         ),
         has_path_params=has_path_params,
         has_query_creds=has_query_creds,
+        url_choices=_url_template_choices(spec),
+        field_names=_query_field_names(spec),
+        booleans=boolean_params(spec.cmd_spec),
     )
 
     fetcher_source_lines = [
@@ -1381,6 +1828,9 @@ def _aextract_body(
     body_field_names: list[str],
     has_path_params: bool,
     has_query_creds: bool,
+    url_choices: UrlChoices | None = None,
+    field_names: dict[str, str] | None = None,
+    booleans: set[str] | frozenset[str] = frozenset(),
 ) -> list[str]:
     """Render the body of ``aextract_data`` as a list of source lines.
 
@@ -1408,6 +1858,12 @@ def _aextract_body(
         Whether the URL has placeholders to substitute.
     has_query_creds : bool
         Whether any credential lives in the query string.
+    url_choices : list, optional
+        ``_url_template_choices`` output for a command with several URLs.
+    field_names : dict, optional
+        Parameter name to ``QueryParams`` field name (``_query_field_names``).
+    booleans : set of str, optional
+        Names of boolean parameters.
 
     Returns
     -------
@@ -1415,16 +1871,19 @@ def _aextract_body(
         Indented lines forming the body of ``aextract_data``.
     """
     lines: list[str] = list(cred_lines)
-    if has_path_params:
-        sub_args = ", ".join(
-            f"{p}=getattr(query, {query_field_name(p)!r})" for p in path_params
+    lines.extend(
+        _path_lines(
+            url_path_template,
+            path_params if has_path_params else [],
+            url_choices,
+            field_names,
+            booleans,
         )
-        lines.append(f"        _path = {url_path_template!r}.format({sub_args})")
-    else:
-        lines.append(f"        _path = {url_path_template!r}")
+    )
     lines.append("")
     lines.append(query_block)
-    lines.append("        _query_string = get_querystring(_query_dict, [])")
+    lines.extend(_consumed_path_lines(url_choices))
+    lines.append("        _query_string = encode_query(_query_dict)")
     lines.append(
         f'        _url = f"{base_url}{{_path}}" + ("?" + _query_string if _query_string else "")'
     )
@@ -1437,7 +1896,7 @@ def _aextract_body(
         body_literal = (
             "{"
             + ", ".join(
-                f"{name!r}: getattr(query, {query_field_name(name)!r}, None)"
+                f"{name!r}: getattr(query, {_field_name(field_names, name)!r}, None)"
                 for name in body_field_names
             )
             + "}"
