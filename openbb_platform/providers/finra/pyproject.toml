@@ -42,7 +42,7 @@ path = "hatch_build.py"
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py311"
 fix = true
 extend-exclude = ["openbb_finra/scripts"]
 
@@ -73,7 +73,7 @@ convention = "numpy"
 
 [tool.ty]
 [tool.ty.environment]
-python-version = "3.10"
+python-version = "3.11"
 
 [tool.ty.src]
 include = ["openbb_finra"]
