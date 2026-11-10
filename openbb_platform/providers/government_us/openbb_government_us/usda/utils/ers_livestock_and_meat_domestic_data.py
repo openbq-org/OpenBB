@@ -15,7 +15,7 @@ ZIP_DIR = "livestock-data-machine-readable-files"
 LIVESTOCK_AND_MEAT_FILES: dict[str, dict] = {
     "supply_and_disappearance": {
         "label": "Meat supply and disappearance",
-        "member": "MeatSD.csv",
+        "member": ("Meat-Supply-Disappearance.csv", "MeatSD.csv"),
         "table_name": None,
         "fold_dims": (("commodity_desc", "commodity"),),
         "col_dims": ("attribute_desc",),
@@ -25,7 +25,7 @@ LIVESTOCK_AND_MEAT_FILES: dict[str, dict] = {
     },
     "slaughter": {
         "label": "Livestock and poultry slaughter",
-        "member": "MeatStats.csv",
+        "member": ("Meat-Statistics.csv", "MeatStats.csv"),
         "table_name": "Livestock and poultry slaughter",
         "fold_dims": (("commodity_desc", "commodity"),),
         "col_dims": ("attribute_desc",),
@@ -35,7 +35,7 @@ LIVESTOCK_AND_MEAT_FILES: dict[str, dict] = {
     },
     "production": {
         "label": "Red meat and poultry production",
-        "member": "MeatStats.csv",
+        "member": ("Meat-Statistics.csv", "MeatStats.csv"),
         "table_name": "Red meat and poultry production",
         "fold_dims": (("commodity_desc", "commodity"),),
         "col_dims": ("attribute_desc",),
@@ -45,7 +45,7 @@ LIVESTOCK_AND_MEAT_FILES: dict[str, dict] = {
     },
     "live_and_dressed_weights": {
         "label": "Livestock and poultry live and dressed weights",
-        "member": "MeatStats.csv",
+        "member": ("Meat-Statistics.csv", "MeatStats.csv"),
         "table_name": "Livestock and poultry live and dressed weights",
         "fold_dims": (("commodity_desc", "commodity"),),
         "col_dims": ("attribute_desc",),
@@ -55,7 +55,7 @@ LIVESTOCK_AND_MEAT_FILES: dict[str, dict] = {
     },
     "cold_storage": {
         "label": "Red meat and poultry cold storage stocks",
-        "member": "MeatStats.csv",
+        "member": ("Meat-Statistics.csv", "MeatStats.csv"),
         "table_name": "Red meat and poultry beginning cold storage stocks",
         "fold_dims": (("commodity_desc", "commodity"),),
         "col_dims": ("attribute_desc",),
@@ -286,6 +286,14 @@ async def afetch_table(table: str, **kwargs) -> list[dict]:
 
     config = LIVESTOCK_AND_MEAT_FILES[table]
     content = await afetch_ers_file(ZIP_MEDIA, product=PRODUCT_PAGE)
+    members = config["member"]
+    if isinstance(members, str):
+        members = (members,)
     with zipfile.ZipFile(BytesIO(content)) as archive:
-        raw = archive.read(f"{ZIP_DIR}/{config['member']}")
+        names = {name.lower(): name for name in archive.namelist()}
+        member = next(
+            (names[key] for m in members if (key := f"{ZIP_DIR}/{m}".lower()) in names),
+            f"{ZIP_DIR}/{members[0]}",
+        )
+        raw = archive.read(member)
     return parse_table(raw.decode("utf-8-sig", errors="replace"), table)
