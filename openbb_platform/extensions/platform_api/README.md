@@ -584,6 +584,21 @@ This can be changed by adding the path as an argument.
 openbb-api --apps-json /Users/some_user/path/to/workspace_apps.json
 ```
 
+Bundled example apps are included by default. Override their JSON file with `OPENBB_DEFAULT_APPS_PATH`:
+
+```sh
+OPENBB_DEFAULT_APPS_PATH=/etc/openbb/default_apps.json openbb-api
+```
+
+A missing or unreadable file, invalid JSON, or a JSON catalogue with an invalid app structure results in no default apps. An empty JSON array (`[]`) also disables defaults. User apps and apps supplied by extensions are loaded independently.
+
+The environment variable can also be supplied through `openbb.toml`:
+
+```toml
+[env]
+OPENBB_DEFAULT_APPS_PATH = "/etc/openbb/default_apps.json"
+```
+
 The browser will warn about the untrusted cert — accept once, or add `localhost.crt` to the OS trust store.
 
 ## License
