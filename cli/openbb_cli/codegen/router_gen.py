@@ -97,6 +97,36 @@ def _model_name_for(path: str) -> str:
     )
 
 
+def mounted_command_paths(root: NamespaceNode) -> dict[str, str]:
+    """Map each command's dotted spec path to the path it mounts at under ``obb``.
+
+    Segments are normalized the same way as router modules and functions, and a
+    command that is also a namespace mounts on its own router, named after itself.
+
+    Parameters
+    ----------
+    root : NamespaceNode
+        The synthetic root node returned by ``build_namespace_tree``.
+
+    Returns
+    -------
+    dict[str, str]
+        ``{dotted_spec_path: dotted_mounted_path}`` for every command in the tree.
+    """
+    out: dict[str, str] = {}
+    pending = list(root.children.values())
+    while pending:
+        node = pending.pop()
+        pending.extend(node.children.values())
+        if node.cmd_spec is None:
+            continue
+        parts = [_safe_segment(p) for p in node.full_path.split(".") if p]
+        if node.is_namespace:
+            parts.append(_safe_segment(node.name))
+        out[node.full_path] = ".".join(parts)
+    return out
+
+
 def generate_routers(
     root: NamespaceNode,
     *,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import re
 
 import pytest
 
@@ -1038,3 +1039,207 @@ def test_union_of_untitled_object_variants_keeps_distinct_classes():
     assert "city:" in src and "type:" in src
     ast.parse(src)
     assert len({line for line in src.splitlines() if line.startswith("class ")}) >= 3
+
+
+def _groups_class():
+    schema = {
+        "type": "object",
+        "properties": {
+            "symbol": {"type": "string"},
+            "symbols": {"type": "string"},
+            "startTime": {"type": "integer"},
+            "endTime": {"type": "integer"},
+        },
+        "x-required-groups": [
+            {
+                "combinator": "oneOf",
+                "alternatives": [["symbol"], ["symbols"]],
+                "members": ["symbol", "symbols"],
+                "required": True,
+            },
+            {
+                "combinator": "anyOf",
+                "alternatives": [["startTime", "endTime"]],
+                "members": ["startTime", "endTime"],
+                "required": False,
+            },
+        ],
+    }
+    cls = pg.generate_class(
+        schema, class_name="TickerQueryParams", base_class="QueryParams"
+    )
+    rendered = (
+        "from openbb_core.provider.abstract.query_params import QueryParams\n"
+        + pg.render_module(cls)
+    )
+    ast.parse(rendered)
+    namespace: dict = {}
+    exec(rendered, namespace)  # noqa: S102
+    return cls, namespace["TickerQueryParams"]
+
+
+def test_required_groups_validator_renders_with_field_names():
+    cls, _ = _groups_class()
+    assert "from pydantic import model_validator" in cls.imports
+    assert "def _check_required_groups(self) -> Any:" in cls.source
+    assert "for _names in (('symbol',), ('symbols',))" in cls.source
+    assert "for _name in ('start_time', 'end_time')" in cls.source
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"symbol": "BTCUSDT"},
+        {"symbols": '["BTCUSDT"]'},
+        {"symbol": "BTCUSDT", "start_time": 1, "end_time": 2},
+    ],
+)
+def test_required_groups_validator_accepts_valid_combinations(kwargs):
+    _, model = _groups_class()
+    model(**kwargs)
+
+
+@pytest.mark.parametrize(
+    "kwargs,message",
+    [
+        ({}, "Pass exactly one of: symbol | symbols"),
+        ({"symbol": "A", "symbols": "B"}, "Pass exactly one of: symbol | symbols"),
+        (
+            {"symbol": "A", "start_time": 1},
+            "Pass at least one of: (start_time, end_time)",
+        ),
+    ],
+)
+def test_required_groups_validator_rejects_invalid_combinations(kwargs, message):
+    _, model = _groups_class()
+    with pytest.raises(ValueError, match=re.escape(message)):
+        model(**kwargs)
+
+
+def test_generate_class_without_required_groups_has_no_validator():
+    cls = pg.generate_class(
+        {"type": "object", "properties": {"a": {"type": "string"}}},
+        class_name="Plain",
+        base_class="QueryParams",
+    )
+    assert "_check_required_groups" not in cls.source
+    assert "from pydantic import model_validator" not in cls.imports
+
+
+def test_required_groups_validator_treats_empty_values_as_not_passed():
+    _, model = _groups_class()
+    with pytest.raises(
+        ValueError, match=re.escape("Pass exactly one of: symbol | symbols")
+    ):
+        model(symbol="", symbols="")
+    model(symbol="A", symbols="")
+
+
+def test_required_groups_enforced_when_names_differ_only_in_case():
+    schema = {
+        "type": "object",
+        "properties": {"Symbol": {"type": "string"}, "symbol": {"type": "string"}},
+        "x-required-groups": [
+            {
+                "combinator": "oneOf",
+                "alternatives": [["Symbol"], ["symbol"]],
+                "members": ["Symbol", "symbol"],
+                "required": True,
+            }
+        ],
+    }
+    cls = pg.generate_class(schema, class_name="Q", base_class="QueryParams")
+    rendered = (
+        "from openbb_core.provider.abstract.query_params import QueryParams\n"
+        + pg.render_module(cls)
+    )
+    namespace: dict = {}
+    exec(rendered, namespace)  # noqa: S102
+    model = namespace["Q"]
+    assert model(Symbol="A").symbol_ == "A"
+    assert model(symbol="a").symbol == "a"
+    with pytest.raises(ValueError, match="Pass exactly one of"):
+        model(Symbol="A", symbol="a")
+
+
+def test_field_named_after_a_builtin_its_class_annotates_with_is_renamed():
+    schema = {
+        "type": "object",
+        "properties": {
+            "list": {"type": "array", "items": {"type": "string"}},
+            "type": {"type": "string"},
+        },
+    }
+    cls = pg.generate_class(schema, class_name="Stats", base_class="BaseModel")
+    assert "list_: list[str] | None" in cls.source
+    assert "alias='list'" in cls.source or 'alias="list"' in cls.source
+    assert "    type: str | None" in cls.source
+    namespace: dict = {}
+    exec(pg.render_module(cls), namespace)  # noqa: S102
+    assert namespace["Stats"](**{"list": ["a"]}).list_ == ["a"]
+
+
+def test_field_named_after_a_builtin_no_annotation_uses_keeps_its_name():
+    schema = {"type": "object", "properties": {"list": {"type": "string"}}}
+    cls = pg.generate_class(schema, class_name="Plain", base_class="BaseModel")
+    assert "    list: str | None" in cls.source
+
+
+def test_colliding_property_names_get_distinct_fields():
+    """JSON-LD ``@id`` beside ``id``: the exact name keeps ``id``."""
+    schema = {
+        "type": "object",
+        "properties": {"@id": {"type": "string"}, "id": {"type": "string"}},
+    }
+    cls = pg.generate_class(schema, class_name="Product", base_class="BaseModel")
+    namespace: dict = {}
+    exec(pg.render_module(cls), namespace)  # noqa: S102
+    row = namespace["Product"](**{"@id": "urn:1", "id": "1"})
+    assert (row.id, row.id_) == ("1", "urn:1")
+
+
+def test_builtin_name_inside_a_literal_value_does_not_rename_a_field():
+    schema = {
+        "type": "object",
+        "properties": {
+            "list": {"type": "string"},
+            "view": {"type": "string", "enum": ["list", "grid"]},
+        },
+    }
+    cls = pg.generate_class(schema, class_name="Q", base_class="QueryParams")
+    assert "    list: str | None" in cls.source
+    assert pg.query_params_field_names(schema["properties"], "Q")["list"] == "list"
+
+
+def test_optional_group_ignores_members_left_at_their_default():
+    schema = {
+        "type": "object",
+        "properties": {
+            "symbol": {"type": "string"},
+            "isin": {"type": "string"},
+            "limit": {"type": "integer", "default": 10},
+        },
+        "x-required-groups": [
+            {
+                "combinator": "oneOf",
+                "alternatives": [["symbol"], ["isin"]],
+                "members": ["symbol", "isin", "limit"],
+                "required": False,
+            }
+        ],
+    }
+    cls = pg.generate_class(schema, class_name="Q", base_class="QueryParams")
+    rendered = (
+        "from openbb_core.provider.abstract.query_params import QueryParams\n"
+        + pg.render_module(cls)
+    )
+    namespace: dict = {}
+    exec(rendered, namespace)  # noqa: S102
+    model = namespace["Q"]
+    model()
+    model(limit=10)
+    model(symbol="AAPL", limit=5)
+    with pytest.raises(
+        ValueError, match=re.escape("Pass exactly one of: symbol | isin")
+    ):
+        model(limit=5)

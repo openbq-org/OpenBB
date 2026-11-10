@@ -93,6 +93,55 @@ class TestYangZhang(_VolatilityShared):
         with pytest.warns(UserWarning, match="Window must be at least 2"):
             self.__class__.func(ohlcv_df, window=1)
 
+    def test_overnight_moves_only_count_once(self):
+        # Prices move only between sessions (no intraday range), so the
+        # open-to-close and Rogers-Satchell terms are zero and the estimate
+        # reduces to the overnight (close-to-open) volatility.
+        gaps = np.array([0.0, 0.01, -0.02, 0.015, -0.005, 0.02, -0.01, 0.005])
+        price = 100 * np.exp(np.cumsum(gaps))
+        df = pd.DataFrame(
+            {"open": price, "high": price, "low": price, "close": price},
+            index=pd.date_range("2021-01-01", periods=len(price), freq="D"),
+        )
+        window = 5
+        log_oc = np.log(df["open"] / df["close"].shift(1))
+        expected = np.sqrt(
+            (log_oc**2).rolling(window).sum() / (window - 1) * 252
+        ).dropna()
+
+        result = yang_zhang(df, window=window)
+
+        pd.testing.assert_series_equal(result, expected, check_names=False)
+
+    def test_matches_hand_computed_window(self):
+        # A flat first bar, then one window of 3 sessions. Per-session log
+        # moves: gap g = ln(O/C_prev), body c = ln(C/O), h = ln(H/O), lo = ln(L/O).
+        g = np.array([0.0, 0.01, -0.02, 0.03])
+        c = np.array([0.0, 0.02, -0.01, 0.0])
+        h = np.array([0.0, 0.03, 0.01, 0.02])
+        lo = np.array([0.0, -0.01, -0.02, -0.01])
+        log_close = np.log(100) + np.cumsum(g + c)
+        log_open = log_close - c
+        df = pd.DataFrame(
+            {
+                "open": np.exp(log_open),
+                "high": np.exp(log_open + h),
+                "low": np.exp(log_open + lo),
+                "close": np.exp(log_close),
+            },
+            index=pd.date_range("2021-01-01", periods=len(g), freq="D"),
+        )
+
+        result = yang_zhang(df, window=3)
+
+        # sum g^2 = 14e-4, sum c^2 = 5e-4, sum RS = 6e-4 + 4e-4 + 5e-4 = 15e-4,
+        # k = 0.34 / (1.34 + 4 / 2) = 17 / 167, divisor window - 1 = 2.
+        # var = (14 + 17/167 * 5 + 150/167 * 15) / 2 * 1e-4 = 4673 / 3340000.
+        # vol = sqrt(4673 / 3340000 * 252). The old close-to-close term,
+        # sum (g + c)^2 = 27e-4, gave sqrt(5047 / 3340000 * 252) = 0.61708.
+        assert len(result) == 1
+        assert result.iloc[0] == pytest.approx(0.5937791278704656, rel=1e-9)
+
 
 class TestClenowMomentum:
     def test_returns_r2_coef_predictions(self, ohlcv_df):

@@ -565,6 +565,87 @@ def render_function_docstring(
     return "\n".join(lines)
 
 
+_BUILTIN_TYPE_NAMES = (
+    "list",
+    "dict",
+    "set",
+    "tuple",
+    "str",
+    "int",
+    "float",
+    "bool",
+    "bytes",
+)
+
+
+_QUOTED = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"")
+
+
+def _shadowed_builtins(properties: dict[str, Any], class_name: str) -> set[str]:
+    """Builtin type names that a field would shadow inside its class's annotations.
+
+    A field named ``list`` binds ``list`` in the class body, so a later
+    ``list[...]`` annotation (its own included) fails when the class is built.
+    Returns the builtin names some field is called and some annotation uses
+    outside a string (``Literal['list']`` uses none).
+    """
+    names = {safe_field_name(raw)[0] for raw in properties} | {
+        query_field_name(raw) for raw in properties
+    }
+    candidates = names & set(_BUILTIN_TYPE_NAMES)
+    if not candidates:
+        return set()
+    annotations = " ".join(
+        schema_to_type(
+            prop if isinstance(prop, dict) else {},
+            parent_class_name=class_name,
+            field_name=safe_field_name(raw)[0],
+            nested_classes=[],
+            imports=set(),
+        )
+        for raw, prop in properties.items()
+    )
+    annotations = _QUOTED.sub("''", annotations)
+    return {name for name in candidates if re.search(rf"\b{name}\b", annotations)}
+
+
+def _unique_field_names(
+    properties: dict[str, Any], class_name: str, *, query_params: bool
+) -> dict[str, str]:
+    """Map each property name to a field name no other property of the class uses.
+
+    Names are made safe the usual way (``query_field_name`` for query
+    parameters), and a builtin some annotation needs gets a ``_`` suffix. When
+    two properties land on one name (``@id`` and ``id``), the property already
+    spelled that way keeps it and the others get ``_`` suffixes.
+    """
+    shadowed = _shadowed_builtins(properties, class_name)
+    wanted: dict[str, str] = {}
+    for raw in properties:
+        safe = query_field_name(raw) if query_params else safe_field_name(raw)[0]
+        wanted[raw] = f"{safe}_" if safe in shadowed else safe
+    taken: set[str] = set()
+    out: dict[str, str] = {}
+    for raw in sorted(properties, key=lambda r: wanted[r] != r):
+        name = wanted[raw]
+        while name in taken:
+            name = f"{name}_"
+        taken.add(name)
+        out[raw] = name
+    return {raw: out[raw] for raw in properties}
+
+
+def query_params_field_names(
+    properties: dict[str, Any], class_name: str
+) -> dict[str, str]:
+    """Map each parameter to its field name in a ``QueryParams`` class.
+
+    The names ``generate_class`` gives the fields of ``class_name`` built from
+    ``properties``, for code that reads those fields back.
+    """
+    return _unique_field_names(properties, class_name, query_params=True)
+
+
 def generate_class(
     schema: dict[str, Any],
     *,
@@ -581,12 +662,15 @@ def generate_class(
     doc_fields: list[tuple[str, str, str | None, bool, Any, bool]] = []
     optional_object_fields: list[str] = []
     multiple_items: dict[str, dict[str, Any]] = {}
+    field_names: dict[str, str] = {}
+    unique_names = _unique_field_names(
+        properties, class_name, query_params=base_class == "QueryParams"
+    )
 
     for raw_name, prop_schema in properties.items():
-        safe_name, needs_alias = safe_field_name(raw_name)
-        if base_class == "QueryParams":
-            safe_name = query_field_name(raw_name)
-            needs_alias = safe_name != raw_name
+        safe_name = unique_names[raw_name]
+        needs_alias = safe_name != raw_name
+        field_names[raw_name] = safe_name
         annotation = schema_to_type(
             prop_schema if isinstance(prop_schema, dict) else {},
             parent_class_name=class_name,
@@ -687,6 +771,23 @@ def generate_class(
             "        return values"
         )
 
+    required_groups = [
+        group
+        for group in schema.get("x-required-groups") or []
+        if _group_maps_to_distinct_fields(group, field_names)
+    ]
+    if required_groups:
+        imports.add("from pydantic import model_validator")
+        imports.add("from typing import Any")
+        defaults = {
+            field_names[raw]: prop["default"]
+            for raw, prop in properties.items()
+            if isinstance(prop, dict) and prop.get("default") is not None
+        }
+        body_lines.append(
+            _render_required_groups_validator(required_groups, field_names, defaults)
+        )
+
     summary = docstring or class_name
     doc_block = _render_class_docstring(summary, doc_fields)
 
@@ -701,6 +802,99 @@ def generate_class(
         nested=nested_classes,
         imports=imports,
     )
+
+
+def _group_maps_to_distinct_fields(
+    group: dict[str, Any], field_names: dict[str, str]
+) -> bool:
+    """Whether every name in a required group is a field of its own.
+
+    A name with no field, or two names that collapse to one field (``Symbol``
+    and ``symbol``), would make the group impossible to satisfy.
+    """
+    alternatives = group.get("alternatives") or []
+    names = {name for alt in alternatives for name in alt}
+    names.update(name for name in group.get("members") or [] if name in field_names)
+    if not alternatives or any(name not in field_names for name in names):
+        return False
+    return len({field_names[name] for name in names}) == len(names)
+
+
+def _render_required_groups_validator(
+    groups: list[dict[str, Any]],
+    field_names: dict[str, str],
+    defaults: dict[str, Any] | None = None,
+) -> str:
+    """Render an ``after`` model validator enforcing ``oneOf`` / ``anyOf`` groups.
+
+    Parameters
+    ----------
+    groups : list[dict]
+        Required groups in the spec form (``combinator``, ``alternatives``,
+        ``members``, ``required``), naming properties by their schema name.
+    field_names : dict[str, str]
+        Schema property name to generated field name.
+    defaults : dict[str, Any], optional
+        Field name to default value. An optional group is only checked when a
+        member is passed, and a member left at its default was not passed.
+
+    Returns
+    -------
+    str
+        The indented validator method source. ``None``, ``""`` and ``[]``
+        count as not passed.
+    """
+    defaults = defaults or {}
+    lines = [
+        '\n    @model_validator(mode="after")',
+        "    def _check_required_groups(self) -> Any:",
+        '        """Enforce the parameter combinations the API requires."""',
+    ]
+    for group in groups:
+        alternatives = tuple(
+            tuple(field_names[name] for name in alt) for alt in group["alternatives"]
+        )
+        exactly_one = group.get("combinator") == "oneOf"
+        described = " | ".join(
+            alt[0] if len(alt) == 1 else f"({', '.join(alt)})" for alt in alternatives
+        )
+        message = f"Pass {'exactly' if exactly_one else 'at least'} one of: {described}"
+        indent = "        "
+        if not group.get("required", True):
+            members = tuple(
+                field_names[name]
+                for name in group.get("members") or []
+                if name in field_names
+            )
+            if any(name in defaults for name in members):
+                pairs = tuple((name, defaults.get(name)) for name in members)
+                lines.extend(
+                    [
+                        f"{indent}if any(",
+                        f"{indent}    getattr(self, _name) not in (None, '', [])",
+                        f"{indent}    and getattr(self, _name) != _default",
+                        f"{indent}    for _name, _default in {pairs!r}",
+                        f"{indent}):",
+                    ]
+                )
+            else:
+                lines.append(
+                    f"{indent}if any(getattr(self, _name) not in (None, '', []) "
+                    f"for _name in {members!r}):"
+                )
+            indent += "    "
+        lines.extend(
+            [
+                f"{indent}_satisfied = sum(",
+                f"{indent}    all(getattr(self, _name) not in (None, '', []) for _name in _names)",
+                f"{indent}    for _names in {alternatives!r}",
+                f"{indent})",
+                f"{indent}if _satisfied {'!= 1' if exactly_one else '< 1'}:",
+                f"{indent}    raise ValueError({message!r})",
+            ]
+        )
+    lines.append("        return self")
+    return "\n".join(lines)
 
 
 def consolidate_imports(imports: set[str]) -> list[str]:

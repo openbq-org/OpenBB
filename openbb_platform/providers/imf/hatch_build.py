@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import hashlib
+import io
 import os
 import subprocess
 import sys
+import zipfile
 from contextlib import suppress
 from pathlib import Path
 from typing import TextIO
 
+import requests
 from hatchling.builders.hooks.plugin.interface import (  # ty: ignore[unresolved-import]
     BuildHookInterface,
 )
@@ -17,6 +21,8 @@ _ROOT = Path(__file__).resolve().parent
 _CACHE_PATH = _ROOT / "openbb_imf" / "assets" / "imf_cache.json.xz"
 _GENERATE_CACHE = _ROOT / "openbb_imf" / "utils" / "generate_cache.py"
 _FORCE_ENV = "OPENBB_IMF_FORCE_CACHE_REBUILD"
+_PYPI_RELEASE_URL = "https://pypi.org/pypi/openbb-imf/json"
+_WHEEL_CACHE_MEMBER = "openbb_imf/assets/imf_cache.json.xz"
 
 
 def _open_tty() -> TextIO | None:
@@ -24,6 +30,23 @@ def _open_tty() -> TextIO | None:
     with suppress(OSError):
         return open("/dev/tty", "w", buffering=1, encoding="utf-8")  # noqa: SIM115
     return None
+
+
+def _copy_published_cache() -> str:
+    """Copy ``imf_cache.json.xz`` from the latest openbb-imf wheel on PyPI."""
+    release = requests.get(_PYPI_RELEASE_URL, timeout=60)
+    release.raise_for_status()
+    metadata = release.json()
+    wheel = next(f for f in metadata["urls"] if f["packagetype"] == "bdist_wheel")
+    download = requests.get(wheel["url"], timeout=300)
+    download.raise_for_status()
+    if hashlib.sha256(download.content).hexdigest() != wheel["digests"]["sha256"]:
+        raise ValueError(f"sha256 mismatch for {wheel['filename']}")
+    with zipfile.ZipFile(io.BytesIO(download.content)) as archive:
+        payload = archive.read(_WHEEL_CACHE_MEMBER)
+    _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _CACHE_PATH.write_bytes(payload)
+    return metadata["info"]["version"]
 
 
 class ImfCacheBuildHook(BuildHookInterface):
@@ -86,13 +109,27 @@ class ImfCacheBuildHook(BuildHookInterface):
                     sys.stderr.flush()
                 returncode = proc.wait()
 
-                if returncode != 0 or not _CACHE_PATH.exists():
+                if returncode == 0 and _CACHE_PATH.exists():
+                    cls._generated_this_session = True
+                elif force:
                     self.app.abort(
                         "imf-cache: failed to generate imf_cache.json.xz "
                         f"(exit code {returncode})."
                     )
-
-                cls._generated_this_session = True
+                else:
+                    try:
+                        published = _copy_published_cache()
+                    except Exception as exc:
+                        self.app.abort(
+                            "imf-cache: failed to generate imf_cache.json.xz "
+                            f"(exit code {returncode}) and could not copy it from "
+                            f"the latest openbb-imf release on PyPI: {exc}"
+                        )
+                    else:
+                        _say(
+                            f"imf-cache: IMF SDMX unavailable; using "
+                            f"{_CACHE_PATH.name} from openbb-imf {published} on PyPI"
+                        )
         finally:
             if tty is not None:
                 tty.close()
