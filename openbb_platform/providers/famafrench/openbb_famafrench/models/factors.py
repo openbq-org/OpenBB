@@ -160,7 +160,8 @@ class FamaFrenchFactorsQueryParams(QueryParams):
 class FamaFrenchFactorsData(Data):
     """Fama-French Factors Data.
 
-    Source: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html
+    Factor definitions:
+    https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/f-f_factors.html
     """
 
     __alias_dict__ = {
@@ -182,7 +183,7 @@ class FamaFrenchFactorsData(Data):
     )
     mkt_rf: float | None = Field(
         default=None,
-        description="Excess return on the market, value-weighted return of all firms,"
+        description="Market excess return (Rm - Rf), the value-weighted return of all firms,"
         + " minus the one-month Treasury bill rate."
         + " Not returned for momentum or reversal factors."
         + " Values are in percent.",
