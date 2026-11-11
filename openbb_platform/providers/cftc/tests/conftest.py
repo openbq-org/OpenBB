@@ -15,7 +15,7 @@ SEARCH_FIXTURE_END = date(2026, 7, 16)
 def scrub_string(key):
 
     def before_record_response(response):
-        response["headers"][key] = response["headers"].update({key: "MOCK_VALUE"})
+        response["headers"][key] = "MOCK_VALUE"
         return response
 
     return before_record_response
