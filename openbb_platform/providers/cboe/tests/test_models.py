@@ -1038,6 +1038,24 @@ class TestFuturesSettlements:
             final_settlement=False,
         )
 
+    def test_non_numeric_price_is_null(self):
+        """The options file prints CAB for cabinet trades; that price is null."""
+        csv = (
+            "Product,Symbol,Expiration Date,Price\n"
+            "IBYO,IBYO/H7 P16800,2027-03-01,0.7389\n"
+            "IBYO,IBYO/Z6 P17000,2026-12-01,CAB\n"
+        )
+        query = CboeFuturesSettlementsFetcher.transform_query({"options": True})
+
+        with patch(
+            "openbb_cboe.utils.helpers.get_cboe_data", new=AsyncMock(return_value=csv)
+        ):
+            raw = asyncio.run(CboeFuturesSettlementsFetcher.aextract_data(query, None))
+
+        results = CboeFuturesSettlementsFetcher.transform_data(query, raw)
+
+        assert [r.price for r in results] == [0.7389, None]
+
     def test_empty_raises(self):
         """A session with no published prices raises EmptyDataError."""
         query = CboeFuturesSettlementsFetcher.transform_query({})
