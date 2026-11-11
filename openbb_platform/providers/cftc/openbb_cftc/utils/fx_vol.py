@@ -301,16 +301,23 @@ def ndf_forward_curve(
     min_notional: float = 0.0,
 ) -> tuple[float | None, Callable[[float], float] | None]:
     """Spot and a year-fraction forward interpolator from a pair's non-deliverable forwards."""
-    from statistics import median
-
     from openbb_cftc.utils.fx import extract_fx_observations
 
-    observations = [
-        observation
-        for observation in extract_fx_observations(
+    return observation_curve(
+        extract_fx_observations(
             records, pair=pair, trade_date=as_of, min_notional=min_notional
         )
-        if observation["days"] > 2
+    )
+
+
+def observation_curve(
+    observations: list[dict],
+) -> tuple[float | None, Callable[[float], float] | None]:
+    """Spot and a year-fraction forward interpolator from a pair's forward observations."""
+    from statistics import median
+
+    observations = [
+        observation for observation in observations if observation["days"] > 2
     ]
 
     if not observations:

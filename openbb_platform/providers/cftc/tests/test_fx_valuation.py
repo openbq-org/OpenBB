@@ -301,7 +301,10 @@ def test_value_fx_option_converts_a_base_currency_premium():
 
 
 def _observations(days_list):
-    return [{"days": d, "rate": 1460.0} for d in days_list]
+    return [
+        {"days": d, "rate": 1460.0, "dissemination_identifier": f"obs-{d}"}
+        for d in days_list
+    ]
 
 
 def _patch_market(monkeypatch, nodes, spot=1460.0, base_ok=True, quote_ok=True):
@@ -312,7 +315,7 @@ def _patch_market(monkeypatch, nodes, spot=1460.0, base_ok=True, quote_ok=True):
         lambda *a, **k: _observations(nodes),
     )
     monkeypatch.setattr(
-        "openbb_cftc.utils.fx_vol.ndf_forward_curve",
+        "openbb_cftc.utils.fx_vol.observation_curve",
         lambda *a, **k: (spot, (lambda years: spot * (1.0 + 0.01 * years))),
     )
 
@@ -366,7 +369,7 @@ def test_fx_market_requires_enough_nodes(monkeypatch):
 def test_fx_market_recovers_a_missing_spot_through_cip(monkeypatch):
     _patch_market(monkeypatch, [7, 38, 90])
     monkeypatch.setattr(
-        "openbb_cftc.utils.fx_vol.ndf_forward_curve", lambda *a, **k: (None, None)
+        "openbb_cftc.utils.fx_vol.observation_curve", lambda *a, **k: (None, None)
     )
     trade = fv.extract_fx_trade(_forward(), DAY)
     market = fv.fx_market([], [], trade, DAY)
@@ -378,7 +381,10 @@ def test_fx_market_recovers_a_missing_spot_through_cip(monkeypatch):
 def test_fx_market_cip_fallback_prices_off_both_curves(monkeypatch):
     monkeypatch.setattr(
         "openbb_cftc.utils.fx.extract_fx_observations",
-        lambda *a, **k: [{"days": 2, "rate": 1460.0}, {"days": 5, "rate": 1461.0}],
+        lambda *a, **k: [
+            {"days": 2, "rate": 1460.0, "dissemination_identifier": "a"},
+            {"days": 5, "rate": 1461.0, "dissemination_identifier": "b"},
+        ],
     )
 
     def _rate_df(records, currency, day, min_trades):
@@ -403,7 +409,7 @@ def test_fx_market_cip_fallback_needs_both_curves(monkeypatch):
 
     monkeypatch.setattr(
         "openbb_cftc.utils.fx.extract_fx_observations",
-        lambda *a, **k: [{"days": 2, "rate": 1460.0}],
+        lambda *a, **k: [{"days": 2, "rate": 1460.0, "dissemination_identifier": "a"}],
     )
 
     def _usd_only(records, currency, day, min_trades):
@@ -421,7 +427,7 @@ def test_fx_market_cip_fallback_needs_both_curves(monkeypatch):
 def test_fx_market_cip_fallback_needs_a_near_print(monkeypatch):
     monkeypatch.setattr(
         "openbb_cftc.utils.fx.extract_fx_observations",
-        lambda *a, **k: [{"days": 38, "rate": 1460.0}],
+        lambda *a, **k: [{"days": 38, "rate": 1460.0, "dissemination_identifier": "a"}],
     )
     trade = fv.extract_fx_trade(_forward(), DAY)
 
@@ -431,59 +437,137 @@ def test_fx_market_cip_fallback_needs_a_near_print(monkeypatch):
 def test_fx_market_cip_fallback_rejects_a_nonpositive_spot(monkeypatch):
     monkeypatch.setattr(
         "openbb_cftc.utils.fx.extract_fx_observations",
-        lambda *a, **k: [{"days": 2, "rate": 0.0}],
+        lambda *a, **k: [{"days": 2, "rate": 0.0, "dissemination_identifier": "a"}],
     )
     trade = fv.extract_fx_trade(_forward(), DAY)
 
     assert fv.fx_market([], [], trade, DAY) is None
 
 
-def test_fx_market_uses_the_same_curve_as_the_vol_surface(monkeypatch):
-    seen = {}
-
-    def _curve(records, pair, as_of, **kwargs):
-        seen["ids"] = [r.get("Dissemination Identifier") for r in records]
-        return 1460.0, lambda years: 1460.0
-
-    monkeypatch.setattr(
-        "openbb_cftc.utils.fx.extract_fx_observations",
-        lambda *a, **k: _observations([7, 38, 90]),
+def _forward_at(identifier, expiry, rate, **overrides):
+    return _forward(
+        **{
+            "Dissemination Identifier": identifier,
+            "Expiration Date": expiry,
+            "Exchange rate": rate,
+            **overrides,
+        }
     )
-    monkeypatch.setattr("openbb_cftc.utils.fx_vol.ndf_forward_curve", _curve)
+
+
+def _patch_discounts(monkeypatch):
     monkeypatch.setattr(
         "openbb_cftc.utils.fx_vol.rate_discount_factor",
         lambda *a, **k: lambda years: 0.98**years,
     )
-    monkeypatch.setattr(
-        "openbb_cftc.utils.fx_vol.implied_df", lambda *a, **k: lambda years: 0.97
-    )
-    own = _forward()
-    peer = _forward(**{"Dissemination Identifier": "4402190022000000201"})
-    leg = _forward(
-        **{
-            "Dissemination Identifier": "4402190022000000202",
-            "Package indicator": "TRUE",
-        }
-    )
-    trade = fv.extract_fx_trade(own, DAY)
-    fv.fx_market([own, peer, leg], [], trade, DAY)
 
-    assert seen["ids"] == [
-        own["Dissemination Identifier"],
-        "4402190022000000201",
-        "4402190022000000202",
+
+def test_fx_market_uses_the_same_curve_as_the_vol_surface(monkeypatch):
+    from openbb_cftc.utils import fx_vol
+
+    _patch_discounts(monkeypatch)
+    records = [
+        _forward_at("a", "2026-08-07", "1,455.00"),
+        _forward_at("b", "2026-08-31", "1,458.00"),
+        _forward_at("c", "2026-08-31", "1,460.00"),
+        _forward_at("d", "2026-09-30", "1,466.00"),
+        _forward_at("leg", "2026-10-30", "1,472.00", **{"Package indicator": "TRUE"}),
     ]
+    market = fv.fx_market(records, [], fv.extract_fx_trade(records[1], DAY), DAY)
+    spot, forward = fx_vol.ndf_forward_curve(
+        records, "USDKRW", DAY, min_notional=fv.CURVE_MIN_NOTIONAL
+    )
+
+    assert market["spot"] == pytest.approx(spot)
+    assert market["forward"](0.5) == pytest.approx(1472.0)
+
+    for years in (0.05, 0.1, 0.2, 0.5):
+        assert market["forward"](years) == pytest.approx(forward(years))
+
+
+def test_fx_market_leaves_out_a_print_alone_at_its_tenor(monkeypatch):
+    from openbb_cftc.utils import fx_vol
+
+    _patch_discounts(monkeypatch)
+    own = _forward_at("own", "2026-08-31", "1,470.00")
+    records = [
+        _forward_at("a", "2026-08-07", "1,455.00"),
+        own,
+        _forward_at("c", "2026-09-30", "1,466.00"),
+        _forward_at("d", "2026-10-30", "1,472.00"),
+    ]
+    market = fv.fx_market(records, [], fv.extract_fx_trade(own, DAY), DAY)
+    spot, forward = fx_vol.ndf_forward_curve(
+        [r for r in records if r is not own],
+        "USDKRW",
+        DAY,
+        min_notional=fv.CURVE_MIN_NOTIONAL,
+    )
+
+    assert market["spot"] == pytest.approx(spot)
+    assert market["forward"](38 / 365.0) == pytest.approx(forward(38 / 365.0))
+    assert market["forward"](38 / 365.0) != pytest.approx(1470.0)
+
+
+def test_fx_market_keeps_a_print_that_shares_its_tenor(monkeypatch):
+    from openbb_cftc.utils import fx_vol
+
+    _patch_discounts(monkeypatch)
+    own = _forward_at("own", "2026-08-31", "1,458.00")
+    records = [
+        _forward_at("a", "2026-08-07", "1,455.00"),
+        own,
+        _forward_at("twin", "2026-08-31", "1,462.00"),
+        _forward_at("c", "2026-09-30", "1,466.00"),
+    ]
+    market = fv.fx_market(records, [], fv.extract_fx_trade(own, DAY), DAY)
+    _, forward = fx_vol.ndf_forward_curve(
+        records, "USDKRW", DAY, min_notional=fv.CURVE_MIN_NOTIONAL
+    )
+
+    assert market["forward"](38 / 365.0) == pytest.approx(1460.0)
+    assert market["forward"](38 / 365.0) == pytest.approx(forward(38 / 365.0))
+
+
+def test_fx_market_exclusion_does_not_leak_to_the_pairs_other_prints(monkeypatch):
+    _patch_discounts(monkeypatch)
+    own = _forward_at("own", "2026-08-31", "1,470.00")
+    peer = _forward_at("c", "2026-09-30", "1,466.00")
+    records = [_forward_at("a", "2026-08-07", "1,455.00"), own, peer]
+    memo: dict = {}
+    alone = fv.fx_market(records, [], fv.extract_fx_trade(own, DAY), DAY, memo=memo)
+    shared = fv.fx_market(records, [], fv.extract_fx_trade(peer, DAY), DAY, memo=memo)
+
+    assert alone["forward"](38 / 365.0) != pytest.approx(shared["forward"](38 / 365.0))
+    assert shared["forward"](38 / 365.0) == pytest.approx(
+        fv.fx_market(records, [], fv.extract_fx_trade(peer, DAY), DAY)["forward"](
+            38 / 365.0
+        )
+    )
+
+
+def test_fx_market_without_an_identifier_never_excludes_a_peer(monkeypatch):
+    _patch_discounts(monkeypatch)
+    own = _forward_at("", "2026-08-31", "1,470.00")
+    records = [
+        _forward_at("a", "2026-08-07", "1,455.00"),
+        own,
+        _forward_at("c", "2026-09-30", "1,466.00"),
+    ]
+    market = fv.fx_market(records, [], fv.extract_fx_trade(own, DAY), DAY)
+
+    assert market["forward"](38 / 365.0) == pytest.approx(1470.0)
 
 
 def test_fx_market_builds_the_curve_once_per_pair_and_day(monkeypatch):
     _patch_market(monkeypatch, [7, 38, 90])
     calls: list = []
 
-    def _curve(records, pair, as_of, **kwargs):
-        calls.append(as_of)
+    def _curve(observations):
+        calls.append(len(observations))
         return 1460.0, lambda years: 1460.0
 
-    monkeypatch.setattr("openbb_cftc.utils.fx_vol.ndf_forward_curve", _curve)
+    monkeypatch.setattr("openbb_cftc.utils.fx_vol.observation_curve", _curve)
     first = _forward()
     second = _forward(**{"Dissemination Identifier": "4402190022000000201"})
     memo: dict = {}
@@ -493,14 +577,30 @@ def test_fx_market_builds_the_curve_once_per_pair_and_day(monkeypatch):
             [first, second], [], fv.extract_fx_trade(record, DAY), DAY, memo=memo
         )
 
-    assert calls == [DAY]
+    assert len(calls) == 1
 
     later = DAY + timedelta(days=1)
     fv.fx_market(
         [first, second], [], fv.extract_fx_trade(first, later), later, memo=memo
     )
 
-    assert calls == [DAY, later]
+    assert len(calls) == 2
+
+
+def test_memo_keys_carry_the_curve_date(monkeypatch):
+    _patch_market(monkeypatch, [7, 38, 90])
+    record = _forward()
+    later = DAY + timedelta(days=1)
+    memo: dict = {}
+
+    fv.fx_market([record], [], fv.extract_fx_trade(record, DAY), DAY, memo=memo)
+    first_keys = set(memo)
+    fv.fx_market([record], [], fv.extract_fx_trade(record, later), later, memo=memo)
+
+    assert all(DAY.isoformat() in key for key in first_keys)
+    assert {k for k in memo if later.isoformat() in k} == {
+        k.replace(DAY.isoformat(), later.isoformat()) for k in first_keys
+    }
 
 
 def test_fx_market_memo_builds_the_pair_subset_and_curves_once(monkeypatch):

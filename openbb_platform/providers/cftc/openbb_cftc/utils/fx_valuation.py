@@ -246,9 +246,11 @@ def pair_records(fx_records: Iterable[dict], base: str, quote: str) -> list[dict
     return subset
 
 
-def _pair_subset(fx_records: Iterable[dict], trade: dict, memo: dict) -> list[dict]:
+def _pair_subset(
+    fx_records: Iterable[dict], trade: dict, curve_date: dateType, memo: dict
+) -> list[dict]:
     """Return the pair's own prints, extracted once per day and reused across trades."""
-    key = f"fx-pair:{trade['base']}/{trade['quote']}"
+    key = f"fx-pair:{trade['base']}/{trade['quote']}:{curve_date.isoformat()}"
 
     if key not in memo:
         memo[key] = pair_records(fx_records, trade["base"], trade["quote"])
@@ -268,7 +270,7 @@ def _discount_for(
 
     from openbb_cftc.utils.fx_vol import rate_discount_factor
 
-    key = f"fx-df:{currency}:{min_trades}"
+    key = f"fx-df:{currency}:{curve_date.isoformat()}:{min_trades}"
 
     if key not in memo:
         try:
@@ -281,27 +283,56 @@ def _discount_for(
     return memo[key]
 
 
-def _pair_curve(
+def _pair_observations(
     fx_records: Iterable[dict], trade: dict, curve_date: dateType, memo: dict
 ) -> dict:
-    """Return the pair's forward curve for the day, built once and shared by its prints."""
+    """Return the pair's observations and the prints at each tenor, built once per day."""
     from openbb_cftc.utils.fx import extract_fx_observations
-    from openbb_cftc.utils.fx_vol import ndf_forward_curve
 
-    key = f"fx-curve:{trade['pair']}:{curve_date.isoformat()}"
+    key = f"fx-observations:{trade['pair']}:{curve_date.isoformat()}"
 
     if key not in memo:
-        records = _pair_subset(fx_records, trade, memo)
         observations = extract_fx_observations(
-            records,
+            _pair_subset(fx_records, trade, curve_date, memo),
             pair=trade["pair"],
             trade_date=curve_date,
             min_notional=CURVE_MIN_NOTIONAL,
         )
-        spot, forward = ndf_forward_curve(
-            records, trade["pair"], curve_date, min_notional=CURVE_MIN_NOTIONAL
-        )
+        prints: dict[int, list[str]] = {}
+
+        for observation in observations:
+            prints.setdefault(observation["days"], []).append(
+                observation["dissemination_identifier"]
+            )
+
+        memo[key] = {"observations": observations, "prints": prints}
+
+    return memo[key]
+
+
+def _pair_curve(
+    fx_records: Iterable[dict], trade: dict, curve_date: dateType, memo: dict
+) -> dict:
+    """Return the pair's forward curve for the day, without the trade's own print."""
+    from openbb_cftc.utils.fx_vol import observation_curve
+
+    pair = _pair_observations(fx_records, trade, curve_date, memo)
+    own = trade["dissemination_identifier"]
+    sole = bool(own) and pair["prints"].get(trade["days"]) == [own]
+    tag = f"{trade['pair']}:{curve_date.isoformat()}"
+
+    if sole:
+        tag = f"{tag}:-{trade['days']}"
+
+    key = f"fx-curve:{tag}"
+
+    if key not in memo:
+        observations = [
+            o for o in pair["observations"] if not sole or o["days"] != trade["days"]
+        ]
+        spot, forward = observation_curve(observations)
         memo[key] = {
+            "tag": tag,
             "nodes": len({o["days"] for o in observations if o["days"] > 2}),
             "near": [o["rate"] for o in observations if o["days"] <= 9],
             "spot": spot,
@@ -386,12 +417,12 @@ def fx_market(
 ) -> dict | None:
     """Spot, forward interpolator and both legs' discount curves for a pair, or None."""
     memo = {} if memo is None else memo
-    key = f"fx-market:{trade['pair']}:{curve_date.isoformat()}:{min_trades}"
+    curve = _pair_curve(fx_records, trade, curve_date, memo)
+    key = f"fx-market:{curve['tag']}:{min_trades}"
 
     if key in memo:
         return memo[key]
 
-    curve = _pair_curve(fx_records, trade, curve_date, memo)
     spot, forward = curve["spot"], curve["forward"]
 
     if (
@@ -456,7 +487,7 @@ def option_vol(
         priced = memo[key]
     else:
         options = extract_vanilla_options(
-            _pair_subset(fx_records, trade, memo),
+            _pair_subset(fx_records, trade, curve_date, memo),
             trade["base"],
             trade["quote"],
             curve_date,
