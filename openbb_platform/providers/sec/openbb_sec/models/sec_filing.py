@@ -434,13 +434,26 @@ class Filing(Data):
     @staticmethod
     async def _adownload_file(url, use_cache: bool = True):
         """Download a file asynchronously from a SEC URL."""
+        from urllib.parse import urlparse
+
         from openbb_sec.utils.cache import cached_request
-        from openbb_sec.utils.definitions import SEC_HEADERS
+        from openbb_sec.utils.definitions import HEADERS, SEC_HEADERS
         from openbb_sec.utils.helpers import sec_callback
+
+        host = (urlparse(url).hostname or "").lower()
+        if host == "www.sec.gov":
+            headers = SEC_HEADERS
+        else:
+            # Hosts like xbrl.sec.gov return 404 when Host: www.sec.gov is pinned.
+            headers = {k: v for k, v in SEC_HEADERS.items() if k.lower() != "host"}
+            if "definitelynot@fakecompany.com" in headers.get(
+                "User-Agent", ""
+            ) and HEADERS.get("User-Agent"):
+                headers["User-Agent"] = HEADERS["User-Agent"]
 
         return await cached_request(
             url,
-            headers=SEC_HEADERS,
+            headers=headers,
             response_callback=sec_callback,
             raise_for_status=True,
             use_cache=use_cache,
