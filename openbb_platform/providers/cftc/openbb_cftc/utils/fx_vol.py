@@ -48,6 +48,9 @@ _MONEYNESS_MAX_OFFSET = 1750.0
 _VOL_TRIM_MIN = 0.5
 _VOL_TRIM_MAX = 2.0
 
+FORWARD_MIN_DAYS = 2
+NEAR_MAX_DAYS = 9
+
 
 def resolve_major_pair(pair: str) -> tuple[str, str, float]:
     """Return a major pair's, or raise for an unsupported one."""
@@ -310,32 +313,13 @@ def ndf_forward_curve(
     )
 
 
-def observation_curve(
-    observations: list[dict],
-) -> tuple[float | None, Callable[[float], float] | None]:
-    """Spot and a year-fraction forward interpolator from a pair's forward observations."""
-    from statistics import median
-
-    observations = [
-        observation for observation in observations if observation["days"] > 2
-    ]
-
-    if not observations:
-        return None, None
-
-    by_day: dict[int, list[float]] = {}
-
-    for observation in observations:
-        by_day.setdefault(observation["days"], []).append(observation["rate"])
-
-    nodes = sorted((days, median(rates)) for days, rates in by_day.items())
-    days = [node[0] for node in nodes]
-    near = [rate for day, rate_list in by_day.items() if day <= 9 for rate in rate_list]
-    spot = median(near) if near else nodes[0][1]
+def _interpolator(
+    days: list[int], nodes: list[tuple[int, float]]
+) -> Callable[[float], float]:
+    """Year-fraction forward interpolator over tenor nodes, flat beyond the ends."""
+    from bisect import bisect_right
 
     def forward(years: float) -> float:
-        from bisect import bisect_right
-
         target = years * 365.0
 
         if target <= days[0]:
@@ -350,6 +334,128 @@ def observation_curve(
         weight = (target - day_low) / (day_high - day_low)
 
         return rate_low + weight * (rate_high - rate_low)
+
+    return forward
+
+
+def _spot(pool: list[float], nodes: list[tuple[int, float]]) -> float:
+    """Median of the near-tenor rates, or the shortest node's rate when there are none."""
+    from statistics import median
+
+    return median(pool) if pool else nodes[0][1]
+
+
+class ObservationCurve:
+    """Spot and forward curve of a pair's observations, able to leave one print out."""
+
+    def __init__(self, observations: list[dict]):
+        from statistics import median
+
+        self._where: dict[str, tuple[int, float] | None] = {}
+        self._near: list[float] = []
+        self._pool: list[float] = []
+        self._by_day: dict[int, list[float]] = {}
+
+        for observation in observations:
+            days, rate = observation["days"], observation["rate"]
+            identifier = observation["dissemination_identifier"]
+
+            if identifier:
+                self._where[identifier] = (
+                    None if identifier in self._where else (days, rate)
+                )
+
+            if days <= NEAR_MAX_DAYS:
+                self._near.append(rate)
+
+            if days > FORWARD_MIN_DAYS:
+                self._by_day.setdefault(days, []).append(rate)
+
+                if days <= NEAR_MAX_DAYS:
+                    self._pool.append(rate)
+
+        self._near.sort()
+        self._pool.sort()
+
+        for rates in self._by_day.values():
+            rates.sort()
+
+        self._nodes = [
+            (days, median(rates)) for days, rates in sorted(self._by_day.items())
+        ]
+        self._days = [node[0] for node in self._nodes]
+        self._curve: tuple[float | None, Callable[[float], float] | None, int] = (
+            (
+                _spot(self._pool, self._nodes),
+                _interpolator(self._days, self._nodes),
+                len(self._nodes),
+            )
+            if self._nodes
+            else (None, None, 0)
+        )
+
+    def __contains__(self, identifier: str) -> bool:
+        """Whether an identifier names exactly one of the observations."""
+        return self._where.get(identifier) is not None
+
+    def curve(
+        self, without: str = ""
+    ) -> tuple[float | None, Callable[[float], float] | None, int]:
+        """Spot, forward interpolator and node count, leaving out one print when given."""
+        from bisect import bisect_left
+        from statistics import median
+
+        entry = self._where.get(without)
+
+        if entry is None or entry[0] <= FORWARD_MIN_DAYS:
+            return self._curve
+
+        days, rate = entry
+        rates = self._by_day[days]
+        position = bisect_left(rates, rate)
+        peers = rates[:position] + rates[position + 1 :]
+        index = bisect_left(self._days, days)
+        nodes = list(self._nodes)
+        node_days = self._days
+
+        if peers:
+            nodes[index] = (days, median(peers))
+        else:
+            del nodes[index]
+            node_days = node_days[:index] + node_days[index + 1 :]
+
+        if not nodes:
+            return None, None, 0
+
+        pool = self._pool
+
+        if days <= NEAR_MAX_DAYS:
+            position = bisect_left(pool, rate)
+            pool = pool[:position] + pool[position + 1 :]
+
+        spot = self._curve[0] if pool is self._pool and pool else _spot(pool, nodes)
+
+        return spot, _interpolator(node_days, nodes), len(nodes)
+
+    def near_rates(self, without: str = "") -> list[float]:
+        """Sorted rates of the near-tenor observations, leaving out one print when given."""
+        from bisect import bisect_left
+
+        entry = self._where.get(without)
+
+        if entry is None or entry[0] > NEAR_MAX_DAYS:
+            return list(self._near)
+
+        position = bisect_left(self._near, entry[1])
+
+        return self._near[:position] + self._near[position + 1 :]
+
+
+def observation_curve(
+    observations: list[dict],
+) -> tuple[float | None, Callable[[float], float] | None]:
+    """Spot and a year-fraction forward interpolator from a pair's forward observations."""
+    spot, forward, _ = ObservationCurve(observations).curve()
 
     return spot, forward
 

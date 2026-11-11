@@ -2,8 +2,12 @@
 
 from collections.abc import Callable, Iterable
 from datetime import date as dateType
+from typing import TYPE_CHECKING
 
 from openbb_cftc.utils.dtcc import qualified_keys
+
+if TYPE_CHECKING:
+    from openbb_cftc.utils.fx_vol import ObservationCurve
 
 PRICEABLE_FORWARDS = frozenset({"Forward", "Non-Deliverable Forward"})
 OPTION_FAMILIES = frozenset({"Van", "NDO"})
@@ -283,61 +287,24 @@ def _discount_for(
     return memo[key]
 
 
-def _pair_observations(
-    fx_records: Iterable[dict], trade: dict, curve_date: dateType, memo: dict
-) -> dict:
-    """Return the pair's observations and the prints at each tenor, built once per day."""
-    from openbb_cftc.utils.fx import extract_fx_observations
-
-    key = f"fx-observations:{trade['pair']}:{curve_date.isoformat()}"
-
-    if key not in memo:
-        observations = extract_fx_observations(
-            _pair_subset(fx_records, trade, curve_date, memo),
-            pair=trade["pair"],
-            trade_date=curve_date,
-            min_notional=CURVE_MIN_NOTIONAL,
-        )
-        prints: dict[int, list[str]] = {}
-
-        for observation in observations:
-            prints.setdefault(observation["days"], []).append(
-                observation["dissemination_identifier"]
-            )
-
-        memo[key] = {"observations": observations, "prints": prints}
-
-    return memo[key]
-
-
 def _pair_curve(
     fx_records: Iterable[dict], trade: dict, curve_date: dateType, memo: dict
-) -> dict:
-    """Return the pair's forward curve for the day, without the trade's own print."""
-    from openbb_cftc.utils.fx_vol import observation_curve
+) -> "ObservationCurve":
+    """Return the pair's forward curve for the day, built once and shared by its prints."""
+    from openbb_cftc.utils.fx import extract_fx_observations
+    from openbb_cftc.utils.fx_vol import ObservationCurve
 
-    pair = _pair_observations(fx_records, trade, curve_date, memo)
-    own = trade["dissemination_identifier"]
-    sole = bool(own) and pair["prints"].get(trade["days"]) == [own]
-    tag = f"{trade['pair']}:{curve_date.isoformat()}"
-
-    if sole:
-        tag = f"{tag}:-{trade['days']}"
-
-    key = f"fx-curve:{tag}"
+    key = f"fx-curve:{trade['pair']}:{curve_date.isoformat()}"
 
     if key not in memo:
-        observations = [
-            o for o in pair["observations"] if not sole or o["days"] != trade["days"]
-        ]
-        spot, forward = observation_curve(observations)
-        memo[key] = {
-            "tag": tag,
-            "nodes": len({o["days"] for o in observations if o["days"] > 2}),
-            "near": [o["rate"] for o in observations if o["days"] <= 9],
-            "spot": spot,
-            "forward": forward,
-        }
+        memo[key] = ObservationCurve(
+            extract_fx_observations(
+                _pair_subset(fx_records, trade, curve_date, memo),
+                pair=trade["pair"],
+                trade_date=curve_date,
+                min_notional=CURVE_MIN_NOTIONAL,
+            )
+        )
 
     return memo[key]
 
@@ -418,31 +385,29 @@ def fx_market(
     """Spot, forward interpolator and both legs' discount curves for a pair, or None."""
     memo = {} if memo is None else memo
     curve = _pair_curve(fx_records, trade, curve_date, memo)
-    key = f"fx-market:{curve['tag']}:{min_trades}"
+    own = trade["dissemination_identifier"]
+    shared = own not in curve
+    key = f"fx-market:{trade['pair']}:{curve_date.isoformat()}:{min_trades}"
 
-    if key in memo:
+    if shared and key in memo:
         return memo[key]
 
-    spot, forward = curve["spot"], curve["forward"]
+    spot, forward, nodes = curve.curve(own)
 
-    if (
-        curve["nodes"] < MIN_FORWARD_NODES
-        or spot is None
-        or forward is None
-        or spot <= 0.0
-    ):
+    if nodes < MIN_FORWARD_NODES or spot is None or forward is None or spot <= 0.0:
         market = _cip_market(
-            curve["near"], rates_records, trade, curve_date, min_trades, memo
+            curve.near_rates(own), rates_records, trade, curve_date, min_trades, memo
         )
     else:
         market = _curve_market(
             spot, forward, rates_records, trade, curve_date, min_trades, memo
         )
 
-    if market is not None:
-        market["key"] = key
+    if shared:
+        if market is not None:
+            market["key"] = key
 
-    memo[key] = market
+        memo[key] = market
 
     return market
 
