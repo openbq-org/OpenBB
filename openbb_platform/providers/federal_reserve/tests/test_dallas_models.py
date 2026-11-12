@@ -213,7 +213,7 @@ def _tros_workbook() -> bytes:
     )
 
 
-def _bcs_workbook() -> bytes:
+def _bcs_workbook(sheet_name: str = "CSV_BCS_Index_Results") -> bytes:
     """Build a BCS sheet with datetime dates and the diffusion columns."""
     header = [
         "date",
@@ -252,7 +252,7 @@ def _bcs_workbook() -> bytes:
         return row
 
     return _workbook(
-        "CSV_BCS_Index_Results",
+        sheet_name,
         [
             header,
             make(datetime(2026, 3, 30), 15.3, 5.0),
@@ -525,6 +525,18 @@ class TestBanking:
         columns = result[0].model_dump()
         assert columns["Total Loan Volume (current)"] == 35.6
         assert columns["General Business Activity (current)"] == 10.2
+
+    def test_reads_the_renamed_sheet(self, monkeypatch):
+        """The Dallas Fed renamed the sheet to ``BCS_Index_Results``."""
+        monkeypatch.setattr(
+            "openbb_core.provider.utils.helpers.make_request",
+            lambda *a, **k: _response(_bcs_workbook("BCS_Index_Results")),
+        )
+        query = FederalReserveDallasBankingFetcher.transform_query({})
+        rows = FederalReserveDallasBankingFetcher.extract_data(query, None)
+        result = FederalReserveDallasBankingFetcher.transform_data(query, rows)
+        assert [r.date for r in result] == [date(2026, 3, 30), date(2026, 5, 18)]
+        assert result[-1].model_dump()["Total Loan Volume (current)"] == 35.6
 
     def test_empty_raises(self, monkeypatch):
         """An empty response raises ``EmptyDataError``."""
