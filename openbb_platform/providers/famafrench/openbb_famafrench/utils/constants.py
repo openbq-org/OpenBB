@@ -1057,7 +1057,7 @@ INTERNATIONAL_INDEX_PORTFOLIOS_URLS = {
 
 INTERNATIONAL_INDEX_PORTFOLIO_FILES = {
     "uk": "Ind_UK.Dat",
-    "scandinavia": "Ind_Scandinavia.Dat",
+    "scandinavia": "Ind_Scandanavia.Dat",
     "europe": "Ind_Eur_With_UK.Dat",
     "europe_ex_uk": "Ind_Eur_WOut_UK.Dat",
     "asia_pacific": "Ind_Asia_Pacific.Dat",
