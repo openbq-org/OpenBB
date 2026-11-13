@@ -91,16 +91,27 @@ class ExceptionHandlers:
             )
         except Exception:
             errors = error.errors if hasattr(error, "errors") else error
-        all_in_query = all(
-            loc in query_params
-            for err in errors  # ty: ignore[not-iterable]
-            for loc in err.get("loc", ())
-        )
-        if "QueryParams" in error.title and all_in_query:
+        if "QueryParams" in error.title:
             detail = [
                 {
                     **{k: v for k, v in err.items() if k != "ctx"},
-                    "loc": ("query",) + err.get("loc", ()),
+                    "loc": (
+                        ("query",) + err.get("loc", ())
+                        if (
+                            # Fetcher QueryParams validation reports absent
+                            # fields without a transport source. Preserve an
+                            # explicit source such as "body".
+                            (
+                                err.get("type") == "missing"
+                                and len(err.get("loc", ())) == 1
+                            )
+                            or all(
+                                loc in query_params
+                                for loc in err.get("loc", ())
+                            )
+                        )
+                        else err.get("loc", ())
+                    ),
                 }
                 for err in errors  # ty: ignore[not-iterable]
             ]
