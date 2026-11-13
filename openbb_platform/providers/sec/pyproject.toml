@@ -65,8 +65,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "openbb_sec/cli.py" = ["T201", "S404", "S603", "PLC0415"]
 "openbb_sec/sec_router.py" = ["ARG001", "PLC0415", "SLF001"]
-"openbb_sec/models/*.py" = ["ARG002", "PLC0415", "PLR0911", "PLR0912", "PLR0914", "PLR0915", "PLR0917"]
-"openbb_sec/utils/*.py" = ["PLR0911", "PLR0912", "PLR0913", "PLR0914", "PLR0915", "PLR0917", "SLF001", "BLE001"]
+"openbb_sec/models/*.py" = ["ARG002", "PLC0415", "PLR0911", "PLR0912", "PLR0914", "PLR0915", "PLR0917", "SIM102"]
+"openbb_sec/utils/*.py" = ["PLR0911", "PLR0912", "PLR0913", "PLR0914", "PLR0915", "PLR0917", "SLF001", "BLE001", "SIM102"]
 "openbb_sec/utils/statement_schema/*.py" = ["PLR0911", "PLR0912", "PLR0913", "PLR0914", "PLR0915", "PLR0917", "SLF001", "BLE001", "B023"]
 "tests/**" = ["S101", "S108", "D", "SIM105", "SIM117", "T201", "PLC0415"]
 "integration/**" = ["S101", "S108", "D", "SIM105", "SIM117", "PLC0415", "ARG001"]
@@ -88,16 +88,21 @@ include = ["openbb_sec"]
 exclude = ["tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "ignore"
+import-not-found = "ignore"
+missing-union-attribute = "ignore"
+unused-ignore-comment = "ignore"
+unused-type-ignore-comment = "ignore"
+renamed-rule-in-ignore-comment = "ignore"
 
 [[tool.ty.overrides]]
 include = ["openbb_sec/models/**"]
 
 [tool.ty.overrides.rules]
-invalid-attribute-override = "ignore"
-invalid-mutable-override = "ignore"
+incompatible-attribute-override = "ignore"
+incompatible-mutable-override = "ignore"
 
 [tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
 markers = [
