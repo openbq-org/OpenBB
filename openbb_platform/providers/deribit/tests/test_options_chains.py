@@ -1,10 +1,18 @@
 """Tests for the Deribit options chain."""
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 import pytest
+import time_machine
 from openbb_core.app.model.abstract.error import OpenBBError
 from openbb_core.provider.utils.errors import EmptyDataError
 
 from openbb_deribit.models.options_chains import DeribitOptionsChainsFetcher
+
+# The XRP_USDC contracts quoted in the fixtures expire at 2026-09-21 08:00 UTC.
+EXPIRING = "2026-09-21"
+UTC = ZoneInfo("UTC")
 
 
 @pytest.fixture
@@ -191,3 +199,52 @@ class TestChain:
         )
 
         assert {row["underlying_symbol"] for row in result.model_dump()} == {"XRP-USDC"}
+
+
+def _days_left(result) -> set:
+    """Return the DTE of every contract in the result that expires on EXPIRING."""
+    return {
+        row["dte"] for row in result.model_dump() if str(row["expiration"]) == EXPIRING
+    }
+
+
+class TestDaysToExpiration:
+    """DTE is the whole days left before the exchange expires the contract."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("zone", ["UTC", "Asia/Tokyo", "America/Los_Angeles"])
+    async def test_the_local_timezone_does_not_change_it(self, chain, zone):
+        """Five hours before it expires a contract is at zero days, anywhere."""
+        chain("XRP_USDC")
+        instant = datetime(2026, 9, 21, 3, tzinfo=UTC).astimezone(ZoneInfo(zone))
+
+        # A ZoneInfo destination also sets the local timezone, where tzset exists.
+        with time_machine.travel(instant, tick=False):
+            result = await DeribitOptionsChainsFetcher.fetch_data(
+                {"symbol": "XRP_USDC"}, {}
+            )
+
+        assert _days_left(result) == {0}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(("hour", "days"), [(7, 1), (9, 0)])
+    async def test_without_a_timestamp_it_expires_at_eight_utc(
+        self, chain, responder, load, hour, days
+    ):
+        """A contract listed with no timestamp expires at 08:00 UTC on its date."""
+        chain("XRP_USDC")
+        responder(
+            {
+                "get_instruments": [
+                    {k: v for k, v in spec.items() if k != "expiration_timestamp"}
+                    for spec in load("instruments_option")
+                ]
+            }
+        )
+
+        with time_machine.travel(datetime(2026, 9, 20, hour, tzinfo=UTC), tick=False):
+            result = await DeribitOptionsChainsFetcher.fetch_data(
+                {"symbol": "XRP_USDC"}, {}
+            )
+
+        assert _days_left(result) == {days}
