@@ -3,6 +3,7 @@
 from datetime import (
     date as dateType,
     datetime,
+    timezone,
 )
 from typing import Any
 
@@ -31,6 +32,8 @@ PRICE_FIELDS = (
     "high",
     "low",
 )
+# Deribit expires every option at 08:00 UTC on the date in its name.
+EXPIRATION_TIME = "08:00"
 
 
 class DeribitOptionsChainsQueryParams(OptionsChainsQueryParams):
@@ -548,9 +551,11 @@ class DeribitOptionsChainsFetcher(
         from pandas import to_datetime
 
         from openbb_deribit.utils.helpers import (
+            days_to_expiration,
             flatten_ticker,
             get_instruments,
             get_options_symbols,
+            to_timestamp,
         )
         from openbb_deribit.utils.websocket import subscribe_tickers
 
@@ -566,7 +571,7 @@ class DeribitOptionsChainsFetcher(
             ),
             return_exceptions=True,
         )
-        today = to_datetime("today").date()
+        now = datetime.now(timezone.utc).timestamp() * 1000
         results: list[dict] = []
 
         for subscription in subscriptions:
@@ -588,12 +593,15 @@ class DeribitOptionsChainsFetcher(
 
                 expiration = to_datetime(parts[1]).date()
                 spec = specs.get(symbol, {})
+                expires = spec.get("expiration_timestamp") or to_timestamp(
+                    f"{expiration} {EXPIRATION_TIME}"
+                )
                 results.append(
                     {
                         "expiration": expiration,
                         "strike": float(strike),
                         "option_type": "call" if symbol.endswith("-C") else "put",
-                        "dte": (expiration - today).days,
+                        "dte": days_to_expiration(expires, now),
                         "contract_size": spec.get("contract_size"),
                         "is_inverse": spec.get("instrument_type") == "reversed",
                         "timestamp": to_datetime(
