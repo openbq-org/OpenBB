@@ -1480,3 +1480,79 @@ async def test_run_metadata_cleanup_skips_non_dict_and_removes_unjsonable(monkey
     out = await StaticCommandRunner.run(ctx)
     assert "bad" not in out.extra["metadata"].arguments["extra_params"]
     assert out.extra["metadata"].arguments["extra_params"]["ok"] == 1
+
+
+def test_provider_loop_is_one_per_provider():
+    """Each provider gets one running loop; the openbb_ package prefix is ignored."""
+    from openbb_core.app.command_runner import _provider_loop
+
+    assert _provider_loop("loop_a") is _provider_loop("openbb_loop_a")
+    assert _provider_loop("loop_a") is not _provider_loop("loop_b")
+    assert _provider_loop("loop_a").is_running()
+
+
+def test_static_command_runner_command_runs_on_the_provider_loop():
+    """A provider's commands share one loop, never the caller's."""
+    import asyncio
+
+    async def which_loop(**kwargs):
+        return asyncio.get_running_loop()
+
+    which_loop.__module__ = "openbb_loopcheck.router"
+
+    async def main():
+        first = await StaticCommandRunner._command(which_loop, {})
+        second = await StaticCommandRunner._command(which_loop, {})
+        return asyncio.get_running_loop(), first, second
+
+    caller, first, second = asyncio.run(main())
+    assert first is second
+    assert first is not caller
+
+
+def test_static_command_runner_command_uses_provider_choices():
+    """The provider in provider_choices picks the loop."""
+    import asyncio
+
+    from openbb_core.app.command_runner import _provider_loop
+
+    async def which_loop(**kwargs):
+        return asyncio.get_running_loop()
+
+    which_loop.__module__ = "openbb_router_package.router"
+    kwargs = {"provider_choices": SimpleNamespace(provider="chosen_provider")}
+
+    loop = asyncio.run(StaticCommandRunner._command(which_loop, kwargs))
+    assert loop is _provider_loop("chosen_provider")
+
+
+def test_static_command_runner_blocking_command_blocks_only_its_provider():
+    """A CPU-bound command no longer freezes other providers or the caller's loop."""
+    import asyncio
+    import time
+
+    def slow(**kwargs):
+        time.sleep(0.6)
+        return "slow"
+
+    slow.__module__ = "openbb_slow_provider.router"
+
+    async def fast(**kwargs):
+        return "fast"
+
+    fast.__module__ = "openbb_fast_provider.router"
+
+    async def main():
+        started = time.perf_counter()
+        slow_task = asyncio.ensure_future(StaticCommandRunner._command(slow, {}))
+        await asyncio.sleep(0.05)
+        assert await StaticCommandRunner._command(fast, {}) == "fast"
+        fast_done = time.perf_counter() - started
+        await asyncio.sleep(0.05)
+        caller_done = time.perf_counter() - started
+        assert await slow_task == "slow"
+        return fast_done, caller_done
+
+    fast_done, caller_done = asyncio.run(main())
+    assert fast_done < 0.4
+    assert caller_done < 0.5
