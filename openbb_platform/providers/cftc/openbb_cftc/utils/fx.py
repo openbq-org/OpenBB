@@ -100,6 +100,9 @@ def _fx_observation(
         "rate": rate if not spec["invert"] else 1.0 / rate,
         "notional": notional,
         "is_swap": fisn == spec["swap_fisn"],
+        "dissemination_identifier": (
+            record.get("Dissemination Identifier") or ""
+        ).strip(),
     }
 
 
