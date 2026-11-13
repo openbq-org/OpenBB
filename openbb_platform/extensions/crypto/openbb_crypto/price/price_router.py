@@ -46,3 +46,20 @@ async def historical(
 ) -> OBBject:
     """Get historical price data for cryptocurrency pair(s) within a provider."""
     return await OBBject.from_query(Query(**locals()))
+
+
+@router.command(
+    model="CryptoTrades",
+    examples=[
+        APIEx(parameters={"symbol": "BTCUSDT", "provider": "binance"}),
+        APIEx(parameters={"symbol": "ETHUSDT", "limit": 100, "provider": "binance"}),
+    ],
+)
+async def trades(
+    cc: CommandContext,
+    provider_choices: ProviderChoices,
+    standard_params: StandardParams,
+    extra_params: ExtraParams,
+) -> OBBject:
+    """Get recent crypto trades."""
+    return await OBBject.from_query(Query(**locals()))
