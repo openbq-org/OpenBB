@@ -222,6 +222,21 @@ class TestReturnsStats:
         assert row.sortino is None
         assert row.calmar is None
 
+    def test_sortino_uses_downside_deviation_below_target(self):
+        # Simple returns: [-0.10, -0.10, 0.20, 0.20].
+        # Mean excess = 0.05; downside deviation = sqrt((0.01 + 0.01 + 0 + 0) / 4) = sqrt(0.005).
+        # Using sample std of negative returns only would yield std([-0.10, -0.10]) == 0 -> None.
+        returns = pd.Series([-0.10, -0.10, 0.20, 0.20])
+        block = _stats_block(returns, periods_per_year=252, rf_per_period=0.0)
+        expected = 0.05 / np.sqrt(0.005) * np.sqrt(252)
+        assert block["sortino"] == pytest.approx(expected)
+
+        # Single negative observation: [-0.08, 0.04, 0.04, 0.04].
+        # Mean excess = 0.01; downside deviation = sqrt(0.08^2 / 4) = 0.04.
+        single_neg = pd.Series([-0.08, 0.04, 0.04, 0.04])
+        block_single = _stats_block(single_neg, periods_per_year=252, rf_per_period=0.0)
+        assert block_single["sortino"] == pytest.approx(0.25 * np.sqrt(252))
+
     def test_constant_series(self, constant_records):
         result = returns_stats(ReturnsStatsQueryParams(data=constant_records))
         row = result.results[0]

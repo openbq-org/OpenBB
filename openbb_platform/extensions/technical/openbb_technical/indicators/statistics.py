@@ -372,9 +372,9 @@ def _stats_block(returns, periods_per_year: int, rf_per_period: float) -> dict:
         if excess.std(ddof=1) > 0
         else None
     )
-    downside = excess[excess < 0]
-    if len(downside) > 0 and downside.std(ddof=1) > 0:
-        sortino = float(excess.mean() / downside.std(ddof=1) * sqrt(periods_per_year))
+    downside_dev = float(sqrt((excess.clip(upper=0.0) ** 2).mean()))
+    if downside_dev > 0:
+        sortino = float(excess.mean() / downside_dev * sqrt(periods_per_year))
     else:
         sortino = None
     cum = (1.0 + clean).cumprod()
