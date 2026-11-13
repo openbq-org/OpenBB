@@ -29,6 +29,12 @@ class NasdaqCalendarSplitsData(CalendarSplitsData):
         json_schema_extra={"x-widget_config": CELL_CLICK_SYMBOL},
     )
     name: str | None = Field(default=None, description="The name of the company.")
+    numerator: float | None = Field(
+        default=None, description="Numerator of the stock split."
+    )
+    denominator: float | None = Field(
+        default=None, description="Denominator of the stock split."
+    )
     ratio_display: str | None = Field(
         default=None, description="The split ratio, as published - i.e., '16 : 1'."
     )
