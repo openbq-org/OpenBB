@@ -60,7 +60,9 @@ def build_new_annotation_map(sig: Signature) -> dict[str, Any]:
 
 def build_new_signature(path: str, func: Callable) -> Signature:
     """Build new function signature."""
-    sig = signature(func)
+    # build_api_wrapper stores the signature built here on the function, and one
+    # function can back several routes; always start from the original.
+    sig = func.__dict__.setdefault("_openbb_original_signature", signature(func))
     parameter_list = sig.parameters.values()
     return_annotation = sig.return_annotation
     new_parameter_list: list = []
@@ -146,7 +148,8 @@ def build_new_signature(path: str, func: Callable) -> Signature:
             var_kw_pos,
             Parameter(
                 "__authenticated_user_settings",
-                kind=Parameter.POSITIONAL_OR_KEYWORD,
+                # Keyword-only, so it may follow a command's own keyword-only parameters.
+                kind=Parameter.KEYWORD_ONLY,
                 default=UserSettings(),
                 annotation=Annotated[
                     UserSettings, Depends(AuthService().user_settings_hook)

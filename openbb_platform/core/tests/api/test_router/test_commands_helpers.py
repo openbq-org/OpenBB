@@ -564,3 +564,40 @@ def test_add_command_map_skips_non_apiroute_leaf(monkeypatch):
     add_command_map(MagicMock(spec=CommandRunner), api_router)
 
     assert plugins_api_router.routes == []
+
+
+def test_build_new_signature_auth_param_once_for_endpoint_on_two_routes(monkeypatch):
+    """One function can back several routes (openbb-federal-reserve mounts its
+    regional_* commands once per Reserve Bank). build_api_wrapper stores each
+    rewritten signature on the function, so the second route must not add the
+    auth parameter again."""
+    from openbb_core.api.router import commands as cmds
+
+    monkeypatch.setattr(cmds, "Env", type("E", (), {"API_AUTH": True}))
+
+    def f(x: int) -> None: ...
+
+    f.__signature__ = build_new_signature("/a", f)  # as build_api_wrapper does
+    second = build_new_signature("/b", f)
+    names = [p.name for p in second.parameters.values()]
+    assert names.count("__authenticated_user_settings") == 1
+    assert names[0] == "x"
+
+
+def test_build_new_signature_auth_param_after_keyword_only_params(monkeypatch):
+    """openbb-sec's /sec/standardized_statement takes keyword-only parameters;
+    the auth parameter must be addable after them."""
+    from inspect import Parameter
+
+    from openbb_core.api.router import commands as cmds
+
+    monkeypatch.setattr(cmds, "Env", type("E", (), {"API_AUTH": True}))
+
+    def f(*, symbol: str, limit: int = 1) -> None: ...
+
+    new_sig = build_new_signature("/p", f)
+    assert (
+        new_sig.parameters["__authenticated_user_settings"].kind
+        is Parameter.KEYWORD_ONLY
+    )
+    assert list(new_sig.parameters)[:2] == ["symbol", "limit"]
