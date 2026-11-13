@@ -507,6 +507,19 @@ class TestStrategiesMethod:
         result = chain.strategies(vertical_puts=[(95.0, 105.0)])
         assert isinstance(result, DataFrame)
 
+    def test_strategies_multiple_vertical_puts(self, chain):
+        result = chain.strategies(
+            days=[14, 44], vertical_puts=[(95.0, 105.0), (90.0, 110.0)]
+        )
+        put_spreads = result[result["Strategy"].str.contains("Put Spread")]
+
+        assert len(put_spreads) == 4
+        assert put_spreads["Expiration"].nunique() == 2
+        assert set(zip(put_spreads["Strike 1"], put_spreads["Strike 2"])) == {
+            (95.0, 105.0),
+            (90.0, 110.0),
+        }
+
     def test_strategies_all_at_once(self, chain):
         from pandas import DataFrame
 
