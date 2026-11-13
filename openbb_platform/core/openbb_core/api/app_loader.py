@@ -1,5 +1,6 @@
 """App loader module."""
 
+import json
 from typing import Any
 
 from fastapi import APIRouter, FastAPI
@@ -95,6 +96,9 @@ class AppLoader:
     def add_exception_handlers(app: FastAPI):
         """Add exception handlers."""
         app.add_exception_handler(Exception, ExceptionHandlers.exception)
+        # Handled inside the CORS middleware, unlike the Exception catch-all.
+        app.add_exception_handler(TimeoutError, ExceptionHandlers.exception)
+        app.add_exception_handler(json.JSONDecodeError, ExceptionHandlers.exception)
         app.add_exception_handler(ValidationError, ExceptionHandlers.validation)  # ty: ignore[invalid-argument-type]
         app.add_exception_handler(ResponseValidationError, ExceptionHandlers.validation)  # ty: ignore[invalid-argument-type]
         app.add_exception_handler(OpenBBError, ExceptionHandlers.openbb)  # ty: ignore[invalid-argument-type]

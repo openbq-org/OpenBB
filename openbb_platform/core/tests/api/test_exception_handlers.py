@@ -1,6 +1,7 @@
 """Tests for openbb_core.api.exception_handlers."""
 
 import json
+from datetime import date
 from unittest.mock import MagicMock
 
 import pytest
@@ -71,10 +72,104 @@ async def test_exception_handler_iterable_missing(monkeypatch):
     )
 
     class HasErrors(Exception):
+        title = "EquityQuoteQueryParams"
         errors = [{"type": "missing", "loc": ("symbol",)}]
 
     resp = await ExceptionHandlers.exception(_make_request(), HasErrors())
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_exception_handler_missing_query_params_field_is_422(monkeypatch):
+    """A required provider QueryParams field absent from the request is a 422."""
+    monkeypatch.setattr(
+        "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
+    )
+
+    class ItemQueryParams(BaseModel):
+        start_date: date
+        code: str
+
+    try:
+        ItemQueryParams(start_date=date(2024, 1, 2))  # type: ignore[call-arg]
+    except ValidationError as ve:
+        err = ve
+
+    # The input holds a date, so the detail must be JSON-encoded to serialize.
+    resp = await ExceptionHandlers.exception(_make_request(), err)
+    assert resp.status_code == 422
+    detail = json.loads(resp.body)["detail"]
+    assert (detail["type"], detail["loc"]) == ("missing", ["code"])
+    assert detail["input"] == {"start_date": "2024-01-02"}
+
+
+@pytest.mark.asyncio
+async def test_exception_handler_missing_field_of_any_query_params_subclass_is_422(
+    monkeypatch,
+):
+    """A QueryParams subclass whose name lacks "QueryParams" is still client input."""
+    from openbb_core.provider.abstract.query_params import QueryParams
+
+    monkeypatch.setattr(
+        "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
+    )
+
+    class BalanceQuery(QueryParams):
+        symbol: str
+
+    try:
+        BalanceQuery()  # type: ignore[call-arg]
+    except ValidationError as ve:
+        err = ve
+
+    resp = await ExceptionHandlers.exception(_make_request(), err)
+    assert resp.status_code == 422
+    assert json.loads(resp.body)["detail"]["type"] == "missing"
+
+
+@pytest.mark.asyncio
+async def test_exception_handler_missing_data_field_stays_500(monkeypatch):
+    """A Data model missing a field is the upstream response's fault, not the client's."""
+    monkeypatch.setattr(
+        "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
+    )
+
+    class ItemData(BaseModel):
+        value: float
+
+    try:
+        ItemData()  # type: ignore[call-arg]
+    except ValidationError as ve:
+        err = ve
+
+    resp = await ExceptionHandlers.exception(_make_request(), err)
+    assert resp.status_code == 500
+
+
+@pytest.mark.asyncio
+async def test_exception_handler_timeout_is_504(monkeypatch):
+    monkeypatch.setattr(
+        "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
+    )
+    resp = await ExceptionHandlers.exception(_make_request(), TimeoutError("slow"))
+    assert (resp.status_code, json.loads(resp.body)["detail"]) == (504, "slow")
+
+    resp = await ExceptionHandlers.exception(_make_request(), TimeoutError())
+    assert resp.status_code == 504
+    assert "did not respond in time" in json.loads(resp.body)["detail"]
+
+
+@pytest.mark.asyncio
+async def test_exception_handler_invalid_json_is_502(monkeypatch):
+    monkeypatch.setattr(
+        "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
+    )
+    err = json.JSONDecodeError("Expecting value", "<html>blocked</html>", 0)
+    resp = await ExceptionHandlers.exception(_make_request(), err)
+    assert resp.status_code == 502
+    assert json.loads(resp.body)["detail"] == (
+        "The data source returned a response that is not valid JSON."
+    )
 
 
 @pytest.mark.asyncio

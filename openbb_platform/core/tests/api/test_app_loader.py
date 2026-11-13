@@ -1,6 +1,11 @@
 """Tests for ``AppLoader``'s OpenAPI tag rewriting."""
 
+import json
+
+import pytest
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.testclient import TestClient
 
 from openbb_core.api.app_loader import AppLoader
 
@@ -145,3 +150,35 @@ def test_swagger_ui_opens_with_every_tag_collapsed():
     from openbb_core.api.rest_api import app
 
     assert (app.swagger_ui_parameters or {}).get("docExpansion") == "none"
+
+
+@pytest.mark.parametrize(
+    "error, status",
+    [
+        (TimeoutError("slow"), 504),
+        (json.JSONDecodeError("Expecting value", "<html>", 0), 502),
+    ],
+)
+def test_timeout_and_invalid_json_responses_keep_cors_headers(
+    monkeypatch, error, status
+):
+    """Handlers registered by type run inside the CORS middleware.
+
+    The ``Exception`` catch-all runs outside it, so a browser client would see
+    a CORS failure instead of the status.
+    """
+    monkeypatch.setattr(
+        "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
+    )
+    app = FastAPI()
+    app.add_middleware(CORSMiddleware, allow_origins=["*"])
+    AppLoader.add_exception_handlers(app)
+
+    @app.get("/fail")
+    async def fail():
+        raise error
+
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.get("/fail", headers={"Origin": "https://example.com"})
+    assert response.status_code == status
+    assert response.headers.get("access-control-allow-origin") == "*"
