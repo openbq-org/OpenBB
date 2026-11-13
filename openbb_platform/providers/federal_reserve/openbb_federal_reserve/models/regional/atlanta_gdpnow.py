@@ -15,7 +15,7 @@ from pydantic import Field
 
 URL = (
     "https://www.atlantafed.org/-/media/Project/Atlanta/FRBA/Documents"
-    "/cqer/researchcq/gdpnow/GDPTrackingModelDataAndForecasts.xlsx"
+    "/research-and-data/data/gdpnow/GDPTrackingModelDataAndForecasts.xlsx"
 )
 
 
