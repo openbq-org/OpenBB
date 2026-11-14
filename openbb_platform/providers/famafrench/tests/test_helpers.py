@@ -604,6 +604,26 @@ def test_every_country_maps_to_a_zip_member():
     assert missing == {}
 
 
+_INDEX_ZIP_MEMBERS = {
+    "Ind_Asia_Pacific.Dat",
+    "Ind_Eur_WOut_UK.Dat",
+    "Ind_Eur_With_UK.Dat",
+    "Ind_Scandanavia.Dat",
+    "Ind_UK.Dat",
+    "Ind_all.Dat",
+}
+
+
+def test_every_index_maps_to_a_zip_member():
+    """Each index names a member of the archive; Scandinavia's is Ind_Scandanavia.Dat."""
+    missing = {
+        index: member
+        for index, member in helpers.INTERNATIONAL_INDEX_PORTFOLIO_FILES.items()
+        if member not in _INDEX_ZIP_MEMBERS
+    }
+    assert missing == {}
+
+
 def test_get_international_portfolio_data_australia(monkeypatch):
     """Australia reads the archive's eight-character member name."""
     monkeypatch.setattr(
