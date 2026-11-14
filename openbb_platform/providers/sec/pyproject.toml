@@ -113,6 +113,7 @@ filterwarnings = [
     "error",
     "ignore::DeprecationWarning:openbb_core.provider.utils.client",
     "ignore::pytest.PytestUnraisableExceptionWarning",
+    "ignore::pytest.PytestWarning",
     "ignore:Using .httpx. with .starlette.testclient. is deprecated",
     "ignore:SelectableGroups dict interface is deprecated:DeprecationWarning",
     "ignore:The behavior of DataFrame concatenation with empty or all-NA entries is deprecated:FutureWarning",
