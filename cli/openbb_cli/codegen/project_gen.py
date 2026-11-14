@@ -93,7 +93,7 @@ packages = ["{package_name}"]
 {provenance_block}
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "D"]
@@ -128,3 +128,4 @@ def _render_provenance_block(provenance: dict[str, str]) -> str:
         return ""
     body = "\n".join(f"{k} = {v!r}" for k, v in entries)
     return f"\n[tool.openbb-codegen]\n{body}\n"
+
