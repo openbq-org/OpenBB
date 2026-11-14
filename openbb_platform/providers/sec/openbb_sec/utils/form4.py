@@ -130,19 +130,19 @@ async def get_form_4_urls(
     urls: list = []
     for item in form_4:
         if (
-            (not start_date or not item.filing_date)  # ty: ignore[unresolved-attribute]
+            (not start_date or not item.filing_date)  # ty: ignore[missing-union-attribute]
             or start_date
-            and item.filing_date < start_date  # ty: ignore[unresolved-attribute]
+            and item.filing_date < start_date  # ty: ignore[missing-union-attribute]
         ):
             continue
         if (
-            (not end_date or not item.report_date)  # ty: ignore[unresolved-attribute]
+            (not end_date or not item.report_date)  # ty: ignore[missing-union-attribute]
             or end_date
-            and item.report_date > end_date  # ty: ignore[unresolved-attribute]
+            and item.report_date > end_date  # ty: ignore[missing-union-attribute]
         ):
             continue
-        to_replace = f"{item.primary_doc.split('/')[0]}/"  # ty: ignore[unresolved-attribute]
-        form_url = item.report_url.replace(to_replace, "")  # ty: ignore[unresolved-attribute]
+        to_replace = f"{item.primary_doc.split('/')[0]}/"  # ty: ignore[missing-union-attribute]
+        form_url = item.report_url.replace(to_replace, "")  # ty: ignore[missing-union-attribute]
         if form_url.endswith(".xml"):
             urls.append(form_url)
 

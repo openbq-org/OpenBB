@@ -88,18 +88,19 @@ include = ["openbb_sec"]
 exclude = ["tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "ignore"
+import-not-found = "ignore"
 
 [[tool.ty.overrides]]
 include = ["openbb_sec/models/**"]
 
 [tool.ty.overrides.rules]
-invalid-attribute-override = "ignore"
-invalid-mutable-override = "ignore"
+incompatible-attribute-override = "ignore"
+incompatible-mutable-override = "ignore"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
+asyncio_default_fixture_loop_scope = "function"
 markers = [
     "record_http: VCR-backed HTTP cassette tests",
     "integration: live integration tests against the SEC API",
