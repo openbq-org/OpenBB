@@ -36,7 +36,11 @@ def _save(sheets: dict[str, list[list]]) -> bytes:
 
 
 def _patch(monkeypatch, content: bytes) -> None:
-    """Point the Kansas City fetch helper at fixture workbook bytes."""
+    """Bypass URL resolution and point the fetch helper at fixture workbook bytes."""
+    monkeypatch.setattr(
+        "openbb_federal_reserve.utils.kansas_city_ag.resolve_kc_ag_url",
+        lambda document_id: "https://example.test/file.xlsx",
+    )
     monkeypatch.setattr(
         "openbb_federal_reserve.utils.kansas_city.fetch_kansas_city",
         lambda *a, **k: content,
@@ -188,3 +192,41 @@ class TestAgFinance:
         query = FederalReserveKansasCityAgFinanceFetcher.transform_query({})
         with pytest.raises(EmptyDataError):
             FederalReserveKansasCityAgFinanceFetcher.extract_data(query, None)
+
+
+@pytest.mark.parametrize(
+    "fetcher, params, document_id",
+    [
+        (FederalReserveKansasCityAgCreditSurveyFetcher, {"table": "land_values"}, 7623),
+        (
+            FederalReserveKansasCityAgCreditSurveyFetcher,
+            {"table": "credit_conditions"},
+            7620,
+        ),
+        (FederalReserveKansasCityAgRatesFetcher, {"rate_type": "variable"}, 7622),
+        (FederalReserveKansasCityAgRatesFetcher, {"rate_type": "fixed"}, 7621),
+        (FederalReserveKansasCityAgFinanceFetcher, {"table": "historical"}, 7228),
+        (
+            FederalReserveKansasCityAgFinanceFetcher,
+            {"table": "ag_bank_performance"},
+            7889,
+        ),
+    ],
+)
+def test_workbook_url_is_resolved_from_the_index(
+    monkeypatch, fetcher, params, document_id
+):
+    """The file names carry the quarter, so each table resolves its document id."""
+    resolved = f"https://www.kansascityfed.org/documents/{document_id}/Q226-file.xlsx"
+    fetched: list[str] = []
+    monkeypatch.setattr(
+        "openbb_federal_reserve.utils.kansas_city_ag.resolve_kc_ag_url",
+        lambda doc: resolved if doc == document_id else "unexpected",
+    )
+    monkeypatch.setattr(
+        "openbb_federal_reserve.utils.kansas_city.fetch_kansas_city",
+        lambda url, *a, **k: fetched.append(url) or b"workbook",
+    )
+    query = fetcher.transform_query(params)
+    assert fetcher.extract_data(query, None) == [{"_raw": b"workbook"}]
+    assert fetched == [resolved]
