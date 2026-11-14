@@ -841,10 +841,14 @@ def extract_toc(html_content: str) -> dict[str, str]:
                 num = item_match.group(1)
                 suffix = item_match.group(2) or ""
                 item_num = f"{num}{suffix}".upper()
-            elif text and not re.match(r"^\d+$", text):  # Not just a page number
+            elif (
+                text
+                and not re.match(r"^\d+$", text)  # Not just a page number
+                and title is None
+                and len(text) > 5
+            ):
                 # Skip short words like "of" that are fragments
-                if title is None and len(text) > 5:
-                    title = text
+                title = text
 
         if item_num and title and item_num not in toc_dict:
             toc_dict[item_num] = title

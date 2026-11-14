@@ -35,7 +35,7 @@ async def get_13f_candidates(symbol: str | None = None, cik: str | None = None):
     params["use_cache"] = False
     params["form_type"] = "13F-HR"
     filings = await fetcher.fetch_data(params, {})
-    filings = [d.model_dump() for d in filings]  # ty: ignore[unresolved-attribute]
+    filings = [d.model_dump() for d in filings]  # ty: ignore[missing-union-attribute]
     if len(filings) == 0:
         raise OpenBBError(f"No 13F-HR filings found for {symbol if symbol else cik}.")
 

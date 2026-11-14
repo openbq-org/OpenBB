@@ -375,15 +375,15 @@ async def get_frame(
         else:
             raise OpenBBError(message) from e
 
-    data = sorted(response.get("data", {}), key=lambda x: x["val"], reverse=True)  # ty: ignore[unresolved-attribute]
+    data = sorted(response.get("data", {}), key=lambda x: x["val"], reverse=True)  # ty: ignore[missing-union-attribute]
     metadata = {
-        "frame": response.get("ccp", ""),  # ty: ignore[unresolved-attribute]
-        "tag": response.get("tag", ""),  # ty: ignore[unresolved-attribute]
-        "label": response.get("label", ""),  # ty: ignore[unresolved-attribute]
-        "description": response.get("description", ""),  # ty: ignore[unresolved-attribute]
-        "taxonomy": response.get("taxonomy", ""),  # ty: ignore[unresolved-attribute]
-        "unit": response.get("uom", ""),  # ty: ignore[unresolved-attribute]
-        "count": response.get("pts", ""),  # ty: ignore[unresolved-attribute]
+        "frame": response.get("ccp", ""),  # ty: ignore[missing-union-attribute]
+        "tag": response.get("tag", ""),  # ty: ignore[missing-union-attribute]
+        "label": response.get("label", ""),  # ty: ignore[missing-union-attribute]
+        "description": response.get("description", ""),  # ty: ignore[missing-union-attribute]
+        "taxonomy": response.get("taxonomy", ""),  # ty: ignore[missing-union-attribute]
+        "unit": response.get("uom", ""),  # ty: ignore[missing-union-attribute]
+        "count": response.get("pts", ""),  # ty: ignore[missing-union-attribute]
     }
     df = DataFrame(data)
     companies = await get_all_companies(use_cache=use_cache)
@@ -466,14 +466,14 @@ async def get_concept(
                 warn(message)
                 messages.append(message)
             if response:
-                units = response.get("units", {})  # ty: ignore[unresolved-attribute]
+                units = response.get("units", {})  # ty: ignore[missing-union-attribute]
                 metadata[ticker] = {
-                    "cik": response.get("cik", ""),  # ty: ignore[unresolved-attribute]
-                    "taxonomy": response.get("taxonomy", ""),  # ty: ignore[unresolved-attribute]
-                    "tag": response.get("tag", ""),  # ty: ignore[unresolved-attribute]
-                    "label": response.get("label", ""),  # ty: ignore[unresolved-attribute]
-                    "description": response.get("description", ""),  # ty: ignore[unresolved-attribute]
-                    "name": response.get("entityName", ""),  # ty: ignore[unresolved-attribute]
+                    "cik": response.get("cik", ""),  # ty: ignore[missing-union-attribute]
+                    "taxonomy": response.get("taxonomy", ""),  # ty: ignore[missing-union-attribute]
+                    "tag": response.get("tag", ""),  # ty: ignore[missing-union-attribute]
+                    "label": response.get("label", ""),  # ty: ignore[missing-union-attribute]
+                    "description": response.get("description", ""),  # ty: ignore[missing-union-attribute]
+                    "name": response.get("entityName", ""),  # ty: ignore[missing-union-attribute]
                     "units": (
                         list(units) if units and len(units) > 1 else list(units)[0]
                     ),
@@ -586,7 +586,7 @@ async def get_universe_quarter4(
             qresp = await fetch_data(f"{base}Q{q}.json", use_cache, persist)
         except Exception:  # noqa: S112
             continue
-        for row in qresp.get("data", []):  # ty: ignore[unresolved-attribute]
+        for row in qresp.get("data", []):  # ty: ignore[missing-union-attribute]
             cik = row.get("cik")
             if cik is None or row.get("val") is None:
                 continue
@@ -594,7 +594,7 @@ async def get_universe_quarter4(
             quarter_counts[cik] += 1
 
     data: list[dict] = []
-    for row in annual_resp.get("data", []):  # ty: ignore[unresolved-attribute]
+    for row in annual_resp.get("data", []):  # ty: ignore[missing-union-attribute]
         cik = row.get("cik")
         if cik is None or row.get("val") is None or quarter_counts.get(cik, 0) < 3:
             continue
@@ -604,11 +604,11 @@ async def get_universe_quarter4(
 
     metadata = {
         "frame": f"CY{year}Q4",
-        "tag": annual_resp.get("tag", ""),  # ty: ignore[unresolved-attribute]
-        "label": annual_resp.get("label", ""),  # ty: ignore[unresolved-attribute]
-        "description": annual_resp.get("description", ""),  # ty: ignore[unresolved-attribute]
-        "taxonomy": annual_resp.get("taxonomy", ""),  # ty: ignore[unresolved-attribute]
-        "unit": annual_resp.get("uom", ""),  # ty: ignore[unresolved-attribute]
+        "tag": annual_resp.get("tag", ""),  # ty: ignore[missing-union-attribute]
+        "label": annual_resp.get("label", ""),  # ty: ignore[missing-union-attribute]
+        "description": annual_resp.get("description", ""),  # ty: ignore[missing-union-attribute]
+        "taxonomy": annual_resp.get("taxonomy", ""),  # ty: ignore[missing-union-attribute]
+        "unit": annual_resp.get("uom", ""),  # ty: ignore[missing-union-attribute]
         "count": len(data),
         "note": (
             "Q4 derived as FY - (Q1 + Q2 + Q3);"

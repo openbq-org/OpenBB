@@ -1657,8 +1657,8 @@ class TestBLKEndToEnd:
 class TestSchemaObject:
     """Direct StatementSchema accessor coverage."""
 
-    @staticmethod
     @pytest.fixture(scope="class")
+    @staticmethod
     def schema():
         return StatementSchema()
 
