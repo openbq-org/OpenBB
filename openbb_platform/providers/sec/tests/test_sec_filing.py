@@ -154,8 +154,61 @@ class TestSecFilingDownloadFile:
         assert captured["url"] == "https://www.sec.gov/x.htm"
         assert captured["kwargs"]["use_cache"] is False
         assert captured["kwargs"]["raise_for_status"] is True
-        assert "headers" in captured["kwargs"]
+        assert captured["kwargs"]["headers"]["Host"] == "www.sec.gov"
         assert "response_callback" in captured["kwargs"]
+
+    def test_adownload_file_strips_host_for_xbrl_sec_gov(self, monkeypatch):
+        from openbb_sec.utils import definitions
+
+        captured: dict = {}
+
+        async def fake_cached_request(url, **kwargs):
+            captured["url"] = url
+            captured["kwargs"] = kwargs
+            return "payload"
+
+        monkeypatch.setattr(
+            "openbb_sec.utils.cache.cached_request", fake_cached_request
+        )
+        monkeypatch.setitem(
+            definitions.SEC_HEADERS, "User-Agent", "Test Co test@co.com"
+        )
+        out = _run(
+            SecBaseFiling._adownload_file(
+                "https://xbrl.sec.gov/dei/2025/dei-2025_lab.xsd", use_cache=False
+            )
+        )
+        assert out == "payload"
+        assert "Host" not in captured["kwargs"]["headers"]
+        assert captured["kwargs"]["headers"]["User-Agent"] == "Test Co test@co.com"
+
+    def test_adownload_file_uses_headers_ua_fallback_for_non_sec_host(
+        self, monkeypatch
+    ):
+        from openbb_sec.utils import definitions
+
+        captured: dict = {}
+
+        async def fake_cached_request(url, **kwargs):
+            captured["kwargs"] = kwargs
+            return "payload"
+
+        monkeypatch.setattr(
+            "openbb_sec.utils.cache.cached_request", fake_cached_request
+        )
+        monkeypatch.setitem(
+            definitions.HEADERS, "User-Agent", "Headers Co headers@co.com"
+        )
+        _run(
+            SecBaseFiling._adownload_file(
+                "https://xbrl.sec.gov/country/2025/country-entire-2025.xsd",
+                use_cache=False,
+            )
+        )
+        assert "Host" not in captured["kwargs"]["headers"]
+        assert (
+            captured["kwargs"]["headers"]["User-Agent"] == "Headers Co headers@co.com"
+        )
 
     def test_non_html_with_read_table_warns_and_returns(self, monkeypatch):
         monkeypatch.setattr(SecBaseFiling, "_adownload_file", _async_return("rawtext"))
