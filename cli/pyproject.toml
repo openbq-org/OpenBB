@@ -5,7 +5,7 @@ description = "Investment Research for Everyone, Anywhere."
 authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
 license = { text = "Apache-2.0" }
 readme = "README.md"
-requires-python = ">=3.11,<4"
+requires-python = ">=3.11.5,<4"
 dependencies = [
     "openbb-core[pandas]>=2.0.1",
     "prompt-toolkit>=3.0.50,<4.0.0",

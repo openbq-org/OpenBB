@@ -5,7 +5,7 @@ description = "OpenBB Platform API: launcher and widgets builder for the Open Da
 authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
 license = { text = "Apache-2.0" }
 readme = "README.md"
-requires-python = ">=3.11,<4"
+requires-python = ">=3.11.5,<4"
 dependencies = [
     "openbb-core>=2.0.1",
     "deepdiff>=8.6.2",
