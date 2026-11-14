@@ -64,7 +64,11 @@ class BlsCacheBuildHook(BuildHookInterface):
                     "bls-cache: regenerating from download.bls.gov "
                     "(~3 min, ~30 sequential survey fetches)..."
                 )
-                env = {**os.environ, "PYTHONUNBUFFERED": "1"}
+                env = {
+                    **os.environ,
+                    "PYTHONUNBUFFERED": "1",
+                    "PYTHONIOENCODING": "utf-8",
+                }
                 proc = subprocess.Popen(  # noqa: S603
                     [sys.executable, str(_GENERATE_CACHE)],
                     cwd=str(_ROOT),
@@ -72,6 +76,8 @@ class BlsCacheBuildHook(BuildHookInterface):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
+                    encoding="utf-8",
+                    errors="replace",
                     bufsize=1,
                 )
                 assert proc.stdout is not None  # noqa: S101
