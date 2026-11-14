@@ -27,6 +27,7 @@ dev = [
     "openbb-devtools>=2.0.1",
     "openbb-charting>=3.0.0",
     "openbb-platform-api>=2.0.0",
+    "time-machine>=2.19.0",
 ]
 
 [build-system]

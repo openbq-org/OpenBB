@@ -44,6 +44,32 @@ def from_day_number(value: Any) -> Any:
     )
 
 
+def days_to_expiration(expiration_timestamp: Any, now: float) -> int:
+    """Return the whole days left before a contract expires.
+
+    The days are counted to the instant the exchange expires the contract, not
+    to its calendar date. A date is read in the timezone of the machine asking,
+    so the same contract would count a different number of days from one place
+    to the next. Part of a day is dropped: a contract with hours left is at zero
+    days, as is one that has already expired.
+
+    Parameters
+    ----------
+    expiration_timestamp : Any
+        When the contract expires, in milliseconds since the epoch.
+    now : float
+        The time to count from, in milliseconds since the epoch.
+
+    Returns
+    -------
+    int
+        The whole days left, never fewer than zero.
+    """
+    left = (float(expiration_timestamp) - now) / (SECONDS_PER_DAY * 1000)
+
+    return max(int(left), 0)
+
+
 def reject_options_by_settlement(currency: str, kind: "str | None") -> None:
     """Refuse a listing of option contracts scoped to a settlement currency.
 
