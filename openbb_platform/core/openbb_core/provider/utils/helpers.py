@@ -350,7 +350,7 @@ async def get_async_requests_session(**kwargs) -> ClientSession:
 async def amake_request(
     url: str,
     method: Literal["GET", "POST"] = "GET",
-    timeout: int = 10,
+    timeout: int | None = None,
     response_callback: (
         Callable[[ClientResponse, ClientSession], Awaitable[dict | list[dict]]] | None
     ) = None,
@@ -366,7 +366,8 @@ async def amake_request(
     method : str, optional
         HTTP method to use.  Can be "GET" or "POST", by default "GET"
     timeout : int, optional
-        Timeout in seconds, by default 10.  Can be overwritten by user setting, request_timeout
+        Timeout in seconds for the whole request. The `request_timeout` preference wins when
+        `preferences` is passed; without a timeout, the `timeout` python setting, else 10.
     response_callback : Callable[[ClientResponse, ClientSession], Awaitable[Union[dict, list[dict]]]], optional
         Async callback with response and session as arguments that returns the json, by default None
     session : ClientSession, optional
@@ -381,7 +382,12 @@ async def amake_request(
     if method.upper() not in ["GET", "POST"]:
         raise ValueError("Method must be GET or POST")
 
-    kwargs["timeout"] = kwargs.pop("preferences", {}).get("request_timeout", timeout)
+    preferences = kwargs.pop("preferences", None) or {}
+    if "request_timeout" in preferences:
+        timeout = preferences["request_timeout"] or timeout
+    if timeout is None:
+        timeout = get_python_request_settings().get("timeout") or 10
+    kwargs["timeout"] = timeout
 
     response_callback = response_callback or (
         lambda r, _: asyncio.ensure_future(r.json())
@@ -414,7 +420,7 @@ async def amake_requests(
     method : Literal["GET", "POST"], optional
         HTTP method to use.  Can be "GET" or "POST", by default "GET"
     timeout : int, optional
-        Timeout in seconds, by default 10.  Can be overwritten by user setting, request_timeout
+        Timeout in seconds for each request, resolved as in `amake_request`.
     response_callback : Callable[[ClientResponse, ClientSession], Awaitable[Union[dict, list[dict]]]], optional
         Async callback with response and session as arguments that returns the json, by default None
     session : ClientSession, optional
