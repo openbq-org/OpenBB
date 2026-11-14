@@ -38,11 +38,13 @@ for _subrouter in (
 
 _APPS_JSON = Path(__file__).parent / "assets" / "apps.json"
 
-# Search & Series are exposed under the Economy ``survey`` namespace when
-# ``openbb_economy`` is installed, or as standalone ``/bls`` commands otherwise.
+# Calendar is exposed under Economy, while Search & Series use its ``survey``
+# namespace when ``openbb_economy`` is installed. All three use standalone
+# ``/bls`` commands otherwise.
 # The template stores the Economy-namespaced widget IDs; rewrite them to the
 # standalone IDs when Economy is absent so the dashboard resolves either way.
 _STANDALONE_WIDGET_IDS: dict[str, str] = {
+    "economy_calendar_bls_obb": "bls_calendar_bls_obb",
     "economy_survey_bls_search_bls_obb": "bls_search_bls_obb",
     "economy_survey_bls_series_bls_obb": "bls_series_bls_obb",
 }
@@ -52,8 +54,8 @@ _STANDALONE_WIDGET_IDS: dict[str, str] = {
 async def bls_apps() -> list:
     """Serve the bundled BLS dashboard template (``assets/apps.json``).
 
-    Widget IDs for the Search & Series widgets are resolved to match the active
-    install: Economy-namespaced when ``openbb_economy`` is present, standalone
+    Calendar, Search & Series widget IDs match the active install:
+    Economy-namespaced when ``openbb_economy`` is present, standalone
     ``/bls`` IDs when it is not.
     """
     apps = json.loads(_APPS_JSON.read_text(encoding="utf-8"))
