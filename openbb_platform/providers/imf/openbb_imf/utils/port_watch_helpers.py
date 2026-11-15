@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 
 from async_lru import alru_cache
@@ -63,14 +64,14 @@ async def _arcgis_query(
 
 def _epoch_to_iso_date(value: Any) -> str | None:
     """Convert a millisecond-epoch integer to ``YYYY-MM-DD`` (or pass through strings)."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     if value is None:
         return None
     if isinstance(value, str):
         return value[:10]
     if isinstance(value, (int, float)) and value > 1e10:
-        return datetime.fromtimestamp(value / 1000, tz=timezone.utc).strftime(
+        return datetime.fromtimestamp(value / 1000, tz=UTC).strftime(
             "%Y-%m-%d"
         )
     return str(value)

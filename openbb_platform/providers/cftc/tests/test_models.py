@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date, timedelta
+from datetime import UTC, date, timedelta
 
 import pytest
 from openbb_core.app.model.abstract.error import OpenBBError
@@ -844,12 +844,12 @@ def test_curve_ok_persists_a_closed_day_verdict(slice_records, monkeypatch):
 
 
 def test_curve_ok_does_not_persist_todays_verdict(slice_records):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from openbb_cftc.models import swap_trades as st
     from openbb_cftc.utils import store
 
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
 
     assert st._curve_ok(slice_records, "ZWL", today, {}) is False
     assert store.get_curve(f"priceable-curve:{today}:ZWL") is None
@@ -871,12 +871,12 @@ def test_spot_ok_requires_forex_prints(fx_records):
 
 
 def test_spot_ok_does_not_persist_todays_verdict(fx_records):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from openbb_cftc.models import swap_trades as st
     from openbb_cftc.utils import store
 
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
 
     assert st._spot_ok(fx_records, "ZWL", "USD", today, {}) is False
     assert store.get_curve(f"priceable-spot:{today}:ZWL/USD") is None
@@ -1220,13 +1220,13 @@ def test_ois_curve_search_window_is_the_lookback(patch_search):
 
 
 def test_ois_curve_search_defaults_the_window_to_today(patch_search):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     asyncio.run(
         CftcOisCurveFetcher.aextract_data(CftcOisCurveQueryParams(currency="CHF"), None)
     )
 
-    assert patch_search[0]["end_date"] == datetime.now(timezone.utc).date()
+    assert patch_search[0]["end_date"] == datetime.now(UTC).date()
 
 
 def test_ois_curve_search_caps_staleness(patch_search):

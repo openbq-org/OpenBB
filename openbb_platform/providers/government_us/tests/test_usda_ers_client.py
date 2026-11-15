@@ -1,7 +1,7 @@
 """Tests for the USDA ERS disk-cache client."""
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from openbb_core.app.model.abstract.error import OpenBBError
@@ -99,17 +99,17 @@ class TestComputeTtl:
 
     def test_future_next_update(self):
         """TTL runs to the end of the next-update day."""
-        now = datetime(2026, 7, 16, 12, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 7, 16, 12, 0, tzinfo=UTC)
         ttl = ers_client.compute_ttl("2026-07-17", now=now)
         assert ttl == int(
             (
-                datetime(2026, 7, 17, 23, 59, 59, tzinfo=timezone.utc) - now
+                datetime(2026, 7, 17, 23, 59, 59, tzinfo=UTC) - now
             ).total_seconds()
         )
 
     def test_past_next_update_falls_back(self):
         """A stale next-update date falls back to the one-day default."""
-        now = datetime(2026, 7, 16, tzinfo=timezone.utc)
+        now = datetime(2026, 7, 16, tzinfo=UTC)
         assert ers_client.compute_ttl("2026-07-01", now=now) == (
             ers_client.DEFAULT_FILE_TTL
         )
@@ -120,7 +120,7 @@ class TestComputeTtl:
 
     def test_minimum_clamp(self):
         """Imminent next-update dates clamp to the one-hour minimum."""
-        now = datetime(2026, 7, 17, 23, 59, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 7, 17, 23, 59, 0, tzinfo=UTC)
         assert ers_client.compute_ttl("2026-07-17", now=now) == ers_client.MIN_FILE_TTL
 
 

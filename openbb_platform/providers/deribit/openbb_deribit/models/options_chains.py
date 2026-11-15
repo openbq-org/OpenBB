@@ -1,9 +1,9 @@
 """Deribit Options Chains Model."""
 
 from datetime import (
+    UTC,
     date as dateType,
     datetime,
-    timezone,
 )
 from typing import Any
 
@@ -571,7 +571,7 @@ class DeribitOptionsChainsFetcher(
             ),
             return_exceptions=True,
         )
-        now = datetime.now(timezone.utc).timestamp() * 1000
+        now = datetime.now(UTC).timestamp() * 1000
         results: list[dict] = []
 
         for subscription in subscriptions:

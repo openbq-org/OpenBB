@@ -1,6 +1,6 @@
 """Deribit Funding Rate History Model."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from openbb_core.provider.abstract.data import Data
@@ -150,13 +150,12 @@ class DeribitFundingRateHistoryFetcher(
         from datetime import (
             datetime as dt,
             timedelta,
-            timezone,
         )
 
         from openbb_deribit.utils.client import gather
         from openbb_deribit.utils.helpers import get_perpetual_symbols, to_timestamp
 
-        now = dt.now(timezone.utc)
+        now = dt.now(UTC)
         start = (
             to_timestamp(query.start_date)
             if query.start_date

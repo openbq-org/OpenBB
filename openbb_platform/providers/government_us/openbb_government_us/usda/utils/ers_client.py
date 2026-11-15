@@ -2,7 +2,7 @@
 
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from html.parser import HTMLParser
 from typing import Any
 
@@ -134,9 +134,9 @@ def compute_ttl(next_update: str | None, now: datetime | None = None) -> int:
     """
     if not next_update:
         return DEFAULT_FILE_TTL
-    current = now or datetime.now(timezone.utc)
+    current = now or datetime.now(UTC)
     expiry = datetime.fromisoformat(next_update).replace(
-        hour=23, minute=59, second=59, tzinfo=timezone.utc
+        hour=23, minute=59, second=59, tzinfo=UTC
     )
     remaining = int((expiry - current).total_seconds())
     if remaining <= 0:

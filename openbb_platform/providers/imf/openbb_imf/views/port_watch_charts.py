@@ -2,7 +2,7 @@
 
 import json
 import math
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -39,7 +39,7 @@ def _theme(theme: str = "dark") -> dict[str, Any]:
 def _source_annotation(th: dict[str, Any]) -> dict[str, Any]:
     """Return the IMF Port Watch source-attribution annotation."""
     return dict(
-        text=f"Source: IMF Port Watch — {datetime.now(timezone.utc).date().isoformat()}",
+        text=f"Source: IMF Port Watch — {datetime.now(UTC).date().isoformat()}",
         x=0.5,
         xref="paper",
         yref="paper",

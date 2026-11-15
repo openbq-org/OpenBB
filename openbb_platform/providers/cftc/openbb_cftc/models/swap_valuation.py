@@ -1,7 +1,10 @@
 """DTCC Swap Valuation Model."""
 
 from collections.abc import Iterable
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 from typing import Any, Literal
 
 from openbb_core.provider.abstract.annotated_result import AnnotatedResult
@@ -383,7 +386,7 @@ class CftcSwapValuationFetcher(
         **kwargs: Any,
     ) -> tuple[dict, Iterable[dict], str, dict, str, str]:
         """Fetch the selected trade's own record, the curve slice, and its realized fixings."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from openbb_core.app.model.abstract.error import OpenBBError
 
@@ -407,7 +410,7 @@ class CftcSwapValuationFetcher(
         report_date = (
             query.date.isoformat()
             if query.date
-            else datetime.now(timezone.utc).date().isoformat()
+            else datetime.now(UTC).date().isoformat()
         )
         currency = query.currency
         other_currency: str | None = None
@@ -444,7 +447,7 @@ class CftcSwapValuationFetcher(
                         end_date=report_date,
                     )
                 except OpenBBError as exc:
-                    today_date = datetime.now(timezone.utc).date()
+                    today_date = datetime.now(UTC).date()
                     search_records = await search_trades(
                         "rates",
                         start_date=today_date,
@@ -472,7 +475,7 @@ class CftcSwapValuationFetcher(
                         store.write_search_records("IR", found_day, [raw_record])
 
             if raw_record is not None:
-                today = datetime.now(timezone.utc).date()
+                today = datetime.now(UTC).date()
                 trade_type = classify_rates_swap(raw_record, today)
                 spread = (
                     parse_spread(raw_record)

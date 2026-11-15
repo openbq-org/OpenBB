@@ -1,14 +1,17 @@
 """Swap curve construction from DTCC PPD slice records."""
 
 from collections.abc import Iterable
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 
 
 def _is_closed_date(trade_date: dateType) -> bool:
     """Whether a report date's file has fully disseminated and cannot change again."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    return trade_date < datetime.now(timezone.utc).date()
+    return trade_date < datetime.now(UTC).date()
 
 
 def _curve_cache_key(**fields) -> str:

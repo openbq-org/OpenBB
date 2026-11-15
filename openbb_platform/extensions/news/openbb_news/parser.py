@@ -1,7 +1,7 @@
 """RSS/Atom feed and article body helpers."""
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from html.parser import HTMLParser
 from time import struct_time
 from typing import TYPE_CHECKING, NamedTuple
@@ -193,8 +193,8 @@ def truncate(text: str, limit: int = 280) -> str:
 def struct_time_to_iso(t: "struct_time | None") -> str:
     """Convert a feedparser ``struct_time`` to ISO 8601."""
     if t is None:
-        return datetime.now(timezone.utc).isoformat()
-    return datetime(*t[:6], tzinfo=timezone.utc).isoformat()
+        return datetime.now(UTC).isoformat()
+    return datetime(*t[:6], tzinfo=UTC).isoformat()
 
 
 async def fetch_feed(session: "ClientSession", url: str):

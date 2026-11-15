@@ -1,6 +1,7 @@
 """Shared handling for the release-table shaped datasets."""
 
 import json
+from datetime import UTC
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -171,7 +172,7 @@ def current(series: dict) -> bool:
     bool
         Whether the series is still current.
     """
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     if DISCONTINUED in (series.get("title") or "").upper():
         return False
@@ -185,8 +186,8 @@ def current(series: dict) -> bool:
 
     stale = STALE_DAYS.get(series.get("frequency") or "", DEFAULT_STALE_DAYS)
 
-    return parser.parse(observed).replace(tzinfo=timezone.utc) >= datetime.now(
-        timezone.utc
+    return parser.parse(observed).replace(tzinfo=UTC) >= datetime.now(
+        UTC
     ) - timedelta(days=stale)
 
 

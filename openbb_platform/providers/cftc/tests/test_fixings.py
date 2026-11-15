@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from openbb_core.app.model.abstract.error import OpenBBError
@@ -200,7 +200,7 @@ def test_get_fixings_serves_cached_history_through_a_source_outage(
     monkeypatch, tmp_path
 ):
     monkeypatch.setenv("OPENBB_CACHE_DIRECTORY", str(tmp_path))
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     yesterday = today - timedelta(days=1)
 
     async def _request(url, **kwargs):
@@ -594,7 +594,7 @@ def test_get_fixings_parses_the_banxico_csv_export(monkeypatch, tmp_path):
         date(2026, 7, 16): pytest.approx(0.0649),
     }
     assert seen[0][1]["series"] == "SF331451"
-    this_year = str(datetime.now(timezone.utc).date().year)
+    this_year = str(datetime.now(UTC).date().year)
     assert seen[0][1]["anoInicial"] == "2000" and seen[0][1]["anoFinal"] == this_year
 
 
@@ -1187,7 +1187,7 @@ def test_get_fixings_parses_the_boi_sdmx_shape(monkeypatch, tmp_path):
         date(2026, 7, 15): pytest.approx(0.035),
     }
     assert "SERIES_CODE]=MNT_SHIR_D" in calls[0]
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     assert (
         f"startPeriod={fixings.FULL_HISTORY_START}" in calls[0]
         and f"endPeriod={today}" in calls[0]

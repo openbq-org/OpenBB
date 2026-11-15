@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -202,7 +202,7 @@ class TestCacheDirectory:
 class TestComputeTtl:
     """Tests for the release-derived cache TTL."""
 
-    NOW = datetime(2026, 7, 16, 12, 0, tzinfo=timezone.utc)
+    NOW = datetime(2026, 7, 16, 12, 0, tzinfo=UTC)
 
     def test_no_release_uses_the_default(self):
         """Without a release timestamp the TTL is the one-day default."""
@@ -218,7 +218,7 @@ class TestComputeTtl:
         ttl = P.compute_ttl("7/22/2026 3:00PM", now=self.NOW)
         assert ttl == int(
             (
-                datetime(2026, 7, 22, 15, 0, tzinfo=timezone.utc) - self.NOW
+                datetime(2026, 7, 22, 15, 0, tzinfo=UTC) - self.NOW
             ).total_seconds()
         )
 
@@ -232,14 +232,14 @@ class TestComputeTtl:
         """A release that already happened falls back to the default."""
         assert (
             P.compute_ttl(
-                "7/22/2026 3:00PM", now=datetime(2026, 8, 1, tzinfo=timezone.utc)
+                "7/22/2026 3:00PM", now=datetime(2026, 8, 1, tzinfo=UTC)
             )
             == P.DEFAULT_TTL
         )
 
     def test_an_imminent_release_is_clamped(self):
         """A release minutes away still caches for the minimum."""
-        now = datetime(2026, 7, 22, 14, 59, tzinfo=timezone.utc)
+        now = datetime(2026, 7, 22, 14, 59, tzinfo=UTC)
         assert P.compute_ttl("7/22/2026 3:00PM", now=now) == P.MIN_TTL
 
     def test_defaults_to_the_current_time(self):
@@ -501,7 +501,7 @@ class TestReleasedAt:
     def test_parses_an_http_date(self):
         """A Last-Modified header becomes an aware datetime."""
         assert P._released_at("Fri, 30 Jan 2026 19:42:41 GMT") == datetime(
-            2026, 1, 30, 19, 42, 41, tzinfo=timezone.utc
+            2026, 1, 30, 19, 42, 41, tzinfo=UTC
         )
 
     def test_no_header_yields_none(self):
@@ -618,7 +618,7 @@ class TestLatestCirculars:
             "year": 2026,
             "month": 1,
             "url": P.circular_url(2026, 1, "tree_nuts"),
-            "released_at": datetime(2026, 1, 30, 19, 42, 41, tzinfo=timezone.utc),
+            "released_at": datetime(2026, 1, 30, 19, 42, 41, tzinfo=UTC),
             "size": 16000,
         }
 
@@ -662,7 +662,7 @@ class TestLatestCirculars:
             "year": folders[P.MAX_CARRY_FORWARD][0],
             "month": folders[P.MAX_CARRY_FORWARD][1],
             "url": P.circular_url(*folders[P.MAX_CARRY_FORWARD], "citrus"),
-            "released_at": datetime(2026, 1, 30, 19, 42, 41, tzinfo=timezone.utc),
+            "released_at": datetime(2026, 1, 30, 19, 42, 41, tzinfo=UTC),
             "size": 13000,
         }
         assert len(source.heads()) <= P.MAX_CARRY_FORWARD + 1
@@ -706,7 +706,7 @@ class TestHistoricalCirculars:
             "year": 2026,
             "month": 1,
             "url": P.circular_url(2026, 1, "tree_nuts"),
-            "released_at": datetime(2026, 1, 30, 19, 42, 41, tzinfo=timezone.utc),
+            "released_at": datetime(2026, 1, 30, 19, 42, 41, tzinfo=UTC),
             "size": 16000,
         }
 

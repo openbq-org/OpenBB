@@ -1,7 +1,10 @@
 """Federal Reserve Bank of Atlanta Market Probability Tracker Model."""
 
 import re
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 from typing import Any
 
 from openbb_core.provider.abstract.data import Data
@@ -52,9 +55,9 @@ def _load_meetings(content: bytes) -> tuple[dateType, list[dateType]]:
 
 def _nearest_meeting(meetings: list[dateType]) -> dateType:
     """Pick the nearest upcoming meeting, falling back to the earliest available."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     upcoming = [meeting for meeting in meetings if meeting >= today]
     return min(upcoming) if upcoming else min(meetings)
 

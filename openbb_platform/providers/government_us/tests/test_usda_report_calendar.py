@@ -1,7 +1,7 @@
 """Tests for the USDA FAS report calendar utils and model."""
 
 import asyncio
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pytest
 from openbb_core.app.model.abstract.error import OpenBBError
@@ -101,7 +101,7 @@ class TestFasReportCalendarUtils:
         assert len(rows) == 2
         scheduled = rows[0]
         assert scheduled["release_datetime"] == datetime(
-            2026, 7, 22, 19, 0, tzinfo=timezone.utc
+            2026, 7, 22, 19, 0, tzinfo=UTC
         )
         assert scheduled["title"] == "Coffee: World Markets and Trade"
         assert scheduled["report_type"] == "World Production, Markets, and Trade Report"
@@ -218,7 +218,7 @@ class TestFasReportCalendar:
         assert len(results) == 1
         assert results[0].release_date == date(2026, 7, 22)
         assert results[0].release_datetime == datetime(
-            2026, 7, 22, 19, 0, tzinfo=timezone.utc
+            2026, 7, 22, 19, 0, tzinfo=UTC
         )
         assert results[0].released is False
 

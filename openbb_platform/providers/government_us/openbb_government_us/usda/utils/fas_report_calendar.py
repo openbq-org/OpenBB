@@ -1,7 +1,7 @@
 """USDA FAS report release calendar scraper."""
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import unquote
 
 BASE_URL = "https://www.fas.usda.gov"
@@ -121,7 +121,7 @@ def parse_calendar(html: str) -> list[dict]:
         dtstart = _search(DTSTART_PATTERN, unquote(row))
         released = dtstart is None
         release_datetime = (
-            datetime.strptime(dtstart, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
+            datetime.strptime(dtstart, "%Y%m%dT%H%M%SZ").replace(tzinfo=UTC)
             if dtstart
             else None
         )

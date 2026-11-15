@@ -1,6 +1,9 @@
 """Deribit Futures Curve Model."""
 
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 from typing import Any
 
 from openbb_core.provider.abstract.fetcher import Fetcher
@@ -185,7 +188,7 @@ class DeribitFuturesCurveFetcher(
         EmptyDataError
             If every contract on the curve came back unpriced.
         """
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from pandas import to_datetime
 
@@ -203,7 +206,7 @@ class DeribitFuturesCurveFetcher(
                 {
                     "symbol": symbol,
                     "expiration": (
-                        datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                        datetime.now(UTC).strftime("%Y-%m-%d")
                         if code == "PERPETUAL"
                         else to_datetime(code).strftime("%Y-%m-%d")
                     ),

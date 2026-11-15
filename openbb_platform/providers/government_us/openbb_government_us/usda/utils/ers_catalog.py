@@ -1,7 +1,7 @@
 """USDA ERS Tableau Public visualization catalog."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 
@@ -73,7 +73,7 @@ async def fetch_catalog() -> list[dict]:
                     "description": workbook.get("description")
                     or workbook.get("title", repo_url),
                     "last_updated": datetime.fromtimestamp(
-                        updated_ms / 1000, tz=timezone.utc
+                        updated_ms / 1000, tz=UTC
                     ).strftime("%Y-%m-%d")
                     if updated_ms
                     else None,

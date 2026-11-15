@@ -1,6 +1,6 @@
 """Tests for the Deribit shared accessors."""
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pytest
 from openbb_core.app.model.abstract.error import OpenBBError
@@ -24,7 +24,7 @@ class TestTimestamps:
 
     def test_to_timestamp_keeps_zone(self):
         """A datetime that carries a zone is not shifted twice."""
-        aware = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        aware = datetime(2026, 1, 1, tzinfo=UTC)
 
         assert helpers.to_timestamp(aware) == 1767225600000
 
@@ -452,7 +452,7 @@ class TestCurveByHoursAgo:
     async def test_picks_the_nearest_candle(self, monkeypatch, load):
         """The close nearest the target hour is the one reported."""
         target = helpers.to_timestamp(
-            datetime.now(timezone.utc).replace(microsecond=0, second=0, minute=0)
+            datetime.now(UTC).replace(microsecond=0, second=0, minute=0)
         )
         hour = 3600000
 

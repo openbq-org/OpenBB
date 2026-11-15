@@ -1,6 +1,9 @@
 """CFETS/NIFC daily bulletin client for CNY interest rate swaps."""
 
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 
 CFETS_IRS_BULLETIN_URL = "https://www.chinamoney.com.cn/ags/ms/cm-u-dlrp/IrsDlyBltn"
 MAX_BULLETIN_LOOKBACK_DAYS = 10
@@ -30,9 +33,9 @@ def normalize_reference(name: str) -> str:
 
 def _today_cct() -> dateType:
     """Return the current trading date in China Coordinated Time (UTC+8)."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
-    return (datetime.now(timezone.utc) + timedelta(hours=8)).date()
+    return (datetime.now(UTC) + timedelta(hours=8)).date()
 
 
 async def _download_bulletin(search_date: str) -> dict:

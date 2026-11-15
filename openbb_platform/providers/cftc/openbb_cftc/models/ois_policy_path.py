@@ -1,6 +1,9 @@
 """DTCC OIS Policy-Path Model."""
 
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 from typing import Any, Literal
 
 from openbb_core.provider.abstract.annotated_result import AnnotatedResult
@@ -190,7 +193,7 @@ class CftcOisPolicyPathFetcher(
         **kwargs: Any,
     ) -> tuple[list[dict], str]:
         """Combine a short window of daily files, keeping the currency's OIS prints."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from openbb_core.app.model.abstract.error import OpenBBError
 
@@ -198,7 +201,7 @@ class CftcOisPolicyPathFetcher(
         from openbb_cftc.utils.dtcc import get_available_dates, get_slice
 
         fisn = ois_fisn(query.currency)
-        end = (query.date or datetime.now(timezone.utc).date()).isoformat()
+        end = (query.date or datetime.now(UTC).date()).isoformat()
         dates = await get_available_dates("rates")
         window = [day for day in dates if day <= end][-query.lookback_days :]
 
