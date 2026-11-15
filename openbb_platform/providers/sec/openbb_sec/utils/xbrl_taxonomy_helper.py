@@ -103,6 +103,7 @@ SEC Taxonomy Reference Links
 
 import time
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from io import BytesIO
@@ -526,7 +527,7 @@ TAXONOMIES: dict[str, TaxonomyConfig] = {
     "country": TaxonomyConfig(
         base_url_template="https://xbrl.sec.gov/country/{year}/",
         style=TaxonomyStyle.SEC_EMBEDDED,
-        label_file_pattern="country-{year}_lab.xsd",
+        label_file_pattern="country-entire-{year}.xsd",
         presentation_pattern_regex=r"country-{year}_pre\.xsd",
         presentation_file_template="country-{year}_pre.xsd",
         label="Country Codes",
@@ -541,7 +542,7 @@ TAXONOMIES: dict[str, TaxonomyConfig] = {
     "currency": TaxonomyConfig(
         base_url_template="https://xbrl.sec.gov/currency/{year}/",
         style=TaxonomyStyle.SEC_EMBEDDED,
-        label_file_pattern="currency-{year}_lab.xsd",
+        label_file_pattern="currency-entire-{year}.xsd",
         presentation_pattern_regex=r"currency-{year}_pre\.xsd",
         presentation_file_template="currency-{year}_pre.xsd",
         label="Currency Codes",
@@ -556,7 +557,7 @@ TAXONOMIES: dict[str, TaxonomyConfig] = {
     "exch": TaxonomyConfig(
         base_url_template="https://xbrl.sec.gov/exch/{year}/",
         style=TaxonomyStyle.SEC_EMBEDDED,
-        label_file_pattern="exch-{year}_lab.xsd",
+        label_file_pattern="exch-entire-{year}.xsd",
         presentation_pattern_regex=r"exch-{year}_pre\.xsd",
         presentation_file_template="exch-{year}_pre.xsd",
         label="Exchange Codes",
@@ -571,7 +572,7 @@ TAXONOMIES: dict[str, TaxonomyConfig] = {
     "naics": TaxonomyConfig(
         base_url_template="https://xbrl.sec.gov/naics/{year}/",
         style=TaxonomyStyle.SEC_EMBEDDED,
-        label_file_pattern="naics-{year}_lab.xsd",
+        label_file_pattern="naics-entire-{year}.xsd",
         presentation_pattern_regex=r"naics-{year}_pre\.xsd",
         presentation_file_template="naics-{year}_pre.xsd",
         label="NAICS Codes",
@@ -586,7 +587,7 @@ TAXONOMIES: dict[str, TaxonomyConfig] = {
     "sic": TaxonomyConfig(
         base_url_template="https://xbrl.sec.gov/sic/{year}/",
         style=TaxonomyStyle.SEC_EMBEDDED,
-        label_file_pattern="sic-{year}_lab.xsd",
+        label_file_pattern="sic-entire-{year}.xsd",
         presentation_pattern_regex=r"sic-{year}_pre\.xsd",
         presentation_file_template="sic-{year}_pre.xsd",
         label="SIC Codes",
@@ -601,7 +602,7 @@ TAXONOMIES: dict[str, TaxonomyConfig] = {
     "stpr": TaxonomyConfig(
         base_url_template="https://xbrl.sec.gov/stpr/{year}/",
         style=TaxonomyStyle.SEC_EMBEDDED,
-        label_file_pattern="stpr-{year}_lab.xsd",
+        label_file_pattern="stpr-entire-{year}.xsd",
         presentation_pattern_regex=r"stpr-{year}_pre\.xsd",
         presentation_file_template="stpr-{year}_pre.xsd",
         label="State/Province Codes",
@@ -616,7 +617,7 @@ TAXONOMIES: dict[str, TaxonomyConfig] = {
     "snj": TaxonomyConfig(
         base_url_template="https://xbrl.sec.gov/snj/{year}/",
         style=TaxonomyStyle.SEC_EMBEDDED,
-        label_file_pattern="snj-{year}_lab.xsd",
+        label_file_pattern="snj-{year}_doc.xsd",
         presentation_pattern_regex=r"snj-{year}_pre\.xsd",
         presentation_file_template="snj-{year}_pre.xsd",
         label="Subnational Jurisdiction Codes",
@@ -631,6 +632,33 @@ TAXONOMIES: dict[str, TaxonomyConfig] = {
 }
 
 
+def _sec_label_resolver(
+    taxonomy: str, *, entire: bool = False, suffix: str = "_lab.xsd"
+) -> Callable[[str], str]:
+    """Build a URL mapper from an imported SEC schema URL to its label-bearing file."""
+
+    def _resolve(url: str) -> str:
+        base, sep, filename = url.rpartition("/")
+        if (
+            f"{taxonomy}-entire-" in filename
+            or "_lab" in filename
+            or "-lab-" in filename
+            or "_doc" in filename
+        ):
+            return url
+        if "-01-31.xsd" in filename:
+            new_name = filename.replace(f"{taxonomy}-", f"{taxonomy}-lab-", 1).replace(
+                ".xsd", ".xml"
+            )
+        elif entire:
+            new_name = filename.replace(f"{taxonomy}-", f"{taxonomy}-entire-", 1)
+        else:
+            new_name = filename.replace(".xsd", suffix)
+        return f"{base}{sep}{new_name}"
+
+    return _resolve
+
+
 # Label URL resolution for imported schemas
 TAXONOMY_LABEL_URLS: dict[str, Any] = {
     # FASB taxonomies — separate _lab.xml label files
@@ -640,16 +668,17 @@ TAXONOMY_LABEL_URLS: dict[str, Any] = {
     "xbrl.fasb.org/srt": lambda url: url.replace("srt-", "srt-lab-").replace(
         ".xsd", ".xml"
     ),
-    # SEC taxonomies — _lab.xsd label files
-    "xbrl.sec.gov/dei": lambda url: url.replace(".xsd", "_lab.xsd"),
-    "xbrl.sec.gov/country": lambda url: url.replace(".xsd", "_lab.xsd"),
-    "xbrl.sec.gov/currency": lambda url: url.replace(".xsd", "_lab.xsd"),
-    "xbrl.sec.gov/stpr": lambda url: url.replace(".xsd", "_lab.xsd"),
-    "xbrl.sec.gov/snj": lambda url: url.replace(".xsd", "_lab.xsd"),
-    "xbrl.sec.gov/exch": lambda url: url.replace(".xsd", "_lab.xsd"),
-    "xbrl.sec.gov/naics": lambda url: url.replace(".xsd", "_lab.xsd"),
-    "xbrl.sec.gov/sic": lambda url: url.replace(".xsd", "_lab.xsd"),
-    "xbrl.sec.gov/fnd": lambda url: url.replace(".xsd", "_lab.xsd"),
+    # SEC taxonomies — separate _lab.xsd files
+    "xbrl.sec.gov/dei": _sec_label_resolver("dei"),
+    "xbrl.sec.gov/fnd": _sec_label_resolver("fnd"),
+    # SEC reference taxonomies — labels are embedded in -entire-{year}.xsd (or _doc.xsd for snj)
+    "xbrl.sec.gov/country": _sec_label_resolver("country", entire=True),
+    "xbrl.sec.gov/currency": _sec_label_resolver("currency", entire=True),
+    "xbrl.sec.gov/stpr": _sec_label_resolver("stpr", entire=True),
+    "xbrl.sec.gov/snj": _sec_label_resolver("snj", suffix="_doc.xsd"),
+    "xbrl.sec.gov/exch": _sec_label_resolver("exch", entire=True),
+    "xbrl.sec.gov/naics": _sec_label_resolver("naics", entire=True),
+    "xbrl.sec.gov/sic": _sec_label_resolver("sic", entire=True),
     # Taxonomies without separate label files (labels are in element names only):
     # ecd, cyd, ffd, rxp, spac, cef, oef, vip, sro, sbs
     # FRC core/dpl labels are read from the suite ZIP, not derived from a URL.
@@ -3098,9 +3127,14 @@ class XBRLManager:
                         urls_to_try.append(found)
                 else:
                     # SEC: find the label file (any naming convention)
-                    found = self.client.find_file(
-                        base_url, taxonomy, "lab", str(year)
-                    ) or self.client.find_file(base_url, "lab", str(year))
+                    if "-entire-" in config.label_file_pattern:
+                        found = self.client.find_file(
+                            base_url, f"{taxonomy}-entire-", str(year), ".xsd"
+                        ) or self.client.find_file(base_url, taxonomy, "lab", str(year))
+                    else:
+                        found = self.client.find_file(
+                            base_url, taxonomy, "lab", str(year)
+                        ) or self.client.find_file(base_url, "lab", str(year))
                     if found:
                         urls_to_try.append(found)
 
