@@ -164,29 +164,46 @@ class CboeOptionsChainsFetcher(
                 "prev_day_close": "prev_close",
             }
         )
-        option_df_index = options_df["contract_symbol"].str.extractall(
-            r"^(?P<Ticker>\D*)(?P<expiration>\d*)(?P<option_type>\D*)(?P<strike>\d*)"
+        occ_regex = (
+            r"^(?P<Ticker>.*?)(?P<expiration>\d{6})(?P<option_type>[CP])(?P<strike>\d{8})$"
         )
-        option_df_index = option_df_index.reset_index().drop(
-            columns=["match", "level_0"]
+        option_df_index = options_df["contract_symbol"].str.extract(occ_regex)
+
+        if option_df_index["expiration"].isna().any():
+            fallback_regex = (
+                r"^(?P<Ticker>\D*)(?P<expiration>\d{1,6})(?P<option_type>[CP])(?P<strike>\d*)"
+            )
+            missing_mask = option_df_index["expiration"].isna()
+            fallback = options_df.loc[missing_mask, "contract_symbol"].str.extract(
+                fallback_regex
+            )
+            option_df_index.update(fallback)
+
+        valid_mask = (
+            option_df_index["expiration"].notna()
+            & option_df_index["option_type"].notna()
+            & option_df_index["strike"].notna()
         )
-        valid_expiration_mask = option_df_index["expiration"].str.len() <= 6
-        option_df_index = option_df_index[valid_expiration_mask]
-        options_df = options_df.iloc[option_df_index.index]
+        option_df_index = option_df_index[valid_mask]
+        options_df = options_df.loc[option_df_index.index]
 
         option_df_index.option_type = option_df_index.option_type.str.replace(
             "C", "call"
         ).str.replace("P", "put")
         option_df_index.strike = [ele.lstrip("0") for ele in option_df_index.strike]
-        option_df_index.strike = Series(option_df_index.strike).astype(float)
+        option_df_index.strike = Series(
+            option_df_index.strike, index=option_df_index.index
+        ).astype(float)
         option_df_index.strike = option_df_index.strike * (1 / 1000)
         option_df_index.strike = option_df_index.strike.to_list()
-        option_df_index.expiration = [
-            ele.lstrip("1") for ele in option_df_index.expiration
-        ]
-        option_df_index.expiration = DatetimeIndex(
-            option_df_index.expiration, yearfirst=True
-        ).astype(str)
+        option_df_index.expiration = to_datetime(
+            option_df_index.expiration, format="%y%m%d", errors="coerce"
+        ).dt.strftime("%Y-%m-%d")
+
+        valid_date_mask = option_df_index.expiration.notna()
+        option_df_index = option_df_index[valid_date_mask]
+        options_df = options_df.loc[option_df_index.index]
+
         option_df_index = option_df_index.rename(
             columns={"Ticker": "underlying_symbol"}
         )
