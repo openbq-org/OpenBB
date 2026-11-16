@@ -15,7 +15,7 @@ from openbb_federal_reserve.models.regional.atlanta_publications import api_pref
 
 URL = (
     "https://www.atlantafed.org/-/media/Project/Atlanta/FRBA/Documents"
-    "/cenfis/market-probability-tracker/mpt_histdata.xlsx"
+    "/research-and-data/data/market-probability-tracker/mpt_histdata.xlsx"
 )
 
 _BIN_PATTERN = re.compile(r"^Prob: (\d+)bps - (\d+)bps$")

@@ -12,7 +12,7 @@ from pydantic import Field
 
 URL = (
     "https://www.atlantafed.org/-/media/Project/Atlanta/FRBA/Documents"
-    "/datafiles/research/surveys/business-uncertainty/sbu-data.xlsx"
+    "/research-and-data/surveys/business-uncertainty/sbu-data.xlsx"
 )
 
 _TABLES: dict[str, tuple[str, bool]] = {
