@@ -35,7 +35,11 @@ class ExceptionHandlers:
     @staticmethod
     async def exception(_: Request, error: Exception) -> JSONResponse:
         """Exception handler for Base Exception."""
-        errors = error.errors if hasattr(error, "errors") else error
+        errors = (
+            error.errors()
+            if callable(getattr(error, "errors", None))
+            else getattr(error, "errors", error)
+        )
 
         if errors:
             if isinstance(errors, ValueError):
@@ -45,9 +49,9 @@ class ExceptionHandlers:
                     detail=errors.args,
                 )
             # Required parameters are missing and is not handled by ValidationError.
-            if isinstance(errors, Iterable):
+            if isinstance(errors, Iterable) and not isinstance(errors, (str, bytes)):
                 for err in errors:
-                    if err.get("type") == "missing":
+                    if isinstance(err, dict) and err.get("type") == "missing":
                         return await ExceptionHandlers._handle(
                             exception=error,
                             status_code=422,
@@ -86,17 +90,21 @@ class ExceptionHandlers:
         try:
             errors = (
                 error.errors(include_url=False)
-                if hasattr(error, "errors")
-                else error.errors
+                if callable(getattr(error, "errors", None))
+                else getattr(error, "errors", None)
             )
         except Exception:
-            errors = error.errors if hasattr(error, "errors") else error
+            errors = (
+                error.errors()
+                if callable(getattr(error, "errors", None))
+                else getattr(error, "errors", error)
+            )
         all_in_query = all(
-            loc in query_params
+            loc in query_params or err.get("type") == "missing"
             for err in errors  # ty: ignore[not-iterable]
             for loc in err.get("loc", ())
         )
-        if "QueryParams" in error.title and all_in_query:
+        if "QueryParams" in getattr(error, "title", "") and all_in_query:
             detail = [
                 {
                     **{k: v for k, v in err.items() if k != "ctx"},
