@@ -57,6 +57,22 @@ class TestTimestamps:
         assert helpers.from_day_number(None) is None
 
 
+class TestDaysToExpiration:
+    """Days are counted to the instant a contract expires."""
+
+    EXPIRES = 1789977600000  # 2026-09-21 08:00 UTC
+
+    @pytest.mark.parametrize(
+        ("hours_left", "days"),
+        [(5, 0), (23.99, 0), (24, 1), (47, 1), (24 * 30, 30), (-1, 0)],
+    )
+    def test_whole_days_left(self, hours_left, days):
+        """Part of a day is dropped, and an expired contract has none left."""
+        now = self.EXPIRES - hours_left * 3_600_000
+
+        assert helpers.days_to_expiration(self.EXPIRES, now) == days
+
+
 class TestNormalizeCurrency:
     """The wildcard is spelled the way the exchange spells it."""
 
