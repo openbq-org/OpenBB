@@ -1652,6 +1652,48 @@ def test_format_params_query_params_model_data_processing_path(monkeypatch):
     assert "tags" in out
 
 
+def test_format_params_query_params_default_factory_is_optional():
+    """A field with a default_factory keeps that default instead of becoming required."""
+
+    class _FactoryQueryParams(QueryParams):
+        data: str
+        models: list[str] = Field(default_factory=lambda: ["std", "parkinson"])
+
+    parameter_map = {
+        "params": Parameter(
+            "params",
+            Parameter.POSITIONAL_OR_KEYWORD,
+            annotation=_FactoryQueryParams,
+        )
+    }
+    out = MethodDefinition.format_params("/x/y", parameter_map)
+    assert out["data"].default is Parameter.empty
+    assert out["models"].default == ["std", "parkinson"]
+
+
+def test_format_params_annotated_model_default_factory_is_optional(monkeypatch):
+    """Same for the fields of a pydantic model flattened on a GET command."""
+    from pydantic import BaseModel
+
+    class _FactoryModel(BaseModel):
+        symbol: str
+        columns: list[str] = Field(default_factory=lambda: ["close"])
+
+    monkeypatch.setattr(
+        MethodDefinition, "is_data_processing_function", staticmethod(lambda p: False)
+    )
+    parameter_map = {
+        "params": Parameter(
+            "params",
+            Parameter.POSITIONAL_OR_KEYWORD,
+            annotation=Annotated[_FactoryModel, "meta"],
+        )
+    }
+    out = MethodDefinition.format_params("/x/y", parameter_map)
+    assert out["symbol"].default is Parameter.empty
+    assert out["columns"].default == ["close"]
+
+
 def test_build_command_method_body_raw_query_params_fallback(monkeypatch):
     from openbb_core.provider.abstract.query_params import QueryParams
 
