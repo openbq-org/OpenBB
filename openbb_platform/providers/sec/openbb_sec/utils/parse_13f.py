@@ -138,14 +138,26 @@ async def parse_13f_hr(filing: str, use_cache: bool = True):
                 return cached
         filing = await get_complete_submission(filing)
 
-    text = filing.replace("ns1:", "").replace("n1:", "")
-    match = re.search(r"<informationTable[\s>][\s\S]*</informationTable>", text)
+    xml_blocks = re.findall(r"<XML>(.*?)</XML>", filing, re.DOTALL | re.IGNORECASE)
+    cleaned_filing = (
+        "<root>" + re.sub(r"<\?xml[^>]*\?>", "", "".join(xml_blocks)) + "</root>"
+        if xml_blocks
+        else filing
+    )
+    text = re.sub(
+        r"<(/?)[\w-]+:(informationTable|infoTable)", r"<\1\2", cleaned_filing
+    )
+    text = text.replace("ns1:", "").replace("n1:", "")
+    match = re.search(
+        r"<informationTable[\s>][\s\S]*</informationTable>", text, re.IGNORECASE
+    )
     if match:
         parsed_xml = xmltodict.parse(match.group(0))["informationTable"]["infoTable"]
     else:
         from bs4 import BeautifulSoup
 
-        soup = BeautifulSoup(filing, "xml")
+        cleaned_text = re.sub(r"<(/?)[\w-]+:", r"<\1", text)
+        soup = BeautifulSoup(cleaned_text, "xml")
         info_table = soup.find_all("informationTable") or soup.find_all("table")[-1:]
         parsed_xml = xmltodict.parse(
             str(info_table[0]).replace("ns1:", "").replace("n1:", "")
@@ -177,7 +189,7 @@ async def parse_13f_hr(filing: str, use_cache: bool = True):
         principal_amount = [int(d.get("sshPrnamt", 0)) for d in data["shrsOrPrnAmt"]]
         data["principal_amount"] = principal_amount
         _ = data.pop("shrsOrPrnAmt")
-    except ValueError:
+    except (ValueError, KeyError):
         pass
     try:
         sole = [d.get("Sole") for d in data["votingAuthority"]]
@@ -187,7 +199,7 @@ async def parse_13f_hr(filing: str, use_cache: bool = True):
         data["voting_authority_shared"] = [int(s) if s else 0 for s in shared]
         data["voting_authority_none"] = [int(s) if s else 0 for s in none]
         _ = data.pop("votingAuthority")
-    except ValueError:
+    except (ValueError, KeyError):
         pass
 
     if "putCall" in data.columns:
