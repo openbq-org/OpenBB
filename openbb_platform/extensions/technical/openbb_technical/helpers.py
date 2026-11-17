@@ -62,10 +62,7 @@ def parkinson(
 
     rs = (1.0 / (4.0 * log(2.0))) * ((data["high"] / data["low"]).apply(log)) ** 2.0
 
-    def f(v):
-        return (trading_periods * v.mean()) ** 0.5
-
-    result = rs.rolling(window=window, center=False).apply(func=f)
+    result = (rs.rolling(window=window, center=False).mean() * trading_periods) ** 0.5
 
     if clean:
         return result.dropna()
@@ -175,10 +172,7 @@ def garman_klass(
 
     rs = 0.5 * log_hl**2 - (2 * log(2) - 1) * log_co**2
 
-    def f(v):
-        return (trading_periods * v.mean()) ** 0.5
-
-    result = rs.rolling(window=window, center=False).apply(func=f)
+    result = (rs.rolling(window=window, center=False).mean() * trading_periods) ** 0.5
 
     if clean:
         return result.dropna()
@@ -299,10 +293,7 @@ def rogers_satchell(
 
     rs = log_ho * (log_ho - log_co) + log_lo * (log_lo - log_co)
 
-    def f(v):
-        return (trading_periods * v.mean()) ** 0.5
-
-    result = rs.rolling(window=window, center=False).apply(func=f)
+    result = (rs.rolling(window=window, center=False).mean() * trading_periods) ** 0.5
 
     if clean:
         return result.dropna()
