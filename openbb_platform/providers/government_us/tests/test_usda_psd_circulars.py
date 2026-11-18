@@ -217,9 +217,7 @@ class TestComputeTtl:
         """The TTL runs out when the next circular is released."""
         ttl = P.compute_ttl("7/22/2026 3:00PM", now=self.NOW)
         assert ttl == int(
-            (
-                datetime(2026, 7, 22, 15, 0, tzinfo=UTC) - self.NOW
-            ).total_seconds()
+            (datetime(2026, 7, 22, 15, 0, tzinfo=UTC) - self.NOW).total_seconds()
         )
 
     def test_trailing_padding_is_ignored(self):
@@ -231,9 +229,7 @@ class TestComputeTtl:
     def test_a_past_release_uses_the_default(self):
         """A release that already happened falls back to the default."""
         assert (
-            P.compute_ttl(
-                "7/22/2026 3:00PM", now=datetime(2026, 8, 1, tzinfo=UTC)
-            )
+            P.compute_ttl("7/22/2026 3:00PM", now=datetime(2026, 8, 1, tzinfo=UTC))
             == P.DEFAULT_TTL
         )
 

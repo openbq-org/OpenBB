@@ -102,9 +102,7 @@ class TestComputeTtl:
         now = datetime(2026, 7, 16, 12, 0, tzinfo=UTC)
         ttl = ers_client.compute_ttl("2026-07-17", now=now)
         assert ttl == int(
-            (
-                datetime(2026, 7, 17, 23, 59, 59, tzinfo=UTC) - now
-            ).total_seconds()
+            (datetime(2026, 7, 17, 23, 59, 59, tzinfo=UTC) - now).total_seconds()
         )
 
     def test_past_next_update_falls_back(self):

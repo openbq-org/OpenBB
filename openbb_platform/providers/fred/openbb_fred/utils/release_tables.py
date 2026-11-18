@@ -186,9 +186,9 @@ def current(series: dict) -> bool:
 
     stale = STALE_DAYS.get(series.get("frequency") or "", DEFAULT_STALE_DAYS)
 
-    return parser.parse(observed).replace(tzinfo=UTC) >= datetime.now(
-        UTC
-    ) - timedelta(days=stale)
+    return parser.parse(observed).replace(tzinfo=UTC) >= datetime.now(UTC) - timedelta(
+        days=stale
+    )
 
 
 async def get_units(release_id: str | int, credentials: dict | None) -> dict:

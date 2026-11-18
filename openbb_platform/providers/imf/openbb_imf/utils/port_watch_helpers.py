@@ -71,9 +71,7 @@ def _epoch_to_iso_date(value: Any) -> str | None:
     if isinstance(value, str):
         return value[:10]
     if isinstance(value, (int, float)) and value > 1e10:
-        return datetime.fromtimestamp(value / 1000, tz=UTC).strftime(
-            "%Y-%m-%d"
-        )
+        return datetime.fromtimestamp(value / 1000, tz=UTC).strftime("%Y-%m-%d")
     return str(value)
 
 

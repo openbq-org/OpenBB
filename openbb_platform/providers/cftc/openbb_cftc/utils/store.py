@@ -1,4 +1,5 @@
 """On-disk cache for DTCC PPD data, built on ``diskcache``."""
+
 from datetime import UTC
 
 SEARCH_INTRADAY_TTL_SECONDS = 300

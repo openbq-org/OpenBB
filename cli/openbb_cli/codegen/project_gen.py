@@ -128,4 +128,3 @@ def _render_provenance_block(provenance: dict[str, str]) -> str:
         return ""
     body = "\n".join(f"{k} = {v!r}" for k, v in entries)
     return f"\n[tool.openbb-codegen]\n{body}\n"
-

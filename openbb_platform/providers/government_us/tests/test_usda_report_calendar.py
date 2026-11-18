@@ -100,9 +100,7 @@ class TestFasReportCalendarUtils:
         rows = parse_calendar(SAMPLE_HTML)
         assert len(rows) == 2
         scheduled = rows[0]
-        assert scheduled["release_datetime"] == datetime(
-            2026, 7, 22, 19, 0, tzinfo=UTC
-        )
+        assert scheduled["release_datetime"] == datetime(2026, 7, 22, 19, 0, tzinfo=UTC)
         assert scheduled["title"] == "Coffee: World Markets and Trade"
         assert scheduled["report_type"] == "World Production, Markets, and Trade Report"
         assert scheduled["day_of_week"] == "Wed"
@@ -217,9 +215,7 @@ class TestFasReportCalendar:
         )
         assert len(results) == 1
         assert results[0].release_date == date(2026, 7, 22)
-        assert results[0].release_datetime == datetime(
-            2026, 7, 22, 19, 0, tzinfo=UTC
-        )
+        assert results[0].release_datetime == datetime(2026, 7, 22, 19, 0, tzinfo=UTC)
         assert results[0].released is False
 
     def test_transform_data_dates_a_released_row_today(self):

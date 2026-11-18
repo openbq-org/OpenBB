@@ -136,9 +136,7 @@ class TestHistoryEnvelopeBranches:
         envelope = await udf.history(symbol="AC", resolution="1D", to=2_000_000_000)
 
         assert envelope["s"] == "ok"
-        assert envelope["t"] == [
-            int(datetime(2026, 7, 24, 16, tzinfo=UTC).timestamp())
-        ]
+        assert envelope["t"] == [int(datetime(2026, 7, 24, 16, tzinfo=UTC).timestamp())]
 
     async def test_bars_without_a_close_leave_no_data(self, monkeypatch):
         from openbb_tmx.routers import udf
