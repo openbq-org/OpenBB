@@ -53,6 +53,8 @@ GLOBAL_INDICES_FEED = (
 
 CONSTITUENTS_AU = Literal["X2C", "X2CF", "X2CG", "X2CN"]
 
+# The Cboe Europe indices with a constituents file. Cboe answers 403 for its
+# sector and factor indices, so they are not offered.
 CONSTITUENTS_EU = Literal[
     "BAT20P",
     "BBE20P",
@@ -64,18 +66,6 @@ CONSTITUENTS_EU = Literal[
     "BDK25P",
     "BEP50P",
     "BEPACP",
-    "BEPBUS",
-    "BEPCNC",
-    "BEPCONC",
-    "BEPCONS",
-    "BEPENGY",
-    "BEPFIN",
-    "BEPHLTH",
-    "BEPIND",
-    "BEPNEM",
-    "BEPTEC",
-    "BEPTEL",
-    "BEPUTL",
     "BEPXUKP",
     "BES35P",
     "BEZ50P",
@@ -85,7 +75,6 @@ CONSTITUENTS_EU = Literal[
     "BFRM20P",
     "BIE20P",
     "BIT40P",
-    "BNL25P",
     "BNLM25P",
     "BNO25G",
     "BNORD40P",
@@ -95,23 +84,7 @@ CONSTITUENTS_EU = Literal[
     "BUK250P",
     "BUK350P",
     "BUKAC",
-    "BUKBISP",
-    "BUKBUS",
-    "BUKCNC",
-    "BUKCONC",
-    "BUKCONS",
-    "BUKENGY",
-    "BUKFIN",
-    "BUKHI50P",
-    "BUKHLTH",
-    "BUKIND",
-    "BUKLO50P",
-    "BUKMINP",
-    "BUKNEM",
     "BUKSC",
-    "BUKTEC",
-    "BUKTEL",
-    "BUKUTL",
 ]
 
 
