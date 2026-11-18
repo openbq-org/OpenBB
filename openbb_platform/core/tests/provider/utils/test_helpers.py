@@ -740,6 +740,40 @@ def test_combine_certificates_returns_existing_combined_file(tmp_path):
     assert combine_certificates(str(cert)) == str(combined)
 
 
+def test_combine_certificates_dotted_directory(tmp_path):
+    """A dot in a parent directory name must not be taken as the file extension."""
+    from openbb_core.provider.utils.helpers import combine_certificates
+
+    cert_dir = tmp_path / ".certs"
+    cert_dir.mkdir()
+    cert = cert_dir / "ca.pem"
+    cert.write_text("CERT")
+    bundle = tmp_path / "bundle.pem"
+    bundle.write_text("BUNDLE")
+
+    out = Path(combine_certificates(str(cert), str(bundle)))
+
+    assert out == cert_dir / "ca_combined.pem"
+    assert out.read_text() == "BUNDLECERT"
+    out.unlink()
+
+
+def test_combine_certificates_without_extension(tmp_path):
+    """A certificate file without an extension is combined instead of raising."""
+    from openbb_core.provider.utils.helpers import combine_certificates
+
+    cert = tmp_path / "ca"
+    cert.write_text("CERT")
+    bundle = tmp_path / "bundle.pem"
+    bundle.write_text("BUNDLE")
+
+    out = Path(combine_certificates(str(cert), str(bundle)))
+
+    assert out == tmp_path / "ca_combined"
+    assert out.read_text() == "BUNDLECERT"
+    out.unlink()
+
+
 def test_combine_certificates_cleanup_tolerates_missing_file(tmp_path, monkeypatch):
     """The registered atexit cleanup must not raise if the file is already gone."""
     import atexit

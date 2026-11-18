@@ -478,13 +478,17 @@ def combine_certificates(cert: str, bundle: str | None = None) -> str:
     from pathlib import Path
     from warnings import warn
 
-    if not Path(cert).exists():
+    cert_path = Path(cert)
+
+    if not cert_path.exists():
         raise FileNotFoundError(f"Certificate file '{cert}' not found")
 
-    if cert.split(".", maxsplit=1)[0].endswith("_combined"):
+    if cert_path.stem.endswith("_combined"):
         return cert
 
-    combined_cert = cert.split(".", maxsplit=1)[0] + "_combined." + cert.split(".")[1]
+    combined_cert = str(
+        cert_path.with_name(f"{cert_path.stem}_combined{cert_path.suffix}")
+    )
 
     if Path(combined_cert).exists():
         return combined_cert
