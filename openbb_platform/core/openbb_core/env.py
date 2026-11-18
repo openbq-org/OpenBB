@@ -66,6 +66,27 @@ class Env(metaclass=SingletonMeta):
         """Allow on command output: enables extensions that act on command output."""
         return self.str2bool(self._environ.get("OPENBB_ALLOW_ON_COMMAND_OUTPUT", False))
 
+    @property
+    def COMMAND_TIMEOUTS(self) -> dict[str, float]:
+        """Command deadlines in seconds, by provider; "" holds the default.
+
+        OPENBB_COMMAND_TIMEOUT sets the default and OPENBB_COMMAND_TIMEOUT_<PROVIDER>
+        overrides it for one provider. Unset means no deadline.
+        """
+        prefix = "OPENBB_COMMAND_TIMEOUT"
+        timeouts: dict[str, float] = {}
+        for name, value in self._environ.items():
+            if not value or not (name == prefix or name.startswith(prefix + "_")):
+                continue
+            try:
+                seconds = float(value)
+            except ValueError:
+                seconds = 0.0
+            if not seconds > 0:  # also rejects nan
+                raise ValueError(f"{name}={value!r} must be a positive number of seconds.")
+            timeouts[name[len(prefix) + 1 :].lower()] = seconds
+        return timeouts
+
     @staticmethod
     def str2bool(value) -> bool:
         """Match a value to its boolean correspondent."""
