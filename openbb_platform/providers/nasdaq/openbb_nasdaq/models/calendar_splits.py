@@ -93,7 +93,7 @@ class NasdaqCalendarSplitsFetcher(
         query: NasdaqCalendarSplitsQueryParams, data: list[dict], **kwargs: Any
     ) -> list[NasdaqCalendarSplitsData]:
         """Transform the data to the standard format."""
-        from openbb_nasdaq.utils.helpers import to_date, to_number
+        from openbb_nasdaq.utils.helpers import to_date, to_percent
 
         results: list[NasdaqCalendarSplitsData] = []
 
@@ -111,6 +111,16 @@ class NasdaqCalendarSplitsFetcher(
 
             ratio = row.get("ratio")
             numerator, denominator = _split_ratio(ratio)
+            split_ratio = None
+
+            if numerator and denominator:
+                split_ratio = numerator / denominator
+            elif isinstance(ratio, str) and ratio.strip().endswith("%"):
+                # A stock dividend is published as a percentage: '5%' is 1.05
+                # shares for each one held. Other unparsed ratios have no factor.
+                percent = to_percent(ratio)
+                split_ratio = None if percent is None else 1 + percent
+
             results.append(
                 NasdaqCalendarSplitsData.model_validate(
                     {
@@ -121,11 +131,7 @@ class NasdaqCalendarSplitsFetcher(
                         "ratio_display": ratio,
                         "numerator": numerator,
                         "denominator": denominator,
-                        "split_ratio": (
-                            numerator / denominator
-                            if numerator and denominator
-                            else to_number(ratio)
-                        ),
+                        "split_ratio": split_ratio,
                     }
                 )
             )

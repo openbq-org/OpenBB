@@ -172,6 +172,7 @@ class TestCalendarSplits:
                 {"symbol": "AAA", "executionDate": "07/24/2026", "ratio": "1 : 10"},
                 {"symbol": "BBB", "executionDate": "07/24/2026", "ratio": "1-for-10"},
                 {"symbol": "CCC", "executionDate": "07/24/2026", "ratio": "5%"},
+                {"symbol": "DDD", "executionDate": "07/24/2026", "ratio": "3"},
             ],
         )
 
@@ -181,6 +182,14 @@ class TestCalendarSplits:
             ("AAA", 1.0, 10.0, "1 : 10"),
             ("BBB", None, None, "1-for-10"),
             ("CCC", None, None, "5%"),
+            ("DDD", None, None, "3"),
+        ]
+        # A 5% stock dividend is 1.05 new shares per old one, never 5-for-1.
+        assert [r.split_ratio for r in rows] == [
+            pytest.approx(0.1),
+            None,
+            pytest.approx(1.05),
+            None,
         ]
 
     @pytest.mark.parametrize(
