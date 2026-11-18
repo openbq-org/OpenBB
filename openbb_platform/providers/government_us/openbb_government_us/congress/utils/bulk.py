@@ -526,7 +526,9 @@ def _amendment_record(am) -> dict:
     }
 
 
-_LOAD_LOCKS: dict[str, asyncio.Lock] = {}
+# Keyed by (running loop, key): an asyncio.Lock belongs to the loop that first
+# waits on it, and the commands can run on more than one loop.
+_LOAD_LOCKS: dict[tuple, asyncio.Lock] = {}
 
 
 async def _memoized(key: str, loader: Callable[[], Awaitable]):
@@ -536,7 +538,7 @@ async def _memoized(key: str, loader: Callable[[], Awaitable]):
     if cached is not None:
         return cached
 
-    lock = _LOAD_LOCKS.setdefault(key, asyncio.Lock())
+    lock = _LOAD_LOCKS.setdefault((asyncio.get_running_loop(), key), asyncio.Lock())
     async with lock:
         cached = state.bulk.get(key)
         if cached is not None:
