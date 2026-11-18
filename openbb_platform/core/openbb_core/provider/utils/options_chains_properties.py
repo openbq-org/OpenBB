@@ -504,6 +504,16 @@ class OptionsChainsProperties(Data):
             else:
                 dataframe = df
                 dataframe = dataframe[dataframe.dte >= 0]
+                # An expiration whose strikes all sit on one side of the price has no
+                # out-of-the-money leg for a two-sided strategy; take the next nearest.
+                if hasattr(dataframe, "underlying_price"):
+                    by_exp = dataframe.groupby("expiration")
+                    price = by_exp.underlying_price.first()
+                    spans = (by_exp.strike.min() <= price) & (
+                        by_exp.strike.max() >= price
+                    )
+                    usable = dataframe[dataframe.expiration.isin(spans[spans].index)]
+                    dataframe = dataframe if usable.empty else usable
                 days = -1 if date == 0 else date
                 nearest = (dataframe.dte - days).abs().idxmin()
                 return dataframe.loc[nearest, "expiration"].strftime("%Y-%m-%d")
