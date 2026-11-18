@@ -1566,12 +1566,12 @@ class OptionsChainsProperties(Data):
             for c in vertical_puts:
                 p_strike1 = c[0]
                 p_strike2 = c[1]
-            for day in days:
-                put_spread = self.vertical_put_spread(
-                    day, p_strike1, p_strike2, underlying_price
-                )
-                if not put_spread.empty:
-                    put_spreads = concat([put_spreads, put_spread.transpose()])
+                for day in days:
+                    put_spread = self.vertical_put_spread(
+                        day, p_strike1, p_strike2, underlying_price
+                    )
+                    if not put_spread.empty:
+                        put_spreads = concat([put_spreads, put_spread.transpose()])
 
         if straddle_strike or straddle_strike == 0:
             straddle_strike = None if straddle_strike == 0 else straddle_strike
