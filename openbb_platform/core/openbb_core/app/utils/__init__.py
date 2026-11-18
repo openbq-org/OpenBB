@@ -133,14 +133,23 @@ def df_to_basemodel(
     # Numeric values would be read as epoch offsets, so only text and datetimes are parsed.
     if "date" in df.columns and not is_numeric_dtype(df["date"]):
         try:
-            dates = df["date"].apply(to_datetime)
+            # Parse the column in a single call instead of once per row.
+            dates = to_datetime(df["date"])
         except (TypeError, ValueError):
-            # Not a date column after all, so leave it as it is.
-            dates = None
+            # A column that mixes UTC offsets has no single datetime64
+            # representation, so fall back to parsing each value on its own.
+            try:
+                dates = df["date"].apply(to_datetime)
+            except (TypeError, ValueError):
+                # Not a date column after all, so leave it as it is.
+                dates = None
         if dates is not None:
             df["date"] = dates
-            if all(t.time() == time(0, 0) for t in df["date"]):
-                df["date"] = df["date"].apply(lambda x: x.date().strftime("%Y-%m-%d"))
+            if dates.dtype == object:
+                if all(t.time() == time(0, 0) for t in dates):
+                    df["date"] = dates.apply(lambda x: x.date().strftime("%Y-%m-%d"))
+            elif (dates == dates.dt.normalize()).all():
+                df["date"] = dates.dt.strftime("%Y-%m-%d")
 
     return [
         Data(**d) for d in json.loads(df.to_json(orient="records", date_format="iso"))

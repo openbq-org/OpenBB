@@ -310,6 +310,38 @@ def test_df_to_basemodel_with_date_only_column_keeps_date_format():
     assert out[0].model_dump()["date"] == "2024-01-01"
 
 
+def test_df_to_basemodel_mixed_offsets_all_midnight_keeps_date_format():
+    """A mixed-offset column that is entirely midnight still becomes YYYY-MM-DD.
+
+    The column crosses a daylight-savings boundary, so it has no single
+    datetime64 representation and is checked one value at a time.
+    """
+    df = pd.DataFrame(
+        {
+            "date": ["2023-11-03 00:00:00-04:00", "2023-11-06 00:00:00-05:00"],
+            "value": [1, 2],
+        }
+    )
+    out = df_to_basemodel(df)
+    assert [d.model_dump()["date"] for d in out] == ["2023-11-03", "2023-11-06"]
+
+
+def test_df_to_basemodel_falls_back_to_per_element_parse(monkeypatch):
+    """A column the vectorized parse rejects is parsed one value at a time."""
+    real_to_datetime = pd.to_datetime
+
+    def fake_to_datetime(arg, *args, **kwargs):
+        if isinstance(arg, pd.Series):
+            raise ValueError("Mixed timezones detected. Pass utc=True")
+        return real_to_datetime(arg, *args, **kwargs)
+
+    monkeypatch.setattr(pd, "to_datetime", fake_to_datetime)
+
+    df = pd.DataFrame({"date": ["2024-01-01", "2024-01-02"], "value": [1, 2]})
+    out = df_to_basemodel(df)
+    assert [d.model_dump()["date"] for d in out] == ["2024-01-01", "2024-01-02"]
+
+
 def test_df_to_basemodel_series_input_is_promoted_to_frame():
     s = pd.Series([10, 20, 30], name="value")
     out = df_to_basemodel(s)
