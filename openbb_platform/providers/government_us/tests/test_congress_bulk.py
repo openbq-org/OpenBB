@@ -1399,6 +1399,8 @@ def test_memoized_load_lock_is_per_event_loop():
         release.set()
         thread.join(5)
     assert len(outcome["first"]) == 2
+    # No lock, and so no event loop, outlives its load.
+    assert not any(k[1] == key for k in bulk._LOAD_LOCKS)
 
 
 def test_ensure_billstatus_in_memory_short_circuit(monkeypatch):
