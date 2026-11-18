@@ -102,7 +102,8 @@ def create_term_structure(
             & (df[price_col] > 0)
         ]
 
-        if not calls_filtered.empty:
+        # An expiry with no out-of-the-money strike on a side has no point on that side.
+        if call_strike is not None and not calls_filtered.empty:
             calls = concat(
                 [
                     calls,
@@ -118,7 +119,7 @@ def create_term_structure(
             & (df[price_col] > 0)
         ]
 
-        if not puts_filtered.empty:
+        if put_strike is not None and not puts_filtered.empty:
             puts = concat(
                 [
                     puts,
