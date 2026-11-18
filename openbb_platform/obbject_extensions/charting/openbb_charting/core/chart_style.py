@@ -99,8 +99,6 @@ class ChartStyle:
         ----------
         plt_style : `str`, optional
             The name of the Plotly style to use, by default ""
-        console_style : `str`, optional
-            The name of the Rich style to use, by default ""
         """
         from openbb_core.app.service.user_service import UserService
 

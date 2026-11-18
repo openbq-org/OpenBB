@@ -1465,9 +1465,9 @@ class OptionsChainsProperties(Data):
         strangle_moneyness: List[float]
             List of OTM moneyness to target, expressed as a percent value between 0 and 100.
             Enter a single value, or multiple as a list.
-        synthetic_long: List[float]
+        synthetic_longs: List[float]
             List of strikes for a synthetic long position.
-        synthetic_short: List[float]
+        synthetic_shorts: List[float]
             List of strikes for a synthetic short position.
         vertical_calls: List[tuple]
             Call strikes for vertical spreads, entered as a list of paired tuples - [(sold strike, bought strike)].

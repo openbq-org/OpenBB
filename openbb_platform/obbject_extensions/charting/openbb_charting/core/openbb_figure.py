@@ -214,7 +214,7 @@ class OpenBBFigure(go.Figure):
         col : `int`, optional
             Column number, by default 1
         secondary_y : `bool`, optional
-            Whether to plot on secondary y axis, by default None
+            Whether to plot on secondary y axis, by default False
         """
         try:
             for column, color in zip(
@@ -671,7 +671,7 @@ class OpenBBFigure(go.Figure):
         volume_col : `str`, optional
             Name of the volume column, by default "volume"
         row : `int`, optional
-            Row number, by default 2
+            Row number, by default 1
         col : `int`, optional
             Column number, by default 1
         volume_ticks_x : int, optional
@@ -1423,7 +1423,7 @@ class OpenBBFigure(go.Figure):
         series : DataFrame
             Dataframe to look at
         max_lag : int, optional
-            Number of lags to look at, by default 15
+            Number of lags to look at, by default 20
         m: Optional[int]
             Optionally, a time lag to highlight on the plot. Default is none.
         alpha: Optional[float]
