@@ -119,6 +119,59 @@ def test_fx_spot_triangulates_a_cross_through_usd():
     assert fx_vol.fx_spot([eur_usd], "EUR", "CAD", AS_OF) is None
 
 
+def test_fx_spot_leaves_out_prints_below_a_notional_floor():
+    records = [
+        _forward("EUR", "USD", 500, 600, "2026-07-16"),
+        _forward("EUR", "USD", 1_000_000, 1_100_000, "2026-07-16"),
+    ]
+
+    assert fx_vol.fx_spot(records, "EUR", "USD", AS_OF) == pytest.approx(1.15)
+    assert fx_vol.fx_spot(records, "EUR", "USD", AS_OF, 1_000.0) == pytest.approx(1.10)
+
+
+def test_market_spot_reads_spot_dated_forwards_for_a_pair_without_a_curve():
+    records = [
+        _forward("EUR", "USD", 1_000_000, 1_100_000, "2026-07-16"),
+        _forward("CAD", "USD", 1_400_000, 1_000_000, "2026-07-16"),
+        _forward("EUR", "USD", 500, 900, "2026-07-16"),
+    ]
+    curve = fx_vol.pair_curve(records, "EURCAD", AS_OF)
+    spot, forward = fx_vol.market_spot(curve, records, "EUR", "CAD", AS_OF)
+
+    assert spot == pytest.approx(1.10 * 1.40, abs=1e-6)
+    assert forward is None
+    assert fx_vol.market_spot(curve, [], "EUR", "CAD", AS_OF) == (None, None)
+
+
+def test_build_market_needs_a_spot_and_a_curve_for_each_leg(monkeypatch):
+    records = [_forward("EUR", "USD", 1_000_000, 1_100_000, "2026-07-16")]
+    curve = fx_vol.pair_curve(records, "EURGBP", AS_OF)
+    flat = {"EUR": _df_base, "USD": _df_quote}
+
+    assert fx_vol.build_market(curve, [], "EUR", "USD", AS_OF, flat.get) is None
+    assert fx_vol.build_market(curve, records, "EUR", "USD", AS_OF, {}.get) is None
+
+    market = fx_vol.build_market(curve, records, "EUR", "USD", AS_OF, flat.get)
+
+    assert market["spot"] == pytest.approx(1.10)
+    assert market["forward"](1.0) == pytest.approx(1.10 * exp(0.02))
+
+
+def test_market_discount_is_forward_aware_and_builds_a_currency_once(monkeypatch):
+    seen: list = []
+
+    def _rate_df(records, currency, day, min_trades, forward_aware=False):
+        seen.append((currency, min_trades, forward_aware))
+
+        return _df_base
+
+    monkeypatch.setattr(fx_vol, "rate_discount_factor", _rate_df)
+    discount = fx_vol.market_discount([], AS_OF, 3)
+
+    assert discount("USD") is discount("USD") is _df_base
+    assert seen == [("USD", 3, True)]
+
+
 def test_extract_and_price_recovers_known_vols():
     records = [
         _priced_option(1.06, 30, 0.08, False),

@@ -215,7 +215,7 @@ def _ndf_forex():
 @pytest.fixture(name="flat_usd_ois")
 def flat_usd_ois_fixture(monkeypatch):
     monkeypatch.setattr(
-        "openbb_cftc.utils.fx_vol.ois_discount_factor",
+        "openbb_cftc.utils.fx_vol.rate_discount_factor",
         lambda records, currency, trade_date, min_trades, forward_aware=False: _df_base,
     )
 

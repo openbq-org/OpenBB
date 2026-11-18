@@ -315,7 +315,7 @@ def _patch_market(monkeypatch, nodes, spot=1460.0, base_ok=True, quote_ok=True):
         lambda *a, **k: _observations(nodes, spot),
     )
 
-    def _rate_df(records, currency, day, min_trades):
+    def _rate_df(records, currency, day, min_trades, forward_aware=False):
         if currency == "USD" and not base_ok:
             raise EmptyDataError("no base curve")
 
@@ -378,7 +378,7 @@ def test_fx_market_cip_fallback_prices_off_both_curves(monkeypatch):
         ],
     )
 
-    def _rate_df(records, currency, day, min_trades):
+    def _rate_df(records, currency, day, min_trades, forward_aware=False):
         if currency == "USD":
             return lambda years: 0.96**years
 
@@ -403,7 +403,7 @@ def test_fx_market_cip_fallback_needs_both_curves(monkeypatch):
         lambda *a, **k: [{"days": 2, "rate": 1460.0, "dissemination_identifier": "a"}],
     )
 
-    def _usd_only(records, currency, day, min_trades):
+    def _usd_only(records, currency, day, min_trades, forward_aware=False):
         if currency == "USD":
             return lambda years: 0.96**years
 
@@ -462,6 +462,35 @@ def _small_forward_at(identifier, expiry, rate):
     )
 
 
+def test_fx_market_is_the_market_the_vol_surface_builds(monkeypatch):
+    from openbb_cftc.utils import fx_vol
+
+    _patch_discounts(monkeypatch)
+    small = _small_forward_at("small", "2026-08-31", "1,459.00")
+    records = [
+        _forward_at("a", "2026-08-07", "1,455.00"),
+        _forward_at("b", "2026-08-31", "1,458.00"),
+        _forward_at("d", "2026-09-30", "1,466.00"),
+        small,
+    ]
+    valued = fv.fx_market(records, [], fv.extract_fx_trade(small, DAY), DAY)
+    surface = fx_vol.build_market(
+        fx_vol.pair_curve(records, "USDKRW", DAY),
+        records,
+        "USD",
+        "KRW",
+        DAY,
+        fx_vol.market_discount([], DAY, 1),
+    )
+
+    assert valued["spot"] == surface["spot"]
+
+    for years in (0.05, 0.1, 0.5):
+        assert valued["forward"](years) == surface["forward"](years)
+        assert valued["df_base"](years) == surface["df_base"](years)
+        assert valued["df_quote"](years) == surface["df_quote"](years)
+
+
 def _peers_curve(records, own):
     from openbb_cftc.utils import fx_vol
 
@@ -469,7 +498,7 @@ def _peers_curve(records, own):
         [r for r in records if r is not own],
         "USDKRW",
         DAY,
-        min_notional=fv.CURVE_MIN_NOTIONAL,
+        min_notional=fx_vol.MARKET_MIN_NOTIONAL,
     )
 
 
@@ -488,7 +517,7 @@ def test_fx_market_uses_the_same_curve_as_the_vol_surface(monkeypatch):
     ]
     market = fv.fx_market(records, [], fv.extract_fx_trade(small, DAY), DAY)
     spot, forward = fx_vol.ndf_forward_curve(
-        records, "USDKRW", DAY, min_notional=fv.CURVE_MIN_NOTIONAL
+        records, "USDKRW", DAY, min_notional=fx_vol.MARKET_MIN_NOTIONAL
     )
 
     assert market["spot"] == pytest.approx(spot)
@@ -606,7 +635,7 @@ def test_fx_market_does_not_leave_out_a_print_whose_identifier_repeats(monkeypat
     ]
     market = fv.fx_market(records, [], fv.extract_fx_trade(own, DAY), DAY)
     _, forward = fx_vol.ndf_forward_curve(
-        records, "USDKRW", DAY, min_notional=fv.CURVE_MIN_NOTIONAL
+        records, "USDKRW", DAY, min_notional=fx_vol.MARKET_MIN_NOTIONAL
     )
 
     assert market["forward"](38 / 365.0) == pytest.approx(forward(38 / 365.0))
@@ -680,7 +709,7 @@ def test_fx_market_memo_builds_the_pair_subset_and_curves_once(monkeypatch):
         subset_calls.append((base, quote))
         return real_subset(records, base, quote)
 
-    def _counted_df(records, currency, day, min_trades):
+    def _counted_df(records, currency, day, min_trades, forward_aware=False):
         df_calls.append(currency)
         return lambda years: 0.98**years
 
@@ -705,18 +734,61 @@ def _patch_vol(monkeypatch, priced):
     )
 
 
-def test_option_vol_takes_the_nearest_tenor(monkeypatch):
+def test_option_vol_reads_its_cell_of_the_surface(monkeypatch):
     _patch_vol(
         monkeypatch,
         [
-            {"tenor_days": 38, "implied_vol": 0.10},
-            {"tenor_days": 38, "implied_vol": 0.12},
-            {"tenor_days": 400, "implied_vol": 0.30},
+            {"tenor_days": 30, "strike": 1.1425, "implied_vol": 0.10},
+            {"tenor_days": 44, "strike": 1.1430, "implied_vol": 0.12},
+            {"tenor_days": 38, "strike": 1.1600, "implied_vol": 0.14},
+            {"tenor_days": 38, "strike": 1.1425, "implied_vol": 0.50},
+            {"tenor_days": 60, "strike": 1.1425, "implied_vol": 0.30},
         ],
     )
     trade = fv.extract_fx_trade(_option(), DAY)
 
     assert fv.option_vol([], trade, _market(1.14), DAY) == pytest.approx(0.11)
+
+
+def test_option_vol_falls_back_to_its_expiry_bucket(monkeypatch):
+    _patch_vol(
+        monkeypatch,
+        [
+            {"tenor_days": 38, "strike": 1.1300, "implied_vol": 0.10},
+            {"tenor_days": 38, "strike": 1.1600, "implied_vol": 0.14},
+            {"tenor_days": 60, "strike": 1.1425, "implied_vol": 0.30},
+        ],
+    )
+    trade = fv.extract_fx_trade(_option(), DAY)
+
+    assert fv.option_vol([], trade, _market(1.14), DAY) == pytest.approx(0.12)
+
+
+def test_option_vol_takes_the_nearest_tenor(monkeypatch):
+    _patch_vol(
+        monkeypatch,
+        [
+            {"tenor_days": 60, "strike": 1.1425, "implied_vol": 0.10},
+            {"tenor_days": 60, "strike": 1.1600, "implied_vol": 0.12},
+            {"tenor_days": 400, "strike": 1.1425, "implied_vol": 0.30},
+        ],
+    )
+    trade = fv.extract_fx_trade(_option(), DAY)
+
+    assert fv.option_vol([], trade, _market(1.14), DAY) == pytest.approx(0.11)
+
+
+def test_option_vol_reads_an_unlisted_pair_on_the_moneyness_grid(monkeypatch):
+    _patch_vol(
+        monkeypatch,
+        [
+            {"tenor_days": 38, "strike": 1.1425, "implied_vol": 0.10},
+            {"tenor_days": 38, "strike": 1.1600, "implied_vol": 0.14},
+        ],
+    )
+    trade = {**fv.extract_fx_trade(_option(), DAY), "pair": "EURSEK"}
+
+    assert fv.option_vol([], trade, _market(1.14), DAY) == pytest.approx(0.10)
 
 
 def test_option_vol_returns_none_without_priced_peers(monkeypatch):
@@ -738,7 +810,7 @@ def test_option_vol_prices_a_family_once_per_market(monkeypatch):
 
     def _price(*args, **kwargs):
         calls.append(args)
-        return [{"tenor_days": 38, "implied_vol": 0.10}]
+        return [{"tenor_days": 38, "strike": 1.1425, "implied_vol": 0.10}]
 
     monkeypatch.setattr(
         "openbb_cftc.utils.fx_vol.extract_vanilla_options", lambda *a, **k: [{}]
@@ -765,7 +837,7 @@ def test_value_fx_trade_prices_a_forward(monkeypatch):
 
 def test_value_fx_trade_prices_an_option(monkeypatch):
     _patch_market(monkeypatch, [7, 38, 90], spot=1.14)
-    _patch_vol(monkeypatch, [{"tenor_days": 38, "implied_vol": 0.09}])
+    _patch_vol(monkeypatch, [{"tenor_days": 38, "strike": 1.1425, "implied_vol": 0.09}])
     valued = fv.value_fx_trade(_option(), [], [], DAY)
 
     assert valued["trade_type"] == "fx_option"
