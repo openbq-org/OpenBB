@@ -5,6 +5,7 @@ import io
 import zipfile
 
 import pytest
+from pandas import DataFrame
 
 from openbb_famafrench.utils import helpers
 
@@ -644,6 +645,40 @@ def test_get_international_portfolio_invalid_measure(monkeypatch):
 
     with pytest.raises(ValueError, match="Measure .* not supported"):
         helpers.get_international_portfolio(country="japan", measure="bogus")
+
+
+@pytest.mark.parametrize("suffix", ["", " - Ex-Dividends"])
+def test_get_international_portfolio_all_data_items_not_required(monkeypatch, suffix):
+    """all_data_items_required=False returns the 'Not Reqd' table with its metadata."""
+    tables = [
+        ("Value-Weight Local Returns All 4 Data Items Not Reqd", 1.0),
+        ("Value-Weight Local Returns All 4 Data Items Required", 2.0),
+    ]
+    dataframes = [DataFrame({"mkt": [value]}) for _, value in tables]
+    metadata = [
+        {"frequency": "annual", "description": description + suffix}
+        for description, _ in tables
+    ]
+    monkeypatch.setattr(helpers, "get_international_portfolio_data", lambda *a, **k: "")
+    monkeypatch.setattr(helpers, "read_dat_file", lambda data: [])
+    monkeypatch.setattr(
+        helpers,
+        "process_international_portfolio_data",
+        lambda *a, **k: (dataframes, metadata),
+    )
+
+    dfs, dfs_meta = helpers.get_international_portfolio(
+        country="japan",
+        measure="local",
+        frequency="annual",
+        dividends=not suffix,
+        all_data_items_required=False,
+    )
+
+    assert [df["mkt"].iloc[0] for df in dfs] == [1.0]
+    assert [meta["description"] for meta in dfs_meta] == [
+        "Value-Weight Local Returns All 4 Data Items Not Reqd" + suffix
+    ]
 
 
 def test_get_international_portfolio_ratios_monthly(monkeypatch):
