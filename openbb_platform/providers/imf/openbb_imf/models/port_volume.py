@@ -122,12 +122,7 @@ class ImfPortVolumeQueryParams(PortVolumeQueryParams):
                     for v_ in port_id_map.values()
                 ]
                 idx = values_snake.index(item_lower)
-                new_item = port_id_map[
-                    idx
-                ]  # pragma: no cover -- unreachable: ``idx`` is an integer position into ``values_snake`` while ``port_id_map`` is keyed by port-code strings; the lookup always raises ``KeyError`` before reaching the append
-                new_values.append(
-                    new_item
-                )  # pragma: no cover -- unreachable: preceded by an unconditional KeyError on the line above
+                new_values.append(list(port_id_map.keys())[idx])
             elif item_lower in [
                 v_.split(" - ")[0].lower().replace(" ", "_")
                 for v_ in port_id_map.values()
