@@ -584,12 +584,12 @@ async def amendments(
                 },
                 {
                     "label": "Amendment ID",
-                    "description": "Enter an amendment id (e.g. '119-hamdt-2'), or group"
+                    "description": "Enter an amendment id (e.g. '119-samdt-2'), or group"
                     + " the 'Congressional Amendments' widget by 'Amendment ID' and"
                     + " click a cell.",
                     "show": True,
                     "paramName": "amendment_id",
-                    "value": "119-hamdt-2",
+                    "value": "119-samdt-2",
                 },
             ],
             "refetchInterval": False,

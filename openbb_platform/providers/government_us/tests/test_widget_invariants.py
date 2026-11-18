@@ -372,3 +372,14 @@ class TestNoDuplicatePlacements:
             if widget["i"] not in ids
         ]
         assert not offenders, f"layout references unbuilt widgets: {offenders}"
+
+
+def test_amendment_text_viewer_opens_on_an_amendment_with_text(built):
+    """House amendments carry no published text, so the default is a Senate one."""
+    config = next(
+        config
+        for _, widget_id, config in built
+        if widget_id == "uscongress_amendment_text_congress_gov_obb"
+    )
+    values = {p["paramName"]: p.get("value") for p in config["params"]}
+    assert values["amendment_id"] == "119-samdt-2"
