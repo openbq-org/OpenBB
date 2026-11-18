@@ -599,6 +599,26 @@ class TestIndexConstituents:
         assert raw == [{"Weight": "1"}]
         helper.assert_awaited_once_with("X2CG", session="sod")
 
+    @pytest.mark.parametrize("status", [403, 404])
+    def test_index_without_a_constituents_file(self, status):
+        """Cboe answers 403 or 404 for an index it publishes no file for."""
+        from unittest.mock import Mock
+
+        from aiohttp import ClientResponseError
+
+        async def missing(url, **kwargs):
+            raise ClientResponseError(
+                Mock(real_url=url), (), status=status, message="Forbidden"
+            )
+
+        query = CboeIndexConstituentsFetcher.transform_query({"symbol": "BUKENGY"})
+
+        with (
+            patch("openbb_core.provider.utils.helpers.amake_request", missing),
+            pytest.raises(OpenBBError, match="no constituents for BUKENGY"),
+        ):
+            asyncio.run(CboeIndexConstituentsFetcher.aextract_data(query, None))
+
     def test_transform(self):
         """Percent change is normalized and context columns dropped."""
         query = CboeIndexConstituentsFetcher.transform_query({"symbol": "BUK100P"})

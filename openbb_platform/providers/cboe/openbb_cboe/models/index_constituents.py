@@ -215,7 +215,19 @@ class CboeIndexConstituentsFetcher(
             "https://cdn.cboe.com/api/global/european_indices/constituent_quotes/"
             + f"{query.symbol}.json"
         )
-        data = await amake_request(url)
+        from aiohttp import ClientResponseError
+
+        try:
+            data = await amake_request(url)
+        except ClientResponseError as error:
+            # Cboe answers 403 for an index it publishes no constituents file for.
+            if error.status in (403, 404):
+                from openbb_core.app.model.abstract.error import OpenBBError
+
+                raise OpenBBError(
+                    f"Cboe publishes no constituents for {query.symbol}."
+                ) from error
+            raise
         rows = data.get("data", []) if isinstance(data, dict) else data
 
         return await _with_company_names(rows)
