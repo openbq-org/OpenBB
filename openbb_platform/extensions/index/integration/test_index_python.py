@@ -20,7 +20,7 @@ def obb(pytestconfig):
     "params",
     [
         ({"symbol": "dowjones", "provider": "fmp"}),
-        ({"symbol": "BUKBUS", "provider": "cboe"}),
+        ({"symbol": "BUK100P", "provider": "cboe"}),
         ({"symbol": "^TX60", "provider": "tmx", "use_cache": False}),
     ],
 )

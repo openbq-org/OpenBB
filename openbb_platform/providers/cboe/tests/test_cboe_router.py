@@ -592,6 +592,15 @@ class TestAppsJson:
         assert apps
         assert set(apps[0]["tabs"]) == {"indices", "options", "optimizer", "futures"}
 
+    def test_constituents_open_on_an_index_with_a_file(self):
+        """The template's index is one Cboe publishes constituents for."""
+        import json
+
+        apps = json.dumps(asyncio.run(cboe_router.cboe_apps()))
+
+        assert "BUKENGY" not in apps
+        assert '"BUK100P"' in apps
+
     def test_standalone_ids_when_extensions_absent(self):
         """Standard-namespace IDs are swapped for the ``/cboe`` ones."""
         apps = asyncio.run(cboe_router.cboe_apps())

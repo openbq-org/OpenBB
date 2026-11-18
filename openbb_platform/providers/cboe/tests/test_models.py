@@ -599,6 +599,20 @@ class TestIndexConstituents:
         assert raw == [{"Weight": "1"}]
         helper.assert_awaited_once_with("X2CG", session="sod")
 
+    @pytest.mark.parametrize("symbol", ["BUKENGY", "BEPFIN", "BNL25P", "BUKHI50P"])
+    def test_index_without_a_constituents_file_is_not_a_choice(self, symbol):
+        """Cboe publishes no constituents file for its sector and factor indices."""
+        from typing import get_args
+
+        from pydantic import ValidationError
+
+        from openbb_cboe.utils.helpers import CONSTITUENTS_EU
+
+        assert symbol not in get_args(CONSTITUENTS_EU)
+
+        with pytest.raises(ValidationError):
+            CboeIndexConstituentsFetcher.transform_query({"symbol": symbol})
+
     def test_transform(self):
         """Percent change is normalized and context columns dropped."""
         query = CboeIndexConstituentsFetcher.transform_query({"symbol": "BUK100P"})

@@ -23,7 +23,7 @@ def headers():
     [
         ({"symbol": "dowjones", "provider": "fmp"}),
         ({"symbol": "^TX60", "provider": "tmx", "use_cache": False}),
-        ({"symbol": "BUKBUS", "provider": "cboe"}),
+        ({"symbol": "BUK100P", "provider": "cboe"}),
     ],
 )
 @pytest.mark.integration
