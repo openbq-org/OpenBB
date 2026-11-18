@@ -63,19 +63,27 @@ class UsTreasuryPricesFetcher(
         **kwargs: Any,
     ) -> str:
         """Extract the raw data from US Treasury website."""
-        from openbb_core.provider.utils.helpers import make_request
+        import re
+
+        from openbb_core.provider.utils.helpers import (
+            get_requests_session,
+            make_request,
+        )
 
         from openbb_government_us.treasury.utils.helpers import get_random_agent
 
-        url = "https://treasurydirect.gov/GA-FI/FedInvest/securityPriceDetail"
+        # FedInvest answers 403 to the download unless it carries the session cookie
+        # and CSRF token of the price form. The cookies are set for the www host.
+        base = "https://www.treasurydirect.gov/GA-FI/FedInvest/"
+        url = base + "securityPriceDetail"
 
         HEADERS = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
             "Accept-Language": "en-CA,en-US;q=0.7,en;q=0.3",
             "Accept-Encoding": "gzip, deflate, br",
-            "Referer": "https://treasurydirect.gov/",
+            "Referer": base + "selectSecurityPriceDate",
             "Content-Type": "application/x-www-form-urlencoded",
-            "Origin": "https://treasurydirect.gov",
+            "Origin": "https://www.treasurydirect.gov",
             "User-Agent": get_random_agent(),
         }
 
@@ -87,7 +95,26 @@ class UsTreasuryPricesFetcher(
             "&csv=CSV+FORMAT"
         )
 
-        r = make_request(url=url, method="POST", headers=HEADERS, data=payload)
+        session = get_requests_session()
+        form = make_request(
+            url=base + "selectSecurityPriceDate", headers=HEADERS, session=session
+        )
+
+        if form.status_code != 200:
+            raise OpenBBError("Error with the request: " + str(form.status_code))
+
+        token = re.search(r'name="_csrf" value="([^"]+)"', form.text)
+
+        if token is None:
+            raise OpenBBError("The Treasury price form carried no CSRF token.")
+
+        r = make_request(
+            url=url,
+            method="POST",
+            headers=HEADERS,
+            data=payload + "&_csrf=" + token.group(1),
+            session=session,
+        )
 
         if r.status_code != 200:
             raise OpenBBError("Error with the request: " + str(r.status_code))
