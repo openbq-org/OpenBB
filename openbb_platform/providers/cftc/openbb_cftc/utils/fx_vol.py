@@ -50,6 +50,8 @@ _VOL_TRIM_MAX = 2.0
 
 FORWARD_MIN_DAYS = 2
 NEAR_MAX_DAYS = 9
+MARKET_MIN_NOTIONAL = 1_000.0
+MIN_FORWARD_NODES = 2
 
 
 def resolve_major_pair(pair: str) -> tuple[str, str, float]:
@@ -239,7 +241,11 @@ def _discount_factor(
 
 
 def _deliverable_spot(
-    records: Iterable[dict], base: str, quote: str, as_of: dateType
+    records: Iterable[dict],
+    base: str,
+    quote: str,
+    as_of: dateType,
+    min_notional: float = 0.0,
 ) -> float | None:
     """Median quote-per-base from the pair's own shortest-dated deliverable forwards."""
     from statistics import median
@@ -268,28 +274,35 @@ def _deliverable_spot(
         ccy1 = (record.get("Notional currency-Leg 1") or "").strip()
         ccy2 = (record.get("Notional currency-Leg 2") or "").strip()
 
-        if not (effective and first and second) or (effective - as_of).days > 2:
+        if (
+            not (effective and first and second)
+            or (effective - as_of).days > FORWARD_MIN_DAYS
+        ):
             continue
 
-        if ccy1 == base and ccy2 == quote:
+        if ccy1 == base and ccy2 == quote and first >= min_notional:
             rates.append(second / first)
-        elif ccy2 == base and ccy1 == quote:
+        elif ccy2 == base and ccy1 == quote and second >= min_notional:
             rates.append(first / second)
 
     return median(rates) if rates else None
 
 
 def fx_spot(
-    records: Iterable[dict], base: str, quote: str, as_of: dateType
+    records: Iterable[dict],
+    base: str,
+    quote: str,
+    as_of: dateType,
+    min_notional: float = 0.0,
 ) -> float | None:
     """Spot in quote per base from deliverable forwards."""
-    direct = _deliverable_spot(records, base, quote, as_of)
+    direct = _deliverable_spot(records, base, quote, as_of, min_notional)
 
     if direct is not None or base == "USD" or quote == "USD":
         return direct
 
-    usd_per_base = _deliverable_spot(records, base, "USD", as_of)
-    usd_per_quote = _deliverable_spot(records, quote, "USD", as_of)
+    usd_per_base = _deliverable_spot(records, base, "USD", as_of, min_notional)
+    usd_per_quote = _deliverable_spot(records, quote, "USD", as_of, min_notional)
 
     if usd_per_base is None or usd_per_quote is None:
         return None
@@ -471,6 +484,128 @@ def implied_df(
         return df_base(years) * spot / forward(years)
 
     return lookup
+
+
+def pair_curve(records: Iterable[dict], pair: str, as_of: dateType) -> ObservationCurve:
+    """Return a pair's forward observations above the market floor, empty when it has none."""
+    from openbb_cftc.utils.constants import FX_PAIRS
+    from openbb_cftc.utils.fx import extract_fx_observations
+
+    if pair not in FX_PAIRS:
+        return ObservationCurve([])
+
+    return ObservationCurve(
+        extract_fx_observations(
+            records, pair=pair, trade_date=as_of, min_notional=MARKET_MIN_NOTIONAL
+        )
+    )
+
+
+def market_spot(
+    curve: ObservationCurve,
+    records: Iterable[dict],
+    base: str,
+    quote: str,
+    as_of: dateType,
+    without: str = "",
+) -> tuple[float | None, Callable[[float], float] | None]:
+    """Spot from the pair's forward curve, else its near prints, else spot-dated forwards."""
+    from statistics import median
+
+    spot, forward, nodes = curve.curve(without)
+
+    if nodes >= MIN_FORWARD_NODES and spot is not None and spot > 0.0:
+        return spot, forward
+
+    near = curve.near_rates(without)
+
+    if near:
+        return median(near), None
+
+    return fx_spot(records, base, quote, as_of, MARKET_MIN_NOTIONAL), None
+
+
+def market_discount(
+    rates_records: Iterable[dict],
+    rate_date: dateType,
+    min_trades: int,
+    memo: dict | None = None,
+) -> Callable[[str], Callable[[float], float] | None]:
+    """Lookup of each currency's forward-aware discount function, built once, or None."""
+    from openbb_core.provider.utils.errors import EmptyDataError
+
+    memo = {} if memo is None else memo
+
+    def discount(currency: str) -> Callable[[float], float] | None:
+        key = f"fx-df:{currency}:{rate_date.isoformat()}:{min_trades}"
+
+        if key not in memo:
+            try:
+                memo[key] = rate_discount_factor(
+                    rates_records, currency, rate_date, min_trades, forward_aware=True
+                )
+            except EmptyDataError:
+                memo[key] = None
+
+        return memo[key]
+
+    return discount
+
+
+def build_market(
+    curve: ObservationCurve,
+    records: Iterable[dict],
+    base: str,
+    quote: str,
+    as_of: dateType,
+    discount: Callable[[str], Callable[[float], float] | None],
+    without: str = "",
+) -> dict | None:
+    """Spot, forward and both legs' discount curves for a pair, or None.
+
+    The one market behind the volatility surface and the trade valuations.
+    """
+    spot, observed = market_spot(curve, records, base, quote, as_of, without)
+
+    if spot is None or spot <= 0.0:
+        return None
+
+    df_base = discount(base)
+
+    if observed is not None and df_base is not None:
+        df_quote = implied_df(df_base, spot, observed)
+
+        return {
+            "spot": spot,
+            "forward": observed,
+            "df_base": df_base,
+            "df_quote": df_quote,
+        }
+
+    df_quote = discount(quote)
+
+    if df_quote is None:
+        return None
+
+    if observed is not None:
+
+        def implied_base(years: float) -> float:
+            return df_quote(years) * observed(years) / spot
+
+        return {
+            "spot": spot,
+            "forward": observed,
+            "df_base": implied_base,
+            "df_quote": df_quote,
+        }
+
+    if df_base is None:
+        return None
+
+    def parity(years: float) -> float:
+        return spot * df_base(years) / df_quote(years)
+
+    return {"spot": spot, "forward": parity, "df_base": df_base, "df_quote": df_quote}
 
 
 def _option_is_call(call_ccy: str, put_ccy: str, base: str, quote: str) -> bool | None:
@@ -666,17 +801,13 @@ def _tenor_column(label: str) -> str:
     return f"vol_{label.lower()}"
 
 
-def vol_surface(
+def surface_points(
     priced: list[dict], spot: float, pip: float, moneyness: bool = False
-) -> list[dict]:
-    """Empirical vol surface: median vol per."""
+) -> dict[str, list[tuple[int, float]]]:
+    """Each expiry's (grid offset, vol) points, trimmed around the expiry's median vol."""
     from collections import defaultdict
     from statistics import median
 
-    from openbb_cftc.utils.constants import FX_TENOR_BUCKETS
-
-    tenors = [label for label, _, _ in FX_TENOR_BUCKETS if label != "SPOT"]
-    decimals = _price_decimals(pip)
     by_tenor: dict[str, list[tuple[int, float]]] = defaultdict(list)
 
     for option in priced:
@@ -688,15 +819,32 @@ def vol_surface(
 
         by_tenor[tenor].append((offset, option["implied_vol"]))
 
-    cells: dict[int, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+    trimmed: dict[str, list[tuple[int, float]]] = {}
 
     for tenor, points in by_tenor.items():
         ref = median([vol for _, vol in points])
         low, high = _VOL_TRIM_MIN * ref, _VOL_TRIM_MAX * ref
+        trimmed[tenor] = [point for point in points if low <= point[1] <= high]
 
+    return trimmed
+
+
+def vol_surface(
+    priced: list[dict], spot: float, pip: float, moneyness: bool = False
+) -> list[dict]:
+    """Empirical vol surface: median vol per."""
+    from collections import defaultdict
+    from statistics import median
+
+    from openbb_cftc.utils.constants import FX_TENOR_BUCKETS
+
+    tenors = [label for label, _, _ in FX_TENOR_BUCKETS if label != "SPOT"]
+    decimals = _price_decimals(pip)
+    cells: dict[int, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+
+    for tenor, points in surface_points(priced, spot, pip, moneyness).items():
         for offset, vol in points:
-            if low <= vol <= high:
-                cells[offset][tenor].append(vol)
+            cells[offset][tenor].append(vol)
 
     rows: list[dict] = []
 

@@ -287,27 +287,24 @@ class CftcFxImpliedVolFetcher(
         """Fetch a day's FX options and the rates slice that prices the legs."""
         from openbb_cftc.utils.dtcc import get_latest_viable_slice, get_rates_slice_for
         from openbb_cftc.utils.fx_vol import (
-            fx_spot,
             has_vanilla_options,
             is_ndf_vol_pair,
-            ndf_forward_curve,
+            market_spot,
+            pair_curve,
             resolve_major_pair,
         )
 
         base, quote, _ = resolve_major_pair(query.pair)
         ndf = is_ndf_vol_pair(query.pair)
+        family = "NA/O NDO " if ndf else "NA/O Van "
 
         def _viable(recs: Iterable[dict], day: dateType) -> bool:
-            if ndf:
-                return (
-                    has_vanilla_options(recs, base, quote, "NA/O NDO ")
-                    and ndf_forward_curve(recs, query.pair, day)[0] is not None
-                )
+            if not has_vanilla_options(recs, base, quote, family):
+                return False
 
-            return (
-                has_vanilla_options(recs, base, quote)
-                and fx_spot(recs, base, quote, day) is not None
-            )
+            curve = pair_curve(recs, query.pair, day)
+
+            return market_spot(curve, recs, base, quote, day)[0] is not None
 
         forex, report_date = await get_latest_viable_slice(
             "forex",
@@ -337,37 +334,24 @@ class CftcFxImpliedVolFetcher(
         ndf = fx_vol.is_ndf_vol_pair(query.pair)
         rate_date = dateType.fromisoformat(rates_date)
 
-        if ndf:
-            spot, forward = fx_vol.ndf_forward_curve(forex, query.pair, as_of)
+        market = fx_vol.build_market(
+            fx_vol.pair_curve(forex, query.pair, as_of),
+            forex,
+            base,
+            quote,
+            as_of,
+            fx_vol.market_discount(rates, rate_date, query.min_trades),
+        )
 
-            if spot is None or forward is None:
-                raise OpenBBError(
-                    f"No spot could be established for {query.pair} on {report_date}."
-                )
-
-            df_base = fx_vol.ois_discount_factor(
-                rates, base, rate_date, query.min_trades, forward_aware=True
+        if market is None:
+            raise OpenBBError(
+                f"No spot could be established for {query.pair} on {report_date}."
             )
-            df_quote = fx_vol.implied_df(df_base, spot, forward)
-            options = fx_vol.extract_vanilla_options(
-                forex, base, quote, as_of, spot, "NA/O NDO "
-            )
-        else:
-            spot = fx_vol.fx_spot(forex, base, quote, as_of)
 
-            if spot is None:
-                raise OpenBBError(
-                    f"No spot could be established for {query.pair} on {report_date}."
-                )
-
-            df_quote = fx_vol.ois_discount_factor(
-                rates, quote, rate_date, query.min_trades, forward_aware=True
-            )
-            df_base = fx_vol.ois_discount_factor(
-                rates, base, rate_date, query.min_trades, forward_aware=True
-            )
-            options = fx_vol.extract_vanilla_options(forex, base, quote, as_of, spot)
-
+        spot, df_base, df_quote = market["spot"], market["df_base"], market["df_quote"]
+        options = fx_vol.extract_vanilla_options(
+            forex, base, quote, as_of, spot, "NA/O NDO " if ndf else "NA/O Van "
+        )
         priced = fx_vol.price_options(options, spot, df_quote, df_base)
 
         fits: dict = {}
