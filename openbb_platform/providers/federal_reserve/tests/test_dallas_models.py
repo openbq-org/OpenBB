@@ -777,3 +777,41 @@ def test_survey_sheet_named_index_or_sheet1(fetcher, header, sheet):
     raw = _workbook(sheet, [header, ["Jun-04", 38, 50]])
     rows = fetcher.transform_data(fetcher.transform_query({}), [{"_raw": raw}])
     assert [r.date for r in rows] == [date(2004, 6, 1)]
+
+
+class TestSurveySheet:
+    """Cover the sheet selection shared by the Dallas survey workbooks."""
+
+    @staticmethod
+    def _sheets(*names: str) -> bytes:
+        from openpyxl import Workbook
+
+        workbook = Workbook()
+        workbook.active.title = names[0]
+        for name in names[1:]:
+            workbook.create_sheet(name)
+        buffer = io.BytesIO()
+        workbook.save(buffer)
+        return buffer.getvalue()
+
+    def test_first_published_name_wins(self):
+        """A listed name is used, in order, whatever else the workbook holds."""
+        from openbb_federal_reserve.utils.dallas_survey import survey_sheet
+
+        content = self._sheets("Notes", "Sheet1", "Index")
+        assert survey_sheet(content, ("Index", "Sheet1")) == "Index"
+
+    def test_only_sheet_is_used_when_renamed_again(self):
+        """A workbook with one sheet is read whatever the sheet is called."""
+        from openbb_federal_reserve.utils.dallas_survey import survey_sheet
+
+        assert survey_sheet(self._sheets("Data"), ("Index", "Sheet1")) == "Data"
+
+    def test_no_match_among_several_sheets_names_them(self):
+        """The error names the sheets it found."""
+        from openbb_core.app.model.abstract.error import OpenBBError
+
+        from openbb_federal_reserve.utils.dallas_survey import survey_sheet
+
+        with pytest.raises(OpenBBError, match="Index or Sheet1; it has Notes, Data"):
+            survey_sheet(self._sheets("Notes", "Data"), ("Index", "Sheet1"))
