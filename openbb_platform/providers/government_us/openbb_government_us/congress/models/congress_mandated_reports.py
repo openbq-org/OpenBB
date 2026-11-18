@@ -88,16 +88,6 @@ class CongressMandatedReportsData(Data):
     )
     title: str = Field(description="The report title.")
     submitting_agency: str = Field(description="The agency that submitted the report.")
-    date_submitted_to_congress: dateType | None = Field(
-        default=None, description="The date the report was submitted to Congress."
-    )
-    date_required: dateType | None = Field(
-        default=None,
-        description="The statutory deadline for submission to the GPO.",
-    )
-    is_on_time: bool = Field(
-        description="Whether the report met its submission deadline."
-    )
     pdf: str = Field(
         description="URL to the report in PDF format.",
         json_schema_extra={"x-widget_config": {"hide": True}},
@@ -105,11 +95,6 @@ class CongressMandatedReportsData(Data):
     details_link: str | None = Field(
         default=None,
         description="URL to the GovInfo details page for the report.",
-        json_schema_extra={"x-widget_config": {"hide": True}},
-    )
-    mods_link: str | None = Field(
-        default=None,
-        description="URL to the MODS metadata for the report.",
         json_schema_extra={"x-widget_config": {"hide": True}},
     )
 
@@ -120,7 +105,7 @@ class CongressMandatedReportsFetcher(
         list[CongressMandatedReportsData],
     ]
 ):
-    """Transform the query, extract and transform data from the GovInfo CMR link API."""
+    """Transform the query, extract and transform data from the GovInfo search."""
 
     require_credentials = False
 
@@ -135,7 +120,7 @@ class CongressMandatedReportsFetcher(
         credentials: dict[str, str] | None,
         **kwargs: Any,
     ) -> list:
-        """Extract reports from the GovInfo Congressionally Mandated Reports API."""
+        """Extract Congressionally Mandated Reports from the GovInfo search."""
         from openbb_government_us.congress.utils.bulk import fetch_cmr
         from openbb_government_us.congress.utils.helpers import year_to_congress
 

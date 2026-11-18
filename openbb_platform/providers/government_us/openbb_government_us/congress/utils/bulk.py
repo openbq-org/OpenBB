@@ -1192,39 +1192,40 @@ def filter_calendars(
     return out[:limit]
 
 
+_CMR_LINE2_RE = re.compile(r"Reports\. (.*?)\. \d+\w\w Congress")
+
+
 async def fetch_cmr(congress: int, pagesize: int = 100, offset: int = 0) -> list[dict]:
-    """Fetch Congressionally Mandated Reports from the keyless GovInfo link API."""
-    from openbb_core.provider.utils.helpers import amake_request
+    """Fetch Congressionally Mandated Reports from the keyless GovInfo search.
 
-    url = (
-        f"{GOVINFO_BASE}/link/cmr/tableOfReports?congress={congress}"
-        f"&link-type=json&pagesize={pagesize}&offset={offset}"
+    Newest first. The search pages by index, so ``offset`` is rounded down to a
+    whole page of ``pagesize``.
+    """
+    from datetime import datetime
+
+    response = await wssearch(
+        f"collection:CMR AND congress:{congress}",
+        offset=offset // max(pagesize, 1),
+        pagesize=pagesize,
     )
-    response = await amake_request(url)
-    result_set = response.get("resultSet", []) if isinstance(response, dict) else []
-    records = parse_cmr(result_set)
-    records.sort(key=lambda r: r.get("publication_date") or "", reverse=True)
-    return records
-
-
-def parse_cmr(result_set: list[dict]) -> list[dict]:
-    """Map raw CMR ``resultSet`` records to the data-model shape."""
     records: list[dict] = []
-    for item in result_set:
-        pkg = item.get("packageId", "")
+    for item in response.get("resultSet", []):
+        pkg = item.get("fieldMap", {}).get("packageid", "")
+        line2 = item.get("line2", "")
+        agency = _CMR_LINE2_RE.search(line2)
+        date = _DATE_RE.search(line2)
         records.append(
             {
                 "package_id": pkg,
-                "title": item.get("title", ""),
-                "submitting_agency": item.get("submittingAgency", ""),
-                "publication_date": item.get("publicationDate") or None,
-                "date_submitted_to_congress": item.get("dateSubmittedToCongress")
-                or None,
-                "date_required": item.get("dateRequiredToBeSubmittedToGPO") or None,
-                "is_on_time": item.get("isOnTime") == "true",
-                "pdf": item.get("pdfLink") or (package_urls(pkg)["pdf"] if pkg else ""),
-                "details_link": item.get("detailsLink", ""),
-                "mods_link": item.get("modsLink", ""),
+                "title": item.get("line1", ""),
+                "submitting_agency": agency.group(1) if agency else "",
+                "publication_date": (
+                    datetime.strptime(date.group(1), "%B %d, %Y").date().isoformat()
+                    if date
+                    else None
+                ),
+                "pdf": package_urls(pkg)["pdf"] if pkg else "",
+                "details_link": f"{GOVINFO_BASE}/app/details/{pkg}",
             }
         )
     return records
