@@ -2,8 +2,12 @@
 
 from collections.abc import Callable, Iterable
 from datetime import date as dateType
+from typing import TYPE_CHECKING
 
 from openbb_cftc.utils.dtcc import qualified_keys
+
+if TYPE_CHECKING:
+    from openbb_cftc.utils.fx_vol import ObservationCurve
 
 PRICEABLE_FORWARDS = frozenset({"Forward", "Non-Deliverable Forward"})
 OPTION_FAMILIES = frozenset({"Van", "NDO"})
@@ -246,9 +250,11 @@ def pair_records(fx_records: Iterable[dict], base: str, quote: str) -> list[dict
     return subset
 
 
-def _pair_subset(fx_records: Iterable[dict], trade: dict, memo: dict) -> list[dict]:
+def _pair_subset(
+    fx_records: Iterable[dict], trade: dict, curve_date: dateType, memo: dict
+) -> list[dict]:
     """Return the pair's own prints, extracted once per day and reused across trades."""
-    key = f"fx-pair:{trade['base']}/{trade['quote']}"
+    key = f"fx-pair:{trade['base']}/{trade['quote']}:{curve_date.isoformat()}"
 
     if key not in memo:
         memo[key] = pair_records(fx_records, trade["base"], trade["quote"])
@@ -268,7 +274,7 @@ def _discount_for(
 
     from openbb_cftc.utils.fx_vol import rate_discount_factor
 
-    key = f"fx-df:{currency}:{min_trades}"
+    key = f"fx-df:{currency}:{curve_date.isoformat()}:{min_trades}"
 
     if key not in memo:
         try:
@@ -283,30 +289,22 @@ def _discount_for(
 
 def _pair_curve(
     fx_records: Iterable[dict], trade: dict, curve_date: dateType, memo: dict
-) -> dict:
+) -> "ObservationCurve":
     """Return the pair's forward curve for the day, built once and shared by its prints."""
     from openbb_cftc.utils.fx import extract_fx_observations
-    from openbb_cftc.utils.fx_vol import ndf_forward_curve
+    from openbb_cftc.utils.fx_vol import ObservationCurve
 
     key = f"fx-curve:{trade['pair']}:{curve_date.isoformat()}"
 
     if key not in memo:
-        records = _pair_subset(fx_records, trade, memo)
-        observations = extract_fx_observations(
-            records,
-            pair=trade["pair"],
-            trade_date=curve_date,
-            min_notional=CURVE_MIN_NOTIONAL,
+        memo[key] = ObservationCurve(
+            extract_fx_observations(
+                _pair_subset(fx_records, trade, curve_date, memo),
+                pair=trade["pair"],
+                trade_date=curve_date,
+                min_notional=CURVE_MIN_NOTIONAL,
+            )
         )
-        spot, forward = ndf_forward_curve(
-            records, trade["pair"], curve_date, min_notional=CURVE_MIN_NOTIONAL
-        )
-        memo[key] = {
-            "nodes": len({o["days"] for o in observations if o["days"] > 2}),
-            "near": [o["rate"] for o in observations if o["days"] <= 9],
-            "spot": spot,
-            "forward": forward,
-        }
 
     return memo[key]
 
@@ -386,32 +384,30 @@ def fx_market(
 ) -> dict | None:
     """Spot, forward interpolator and both legs' discount curves for a pair, or None."""
     memo = {} if memo is None else memo
+    curve = _pair_curve(fx_records, trade, curve_date, memo)
+    own = trade["dissemination_identifier"]
+    shared = own not in curve
     key = f"fx-market:{trade['pair']}:{curve_date.isoformat()}:{min_trades}"
 
-    if key in memo:
+    if shared and key in memo:
         return memo[key]
 
-    curve = _pair_curve(fx_records, trade, curve_date, memo)
-    spot, forward = curve["spot"], curve["forward"]
+    spot, forward, nodes = curve.curve(own)
 
-    if (
-        curve["nodes"] < MIN_FORWARD_NODES
-        or spot is None
-        or forward is None
-        or spot <= 0.0
-    ):
+    if nodes < MIN_FORWARD_NODES or spot is None or forward is None or spot <= 0.0:
         market = _cip_market(
-            curve["near"], rates_records, trade, curve_date, min_trades, memo
+            curve.near_rates(own), rates_records, trade, curve_date, min_trades, memo
         )
     else:
         market = _curve_market(
             spot, forward, rates_records, trade, curve_date, min_trades, memo
         )
 
-    if market is not None:
-        market["key"] = key
+    if shared:
+        if market is not None:
+            market["key"] = key
 
-    memo[key] = market
+        memo[key] = market
 
     return market
 
@@ -456,7 +452,7 @@ def option_vol(
         priced = memo[key]
     else:
         options = extract_vanilla_options(
-            _pair_subset(fx_records, trade, memo),
+            _pair_subset(fx_records, trade, curve_date, memo),
             trade["base"],
             trade["quote"],
             curve_date,
