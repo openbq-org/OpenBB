@@ -9,7 +9,7 @@ from collections.abc import Callable
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 BASE = "https://fedinprint.org"
 SEARCH_URL = f"{BASE}/search"
@@ -42,6 +42,9 @@ def fetch_text(url: str) -> str:
 
 
 _PDF_META = re.compile(r'citation_pdf_url"\s*content="([^"]+)"')
+_DOI_META = re.compile(r'citation_doi"\s*content="([^"]+)"')
+_OG_URL = re.compile(r'og:url"\s*content="([^"]+)"')
+_PDF_HREF = re.compile(r'href="([^"]+\.pdf)"', re.IGNORECASE)
 _FILE_HREF = re.compile(r"File\(s\).*?href=\"([^\"]+)\"", re.DOTALL)
 _BLOCK = re.compile(r'search-result-detail">\s*<p>(.*?)</p>', re.DOTALL)
 _TYPE = re.compile(r'content-type">\s*(\S.*?)\s*</span>', re.DOTALL)
@@ -112,6 +115,22 @@ def _first_file_link(page: str) -> str:
     return html.unescape(href.group(1)) if href else ""
 
 
+def _doi_pdf(page: str, fetch: Fetch) -> str:
+    """Return the first PDF linked from an item's DOI landing page, or ``""``.
+
+    Atlanta's items carry only a DOI (no ``citation_pdf_url`` or ``File(s)``
+    link); the DOI lands on the paper's web page, which links the PDF.
+    """
+    doi = _DOI_META.search(page)
+    if not doi:
+        return ""
+    landing = fetch(f"https://doi.org/{html.unescape(doi.group(1))}")
+    href, base = _PDF_HREF.search(landing), _OG_URL.search(landing)
+    if not (href and base):
+        return ""
+    return urljoin(html.unescape(base.group(1)), html.unescape(href.group(1)))
+
+
 def _host(url: str) -> str:
     """Return the lowercased hostname of a URL, or an empty string."""
     return (urlparse(url).hostname or "").lower()
@@ -137,10 +156,13 @@ def resolve_file(item_url: str, fetch: Fetch) -> str | None:
     """Resolve an item page to its direct document URL, or ``None``.
 
     An item points at either a direct file, a catalog page (e.g. FRASER) that in
-    turn names the file, or an HTML article with no document. Only the first two
-    resolve to a downloadable URL. CMS staging hosts are rewritten to public ones.
+    turn names the file, a DOI whose landing page links the file, or an HTML
+    article with no document. Only the first three resolve to a downloadable URL,
+    the last two at the cost of one more request. CMS staging hosts are rewritten
+    to public ones.
     """
-    link = _first_file_link(fetch(item_url))
+    page = fetch(item_url)
+    link = _first_file_link(page) or _doi_pdf(page, fetch)
     if not link:
         return None
     if _host(link) == "fraser.stlouisfed.org" and "/files/" not in link:

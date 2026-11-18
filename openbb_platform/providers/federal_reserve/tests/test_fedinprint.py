@@ -149,6 +149,26 @@ class TestFileResolution:
         fetch = _fetch_from(item_pages={"item": _item(citation="https://x/a.pdf")})
         assert fedinprint.resolve_file("https://x/item", fetch) == "https://x/a.pdf"
 
+    def test_resolve_doi_only_item_through_its_landing_page(self):
+        """An item that carries only a DOI resolves to the landing page's PDF."""
+        pages = {
+            "https://fedinprint.org/item/fedawp/1/original": (
+                '<meta name="citation_doi" content="10.29338/wp2026-19">'
+            ),
+            "https://doi.org/10.29338/wp2026-19": (
+                '<meta property="og:url" content="https://www.atlantafed.org/'
+                'research-and-data/publications/wp/19">'
+                '<a href="/-/media/Project/Atlanta/FRBA/Documents/wp/19.pdf">'
+                "Full text</a>"
+            ),
+        }
+        assert fedinprint.resolve_file(
+            "https://fedinprint.org/item/fedawp/1/original", pages.__getitem__
+        ) == (
+            "https://www.atlantafed.org/-/media/Project/Atlanta/FRBA/Documents/"
+            "wp/19.pdf"
+        )
+
     def test_resolve_fraser_two_hop(self):
         """A FRASER catalog page is followed to the underlying document."""
         fetch = _fetch_from(
