@@ -190,6 +190,29 @@ class TestBusinessConditions:
         assert flags[date(2026, 4, 1)] is False
         assert flags[date(2026, 5, 1)] is True
 
+    def test_prices_period_column_named_month(self, monkeypatch):
+        """The prices CSV parses when its period column is ``month``, not ``Date``."""
+        monkeypatch.setattr(
+            "openbb_core.provider.utils.helpers.make_request",
+            _by_url(
+                {
+                    "business_conditions_prices": _PRICES.replace("Date,", "month,"),
+                    "business_conditions_performance": _PERFORMANCE,
+                }
+            ),
+        )
+        query = FederalReserveMinneapolisBusinessConditionsFetcher.transform_query({})
+        rows = FederalReserveMinneapolisBusinessConditionsFetcher.extract_data(
+            query, None
+        )
+        result = FederalReserveMinneapolisBusinessConditionsFetcher.transform_data(
+            query, rows
+        )
+        assert [(r.date, r.wages, r.sales, r.is_flash) for r in result] == [
+            (date(2026, 4, 1), 32.0, 7.5, False),
+            (date(2026, 5, 1), 24.7, 20.3, True),
+        ]
+
     def test_empty_raises(self, monkeypatch):
         """An empty response raises ``EmptyDataError``."""
         monkeypatch.setattr(

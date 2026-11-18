@@ -143,14 +143,17 @@ class FederalReserveMinneapolisBusinessConditionsFetcher(
         from pandas import isna, read_csv, to_datetime
 
         prices = read_csv(StringIO(data[0]["_prices"])).rename(columns=_PRICES_MAP)
-        prices["is_flash"] = prices["Date"].str.contains(r"\(F\)", regex=True)
-        prices["date"] = prices["Date"].str.replace(r"\s*\(F\)\s*$", "", regex=True)
+        # The bank has published the period column as "Date" and as "month".
+        prices = prices.rename(columns={prices.columns[0]: "month"})
+        prices["is_flash"] = prices["month"].str.contains(r"\(F\)", regex=True)
+        prices["date"] = prices["month"].str.replace(r"\s*\(F\)\s*$", "", regex=True)
         prices["date"] = to_datetime(prices["date"], format="%b %Y").dt.date
-        prices = prices.drop(columns=["Date"])
+        prices = prices.drop(columns=["month"])
 
         performance = read_csv(StringIO(data[0]["_performance"])).rename(
             columns=_PERFORMANCE_MAP
         )
+        performance = performance.rename(columns={performance.columns[0]: "month"})
         performance["is_flash"] = performance["month"].str.contains(
             r"\(F\)", regex=True
         )
