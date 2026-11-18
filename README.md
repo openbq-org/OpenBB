@@ -33,7 +33,7 @@ output = obb.equity.price.historical("AAPL")
 df = output.to_dataframe()
 ```
 
-Data integrations available can be found here: <https://docs.openbb.co/python/reference>
+Data integrations available can be found here: [OpenBB Python Reference](https://docs.openbb.co/python/reference)
 
 ---
 
@@ -41,7 +41,7 @@ Data integrations available can be found here: <https://docs.openbb.co/python/re
 
 While the Open Data Platform provides the open-source data integration foundation, **OpenBB Workspace** offers the enterprise UI for analysts to visualize datasets and leverage AI agents. The platform's "connect once, consume everywhere" architecture enables seamless integration between the two.
 
-You can find OpenBB Workspace at <https://pro.openbb.co>.
+You can find OpenBB Workspace at [pro.openbb.co](https://pro.openbb.co).
 <a href="https://pro.openbb.co">
   <div align="center">
   <img src="https://openbb-cms.directus.app/assets/f69b6aaf-0821-4bc8-a43c-715e03a924ef.png" alt="Logo" width="1000">
@@ -76,7 +76,7 @@ openbb-api
 
 This will launch a FastAPI server, via Uvicorn, at `127.0.0.1:6900`.
 
-You can check that it works by going to <http://127.0.0.1:6900>.
+You can check that it works by going to [`http://127.0.0.1:6900`](http://127.0.0.1:6900).
 
 #### Integrate the ODP Backend to OpenBB Workspace
 
@@ -88,7 +88,7 @@ Sign-in to the [OpenBB Workspace](https://pro.openbb.co/), and follow the follow
 2. Click on "Connect backend"
 3. Fill in the form with:
    Name: Open Data Platform
-   URL: <http://127.0.0.1:6900>
+   URL: [`http://127.0.0.1:6900`](http://127.0.0.1:6900)
 4. Click on "Test". You should get a "Test successful" with the number of apps found.
 5. Click on "Add".
 
@@ -170,9 +170,9 @@ Our use of these names, logos, and brands is for identification purposes only, a
 
 ## 5. Contacts
 
-If you have any questions about the platform or anything OpenBB, feel free to email us at `support@openbb.co`
+If you have any questions about the platform or anything OpenBB, feel free to email us at [support@openbb.co](mailto:support@openbb.co)
 
-If you want to say hi, or are interested in partnering with us, feel free to reach us at `hello@openbb.co`
+If you want to say hi, or are interested in partnering with us, feel free to reach us at [hello@openbb.co](mailto:hello@openbb.co)
 
 Any of our social media platforms: [openbb.co/links](https://openbb.co/links)
 
@@ -180,7 +180,7 @@ Any of our social media platforms: [openbb.co/links](https://openbb.co/links)
 
 This is a proxy of our growth and that we are just getting started.
 
-But for more metrics important to us check [openbb.co/open](https://openbb.co/open).
+But for more metrics important to us check [OpenBB Open](https://openbb.co/open).
 
 [![Star History Chart](https://api.star-history.com/svg?repos=openbb-finance/OpenBB&type=Date&theme=dark)](https://api.star-history.com/svg?repos=openbb-finance/OpenBB&type=Date&theme=dark)
 
