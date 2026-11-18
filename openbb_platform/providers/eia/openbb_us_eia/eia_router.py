@@ -94,49 +94,14 @@ GROUP_TITLES: dict[str, str] = {
 }
 
 
-# Unfiltered, these datasets match more rows than MAX_AUTO_ROWS and the request is
-# refused. Their widgets open on the newest API page instead; the API defaults stay.
-_NEWEST_PAGE = {
-    ("electricity", "electric_power_operations"),
-    ("electricity", "electric_power_operations_for_individual_power_plants"),
-    ("electricity", "inventory_of_operable_generators"),
-    ("electricity_grid", "demand"),
-    ("electricity_grid", "demand_by_subregion"),
-    ("electricity_grid", "generation_by_fuel"),
-    ("electricity_grid", "interchange"),
-    ("nuclear_outages", "facility_level_nuclear_outages"),
-    ("nuclear_outages", "generator_level_nuclear_outages"),
-    ("petroleum", "prime_supplier_sales_volumes"),
-    ("petroleum", "refiner_motor_gasoline_sales_volumes"),
-    ("petroleum", "refiner_sales_volumes_of_other_petroleum_products"),
-    ("petroleum", "exports_by_destination"),
-    ("petroleum", "pad_district_exports_by_destination"),
-    ("petroleum", "pad_district_imports_by_country_of_origin"),
-    ("petroleum", "gasoline_prices_by_formulation_grade_sales_type"),
-    ("petroleum", "refinery_blender_net_production"),
-    ("petroleum", "stocks_by_type"),
-    ("petroleum", "prices_sales_volumes_stocks_by_state"),
-    ("petroleum", "supply_and_disposition"),
-    ("petroleum", "weekly_supply_estimates"),
-}
-
-
-def _widget_config(
-    name: str, sub_category: str, newest_page: bool = False
-) -> dict[str, str | list]:
+def _widget_config(name: str, sub_category: str) -> dict[str, str | list[str]]:
     """Build proper-cased Workspace widget metadata."""
-    config: dict[str, str | list] = {
+    return {
         "name": name,
         "category": WIDGET_CATEGORY,
         "subCategory": sub_category,
         "source": [WIDGET_SOURCE],
     }
-    if newest_page:
-        config["params"] = [
-            {"paramName": "limit", "value": 5000},
-            {"paramName": "sort", "value": "desc", "type": "text", "show": False},
-        ]
-    return config
 
 
 @router.command(
@@ -290,7 +255,6 @@ def _register_dataset_command(target: Router, group: str, dataset: str) -> None:
         "widget_config": _widget_config(
             spec["name"],
             spec.get("category") or GROUP_TITLES.get(group, group),
-            (group, dataset) in _NEWEST_PAGE,
         ),
     }
     if dataset in _MULTI_GROUP_DATASETS:
@@ -396,7 +360,7 @@ router.include_router(_nuclear_router, prefix="/nuclear_outages")
 
 @router.command(
     model="EiaCrudeOilImports",
-    widget_config=_widget_config("Crude Oil Imports", "Petroleum", newest_page=True),
+    widget_config=_widget_config("Crude Oil Imports", "Petroleum"),
     examples=[
         APIEx(
             description="Monthly crude oil imports from Canada, by grade.",
@@ -416,9 +380,7 @@ async def crude_oil_imports(
 
 @router.command(
     model="EiaInternational",
-    widget_config=_widget_config(
-        "International Energy Data", "International", newest_page=True
-    ),
+    widget_config=_widget_config("International Energy Data", "International"),
     examples=[
         APIEx(
             description="Annual petroleum production for OPEC members.",
@@ -445,7 +407,7 @@ async def international(
 @router.command(
     model="EiaSeds",
     widget_config=_widget_config(
-        "State Energy Data System (SEDS)", "State Energy Data System", newest_page=True
+        "State Energy Data System (SEDS)", "State Energy Data System"
     ),
     examples=[
         APIEx(
@@ -471,7 +433,7 @@ async def seds(
 @router.command(
     model="EiaTotalEnergy",
     widget_config=_widget_config(
-        "Total Energy (Monthly Energy Review)", "Total Energy", newest_page=True
+        "Total Energy (Monthly Energy Review)", "Total Energy"
     ),
     examples=[
         APIEx(
@@ -492,9 +454,7 @@ async def total_energy(
 
 @router.command(
     model="EiaAeo",
-    widget_config=_widget_config(
-        "Annual Energy Outlook", "Annual Energy Outlook", newest_page=True
-    ),
+    widget_config=_widget_config("Annual Energy Outlook", "Annual Energy Outlook"),
     examples=[
         APIEx(
             description="Reference-case projections from the 2025 Annual Energy Outlook.",
@@ -521,7 +481,7 @@ async def aeo(
 @router.command(
     model="EiaIeo",
     widget_config=_widget_config(
-        "International Energy Outlook", "International Energy Outlook", newest_page=True
+        "International Energy Outlook", "International Energy Outlook"
     ),
     examples=[
         APIEx(

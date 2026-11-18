@@ -4,7 +4,6 @@ from datetime import date
 from urllib.parse import parse_qs, urlparse
 
 import pytest
-from openbb_core.app.model.abstract.error import OpenBBError
 from openbb_core.provider.utils.errors import EmptyDataError
 
 from openbb_us_eia.models.crude_oil_imports import EiaCrudeOilImportsQueryParams
@@ -194,18 +193,31 @@ class TestPaginate:
             )
 
     @pytest.mark.asyncio
-    async def test_auto_ceiling_raises_without_limit(self):
-        pages = {0: _page([{"period": "2020"}] * 5000, MAX_AUTO_ROWS + 1)}
-        amake_request, amake_requests, _ = _stub_http(pages)
-        with pytest.raises(OpenBBError, match="pagination ceiling"):
-            await paginate(
+    @pytest.mark.parametrize("sort, requests", [("asc", 2), ("desc", 1)])
+    async def test_auto_ceiling_returns_newest_page_without_limit(self, sort, requests):
+        calls = []
+
+        async def amake_request(url, response_callback=None, **kwargs):
+            direction = parse_qs(urlparse(url).query)["sort[0][direction]"][0]
+            calls.append(direction)
+            period = "2026" if direction == "desc" else "1990"
+            return _page([{"period": period}] * 5000, MAX_AUTO_ROWS + 1)
+
+        async def amake_requests(urls, response_callback=None, **kwargs):
+            raise AssertionError("no further pages are requested")
+
+        with pytest.warns(UserWarning, match="Returning the newest 5000 rows"):
+            result = await paginate(
                 build_data_url,
-                {"path": "seds", "api_key": "K"},
+                {"path": "seds", "api_key": "K", "sort": sort},
                 limit=None,
                 amake_request=amake_request,
                 amake_requests=amake_requests,
                 response_callback=_noop_callback,
             )
+        assert calls == [sort, "desc"][:requests]
+        assert result["rows"] == [{"period": "2026"}] * 5000
+        assert result["total"] == MAX_AUTO_ROWS + 1
 
     @pytest.mark.asyncio
     async def test_explicit_limit_bypasses_ceiling(self):
