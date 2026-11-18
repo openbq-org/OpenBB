@@ -156,8 +156,10 @@ def resolve_file(item_url: str, fetch: Fetch) -> str | None:
     """Resolve an item page to its direct document URL, or ``None``.
 
     An item points at either a direct file, a catalog page (e.g. FRASER) that in
-    turn names the file, or an HTML article with no document. Only the first two
-    resolve to a downloadable URL. CMS staging hosts are rewritten to public ones.
+    turn names the file, a DOI whose landing page links the file, or an HTML
+    article with no document. Only the first three resolve to a downloadable URL,
+    the last two at the cost of one more request. CMS staging hosts are rewritten
+    to public ones.
     """
     page = fetch(item_url)
     link = _first_file_link(page) or _doi_pdf(page, fetch)
