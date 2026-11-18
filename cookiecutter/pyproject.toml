@@ -5,7 +5,7 @@ description = "Extensions template for the OpenBB Python Package."
 authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
 license = { text = "Apache-2.0" }
 readme = "README.md"
-requires-python = ">=3.11,<4"
+requires-python = ">=3.11.5,<4"
 dependencies = [
     "cookiecutter>=2.6.0",
     "rich>=13.0.0",
