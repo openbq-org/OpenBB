@@ -1,10 +1,13 @@
 """Exception handlers module."""
 
+import asyncio
 import json
 import logging
 from collections.abc import Iterable
 from typing import Any
 
+import aiohttp
+import requests
 from fastapi import Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import ResponseValidationError
@@ -16,6 +19,21 @@ from openbb_core.env import Env
 from openbb_core.provider.utils.errors import EmptyDataError, UnauthorizedError
 
 logger = logging.getLogger("uvicorn.error")
+
+# requests.Timeout is an OSError, and asyncio.TimeoutError is its own class on
+# Python 3.10, so neither is caught as the builtin TimeoutError.
+TIMEOUT_ERRORS: tuple[type[Exception], ...] = (
+    TimeoutError,
+    asyncio.TimeoutError,
+    requests.exceptions.Timeout,
+)
+# aiohttp raises ContentTypeError, not JSONDecodeError, when a response that
+# should be JSON arrives as another type, such as a blocked page's text/html.
+NON_JSON_ERRORS: tuple[type[Exception], ...] = (
+    json.JSONDecodeError,
+    requests.exceptions.JSONDecodeError,
+    aiohttp.ContentTypeError,
+)
 
 
 def _is_query_model(title: str) -> bool:
@@ -50,22 +68,23 @@ class ExceptionHandlers:
     @staticmethod
     async def exception(_: Request, error: Exception) -> JSONResponse:
         """Exception handler for Base Exception."""
-        if isinstance(error, TimeoutError):
+        if isinstance(error, TIMEOUT_ERRORS):
+            # A requests timeout's message can carry the request URL.
+            message = (
+                "" if isinstance(error, requests.exceptions.Timeout) else str(error)
+            )
             return await ExceptionHandlers._handle(
                 exception=error,
                 status_code=504,
-                detail=str(error)
-                or "The upstream data source did not respond in time.",
+                detail=message or "The upstream data source did not respond in time.",
             )
-        if isinstance(error, json.JSONDecodeError):
+        if isinstance(error, NON_JSON_ERRORS):
             return await ExceptionHandlers._handle(
                 exception=error,
                 status_code=502,
                 detail="The data source returned a response that is not valid JSON.",
             )
         errors = error.errors if hasattr(error, "errors") else error
-        if callable(errors):
-            errors = errors()
 
         if errors:
             if isinstance(errors, ValueError):
@@ -75,16 +94,13 @@ class ExceptionHandlers:
                     detail=errors.args,
                 )
             # Required parameters are missing and is not handled by ValidationError.
-            title = getattr(error, "title", "")
-            if isinstance(errors, Iterable) and (
-                "QueryParams" in title or _is_query_model(title)
-            ):
+            if isinstance(errors, Iterable):
                 for err in errors:
                     if err.get("type") == "missing":
                         return await ExceptionHandlers._handle(
                             exception=error,
                             status_code=422,
-                            detail=jsonable_encoder(err),
+                            detail={**err},
                         )
         return await ExceptionHandlers._handle(
             exception=error,
@@ -101,6 +117,7 @@ class ExceptionHandlers:
         # So we check if the validation error comes from a QueryParams class.
         # And that it is in the request query params.
         # If yes, we update the error location with query.
+        # A missing field is client input too: it cannot be in the request.
         # If not, we handle it as a base Exception error.
         query_params = dict(request.query_params)
         if isinstance(error, ResponseValidationError):
@@ -127,9 +144,12 @@ class ExceptionHandlers:
         all_in_query = all(
             loc in query_params
             for err in errors  # ty: ignore[not-iterable]
+            if err.get("type") != "missing"
             for loc in err.get("loc", ())
         )
-        if "QueryParams" in error.title and all_in_query:
+        if (
+            "QueryParams" in error.title or _is_query_model(error.title)
+        ) and all_in_query:
             detail = [
                 {
                     **{k: v for k, v in err.items() if k != "ctx"},
@@ -140,7 +160,8 @@ class ExceptionHandlers:
             return await ExceptionHandlers._handle(
                 exception=error,
                 status_code=422,
-                detail=detail,
+                # An error's input can hold dates, which JSONResponse cannot serialize.
+                detail=jsonable_encoder(detail),
             )
         return await ExceptionHandlers.exception(request, error)
 

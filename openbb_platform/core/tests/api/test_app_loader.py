@@ -1,8 +1,11 @@
 """Tests for ``AppLoader``'s OpenAPI tag rewriting."""
 
 import json
+from unittest.mock import MagicMock
 
+import aiohttp
 import pytest
+import requests
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.testclient import TestClient
@@ -157,6 +160,13 @@ def test_swagger_ui_opens_with_every_tag_collapsed():
     [
         (TimeoutError("slow"), 504),
         (json.JSONDecodeError("Expecting value", "<html>", 0), 502),
+        (requests.exceptions.ReadTimeout("Read timed out."), 504),
+        (
+            aiohttp.ContentTypeError(
+                MagicMock(real_url="https://example.com"), (), status=200
+            ),
+            502,
+        ),
     ],
 )
 def test_timeout_and_invalid_json_responses_keep_cors_headers(
