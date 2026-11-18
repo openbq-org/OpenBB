@@ -888,3 +888,39 @@ def test_filter_by_dates_only_end_and_missing_date():
     data = [_Item(dt.date(2024, 3, 1)), _NoDate()]
     out = filter_by_dates(data, end_date=dt.date(2024, 2, 1))
     assert out == []
+
+@pytest.mark.parametrize(
+    "settings, call_kwargs, expected",
+    [
+        ({}, {}, 10),  # nothing set: the old 10 s default
+        ({"timeout": 45}, {}, 45),  # python_settings timeout, as make_request reads it
+        ({"timeout": 45}, {"timeout": 5}, 5),  # a fetcher's explicit timeout wins
+        ({"timeout": 45}, {"preferences": {"request_timeout": 2}}, 2),
+    ],
+)
+def test_amake_request_timeout(monkeypatch, settings, call_kwargs, expected):
+    """amake_request reads the same timeout settings as make_request."""
+    captured = []
+
+    class _S:
+        async def request(self, *_a, **kwargs):
+            captured.append(kwargs["timeout"])
+            return MockResponse()
+
+        async def close(self):
+            pass
+
+    async def _session(**_k):
+        return _S()
+
+    monkeypatch.setattr(
+        "openbb_core.provider.utils.helpers.get_python_request_settings",
+        lambda: dict(settings),
+    )
+    monkeypatch.setattr(
+        "openbb_core.provider.utils.helpers.get_async_requests_session", _session
+    )
+    callback = MockSession.mock_callback
+    asyncio.run(amake_request("http://mock.url", response_callback=callback, **call_kwargs))
+    asyncio.run(amake_requests(["http://mock.url"], response_callback=callback, **call_kwargs))
+    assert captured == [expected, expected]
