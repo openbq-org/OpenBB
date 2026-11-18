@@ -89,7 +89,11 @@ class ImfCacheBuildHook(BuildHookInterface):
                     "imf-cache: regenerating from IMF SDMX 3.0 "
                     "(api.imf.org/external/sdmx/3.0)..."
                 )
-                env = {**os.environ, "PYTHONUNBUFFERED": "1"}
+                env = {
+                    **os.environ,
+                    "PYTHONUNBUFFERED": "1",
+                    "PYTHONIOENCODING": "utf-8",
+                }
                 proc = subprocess.Popen(  # noqa: S603
                     [sys.executable, str(_GENERATE_CACHE)],
                     cwd=str(_ROOT),
@@ -97,6 +101,8 @@ class ImfCacheBuildHook(BuildHookInterface):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
+                    encoding="utf-8",
+                    errors="replace",
                     bufsize=1,
                 )
                 assert proc.stdout is not None  # noqa: S101

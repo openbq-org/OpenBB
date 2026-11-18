@@ -120,7 +120,11 @@ class OecdCacheBuildHook(BuildHookInterface):
                 # summary still have the trace). ``PYTHONUNBUFFERED=1``
                 # keeps the subprocess from line-buffering since its
                 # stdout isn't a TTY.
-                env = {**os.environ, "PYTHONUNBUFFERED": "1"}
+                env = {
+                    **os.environ,
+                    "PYTHONUNBUFFERED": "1",
+                    "PYTHONIOENCODING": "utf-8",
+                }
                 proc = subprocess.Popen(  # noqa: S603
                     [sys.executable, str(_GENERATE_CACHE)],
                     cwd=str(_ROOT),
@@ -128,6 +132,8 @@ class OecdCacheBuildHook(BuildHookInterface):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
+                    encoding="utf-8",
+                    errors="replace",
                     bufsize=1,
                 )
                 assert proc.stdout is not None  # noqa: S101
