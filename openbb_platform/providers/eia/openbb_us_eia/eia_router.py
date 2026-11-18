@@ -396,7 +396,7 @@ router.include_router(_nuclear_router, prefix="/nuclear_outages")
 
 @router.command(
     model="EiaCrudeOilImports",
-    widget_config=_widget_config("Crude Oil Imports", "Petroleum"),
+    widget_config=_widget_config("Crude Oil Imports", "Petroleum", newest_page=True),
     examples=[
         APIEx(
             description="Monthly crude oil imports from Canada, by grade.",
@@ -471,7 +471,7 @@ async def seds(
 @router.command(
     model="EiaTotalEnergy",
     widget_config=_widget_config(
-        "Total Energy (Monthly Energy Review)", "Total Energy"
+        "Total Energy (Monthly Energy Review)", "Total Energy", newest_page=True
     ),
     examples=[
         APIEx(

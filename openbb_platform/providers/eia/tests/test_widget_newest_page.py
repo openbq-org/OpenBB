@@ -8,9 +8,11 @@ NEWEST_PAGE = {
     PREFIX + path
     for path in (
         "aeo",
+        "crude_oil_imports",
         "ieo",
         "international",
         "seds",
+        "total_energy",
         "electricity/electric_power_operations",
         "electricity/electric_power_operations_for_individual_power_plants",
         "electricity/inventory_of_operable_generators",
@@ -54,7 +56,7 @@ def _paging_params(operation) -> dict:
 
 
 def test_listed_widgets_open_on_the_newest_5000_rows(eia_paths):
-    assert len(NEWEST_PAGE) == 25
+    assert len(NEWEST_PAGE) == 27
     for path in sorted(NEWEST_PAGE):
         params = _paging_params(eia_paths[path])
         assert params["limit"]["value"] == 5000, path
