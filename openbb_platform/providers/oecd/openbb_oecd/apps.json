@@ -952,8 +952,7 @@
                 "country": [
                   "AUS"
                 ],
-                "frequency": "Q",
-                "end_date": "2020-01-01"
+                "frequency": "Q"
               },
               "chartView": {
                 "enabled": false,

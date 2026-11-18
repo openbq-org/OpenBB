@@ -1427,6 +1427,12 @@ class TestGetOecdAppsJson:
         result = await get_oecd_apps_json()
         assert isinstance(result, list)
 
+    async def test_presentation_table_opens_without_an_end_date(self):
+        """A saved end_date plus the widget's row limit asked OECD for no data."""
+        import json
+
+        assert '"end_date"' not in json.dumps(await get_oecd_apps_json())
+
     async def test_returns_empty_on_missing_file(self, monkeypatch, tmp_path):
         from openbb_oecd import oecd_router as router_mod
 
