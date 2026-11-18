@@ -96,13 +96,13 @@ MONTHS: tuple[str, ...] = (
 
 MONTH_ORD: dict[str, int] = {name: index + 1 for index, name in enumerate(MONTHS)}
 
-HEADER_MARKER = "Import/export"
+HEADER_MARKER = "Commodity description"
 FOOTER_PREFIXES = ("1/", "2/", "3/", "Source", "Date run", "USSR")
 NULL_TOKENS = frozenset({"", "-", "--", "---", "n/a", "na", "null", "none", "nan"})
 
 YEAR_CELL = re.compile(r"^\d{4}$")
 MONTH_CELL = re.compile(r"^([A-Za-z]{3})-(\d{2})$")
-YTD_CELL = re.compile(r"^([A-Za-z]{3}-[A-Za-z]{3})\s+(\d{2})$")
+YTD_CELL = re.compile(r"^([A-Za-z]{3}-[A-Za-z]{3})[\s-]+(\d{2})$")
 UNIT_PAREN = re.compile(r"\s*\(([^()]*)\)\s*$")
 
 
@@ -206,7 +206,7 @@ def parse_time_header(header: tuple) -> list[dict]:
     Parameters
     ----------
     header : tuple
-        The header row values; time cells begin at column D (index 3).
+        The header row values; time cells begin at column F (index 5).
 
     Returns
     -------
@@ -215,7 +215,7 @@ def parse_time_header(header: tuple) -> list[dict]:
         month_ord, col_key, and is_ytd keys.
     """
     columns: list[dict] = []
-    for index in range(3, len(header)):
+    for index in range(5, len(header)):
         cell = header[index]
         if cell is None:
             continue
@@ -288,7 +288,7 @@ def _iter_sheets(content: bytes):
 
 
 def _header_index(rows: list[tuple]) -> int:
-    """Return the index of a sheet's 'Import/export' header row, or -1.
+    """Return the index of a sheet's 'Commodity description' header row, or -1.
 
     Parameters
     ----------
@@ -332,13 +332,11 @@ def parse_products(content: bytes, entry: dict, direction: str) -> list[str]:
             continue
         for row in rows[start + 1 :]:
             label = row[0] if row else None
-            code = row[1] if len(row) > 1 else None
-            if label is None or code is None:
+            flow = row[1] if len(row) > 1 else None
+            if label is None or flow is None:
                 continue
-            block_direction, product, _ = parse_block_label(
-                normalize_label(label), entry["unit_in_label"], entry["unit"]
-            )
-            if block_direction != direction or product in seen:
+            product = normalize_label(label)
+            if str(flow).strip().lower() != direction or product in seen:
                 continue
             seen.add(product)
             products.append(product)
@@ -378,25 +376,25 @@ def parse_workbook(
         if start < 0:
             continue
         columns = parse_time_header(rows[start])
-        current: tuple[str, str, str | None] | None = None
         for row in rows[start + 1 :]:
-            label = row[0] if row else None
-            code = row[1] if len(row) > 1 else None
-            name = row[2] if len(row) > 2 else None
-            label_text = normalize_label(label) if label not in (None, "") else None
-            country = str(name).strip() if name is not None else ""
-            if label_text and code is None and not country:
-                break
-            if label_text and code is not None:
-                current = parse_block_label(
-                    label_text, entry["unit_in_label"], entry["unit"]
-                )
-            if current is None or not country:
+            # Since Nov 2026 every row repeats commodity, trade flow, unit,
+            # geography code, and geography name in columns A-E.
+            label, flow, unit_cell, code, name = (tuple(row) + (None,) * 5)[:5]
+            if flow is None:
+                if label not in (None, ""):
+                    break
                 continue
-            direction, product, unit = current
+            country = str(name).strip() if name is not None else ""
+            if label is None or not country:
+                continue
+            direction = str(flow).strip().lower()
+            product = normalize_label(label)
+            unit = str(unit_cell).strip() if unit_cell is not None else entry["unit"]
             if direction != want_direction or product != want_product:
                 continue
-            if country.casefold() == "total" or country.startswith("Total"):
+            if country.casefold() in ("total", "world total") or country.startswith(
+                "Total"
+            ):
                 continue
             geography_code = (
                 int(code)

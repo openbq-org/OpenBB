@@ -34,42 +34,45 @@ from openbb_government_us.usda.utils.ers_livestock_and_meat_international_trade_
 
 HEAD_ENTRY = {"unit": "Head", "unit_in_label": False}
 
-ANNUAL_HEADER = [
-    "Import/export, geography code and name 1/ 2/",
-    None,
-    None,
-    "1989",
-    "1990",
-    "Jan-May 25",
-    "Jan-May 26",
+DESCRIPTORS = [
+    "Commodity description",
+    "Trade flow",
+    "Unit description",
+    "Geography code",
+    "Geography description",
 ]
+
+ANNUAL_HEADER = [*DESCRIPTORS, 1989, 1990, "Jan-May-25", "Jan-May-26"]
+
+IMPORTS = ["Cattle, total", "Imports", "Head"]
+EXPORTS = ["Cattle, total", "Exports", "Head"]
 
 ANNUAL_ROWS = [
     ["Cattle: annual and cumulative year-to-date U.S. trade (head)", None, None],
     ANNUAL_HEADER,
-    ["Cattle imports, total", 1220, "Canada", 100.0, 110.0, 50.0, 55.0],
-    [None, 2010, "Mexico", 200.0, None, 20.0, 25.0],
-    [None, None, "Total\n ", 300.0, 110.0, 70.0, 80.0],
-    ["Cattle exports, total", 5880, "Japan", 5.0, 6.0, 3.0, 4.0],
-    [None, None, "Other geographies", 1.0, 2.0, None, 1.0],
+    [*IMPORTS, 1220, "Canada", 100.0, 110.0, 50.0, 55.0],
+    [*IMPORTS, 2010, "Mexico", 200.0, None, 20.0, 25.0],
+    [*IMPORTS, 0, "World total", 300.0, 110.0, 70.0, 80.0],
+    [*EXPORTS, 5880, "Japan", 5.0, 6.0, 3.0, 4.0],
+    [*EXPORTS, None, "Other geographies", 1.0, 2.0, None, 1.0],
     ["1/ Geographies are ranked by the sum of their trade.", None, None],
     ["Date run: 7/7/2026", None, None],
 ]
 
 MONTHLY_SHEET0 = [
     ["Cattle: monthly U.S. trade (head)", None, None],
-    ["Import/export, geography code and name 1/ 2/", None, None, "Jan-89", "Feb-89"],
-    ["Cattle imports, total", 1220, "Canada", 11.0, 12.0],
-    ["Cattle exports, total", 5880, "Japan", 1.0, 2.0],
+    [*DESCRIPTORS, "Jan-89", "Feb-89"],
+    [*IMPORTS, 1220, "Canada", 11.0, 12.0],
+    [*EXPORTS, 5880, "Japan", 1.0, 2.0],
     ["1/ ranked", None, None],
 ]
 
 MONTHLY_SHEET1 = [
     ["Cattle: monthly U.S. trade (head)", None, None],
-    ["Import/export, geography code and name 1/ 2/", None, None, "Jan-00", "Feb-26"],
-    ["Cattle imports, total", 1220, "Canada", 21.0, 26.0],
-    [None, 2010, "Mexico", 31.0, 36.0],
-    ["Cattle exports, total", 5880, "Japan", 3.0, 4.0],
+    [*DESCRIPTORS, "Jan-00", "Feb-26"],
+    [*IMPORTS, 1220, "Canada", 21.0, 26.0],
+    [*IMPORTS, 2010, "Mexico", 31.0, 36.0],
+    [*EXPORTS, 5880, "Japan", 3.0, 4.0],
     ["1/ ranked", None, None],
 ]
 
@@ -206,7 +209,7 @@ class TestErsLivestockAndMeatInternationalTradeDataUtils:
 
     def test_parse_time_header_monthly_and_unknown(self):
         """Monthly headers split into year and month; unknown cells are skipped."""
-        header = (None, None, None, "Jan-89", "May-26", "junk", None)
+        header = (None, None, None, None, None, "Jan-89", "May-26", "junk", None)
         columns = parse_time_header(header)
         assert [(c["col_key"], c["month"], c["month_ord"]) for c in columns] == [
             ("1989", "Jan", 1),
@@ -224,7 +227,7 @@ class TestErsLivestockAndMeatInternationalTradeDataUtils:
         assert parse_products(content, HEAD_ENTRY, "imports") == []
 
     def test_parse_workbook_annual_drops_total_keeps_other(self):
-        """Annual parsing drops 'Total' rows and keeps 'Other geographies'."""
+        """Annual parsing drops the world total and keeps 'Other geographies'."""
         records = parse_workbook(ANNUAL_BYTES, HEAD_ENTRY, "imports", "Cattle, total")
         countries = {r["country"] for r in records}
         assert countries == {"Canada", "Mexico"}
@@ -275,7 +278,7 @@ class TestErsLivestockAndMeatInternationalTradeDataUtils:
         assert ranks["Mexico"] == 1
 
     def test_parse_workbook_skips_headerless_and_preblock_rows(self):
-        """Headerless sheets and rows before any block label are skipped."""
+        """Headerless sheets and rows with no commodity are skipped."""
         content = build_xlsx(
             [
                 ("NoHeader", [["random", None, None], ["stuff", 1, "X"]]),
@@ -284,16 +287,8 @@ class TestErsLivestockAndMeatInternationalTradeDataUtils:
                     [
                         ["title", None, None],
                         ANNUAL_HEADER,
-                        [None, 9999, "Ghost", 1.0, 2.0, 3.0, 4.0],
-                        [
-                            "Cattle imports, total",
-                            1220,
-                            "Canada",
-                            100.0,
-                            110.0,
-                            50.0,
-                            55.0,
-                        ],
+                        [None, "Imports", "Head", 9999, "Ghost", 1.0, 2.0, 3.0, 4.0],
+                        [*IMPORTS, 1220, "Canada", 100.0, 110.0, 50.0, 55.0],
                         ["Date run: 7/7/2026", None, None],
                     ],
                 ),
