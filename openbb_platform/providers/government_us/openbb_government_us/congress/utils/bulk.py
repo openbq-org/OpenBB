@@ -1192,58 +1192,20 @@ def filter_calendars(
     return out[:limit]
 
 
-async def fetch_cmr(congress: int, pagesize: int = 100, offset: int = 0) -> list[dict]:
-    """Fetch Congressionally Mandated Reports from the keyless GovInfo link API."""
-    from openbb_core.provider.utils.helpers import amake_request
-
-    url = (
-        f"{GOVINFO_BASE}/link/cmr/tableOfReports?congress={congress}"
-        f"&link-type=json&pagesize={pagesize}&offset={offset}"
-    )
-    response = await amake_request(url)
-    if not isinstance(response, dict) or "resultSet" not in response:
-        # GovInfo's link service answers 500 "No static resource" for this route.
-        return await _fetch_cmr_wssearch(congress, pagesize, offset)
-    records = parse_cmr(response["resultSet"])
-    records.sort(key=lambda r: r.get("publication_date") or "", reverse=True)
-    return records
-
-
-def parse_cmr(result_set: list[dict]) -> list[dict]:
-    """Map raw CMR ``resultSet`` records to the data-model shape."""
-    records: list[dict] = []
-    for item in result_set:
-        pkg = item.get("packageId", "")
-        records.append(
-            {
-                "package_id": pkg,
-                "title": item.get("title", ""),
-                "submitting_agency": item.get("submittingAgency", ""),
-                "publication_date": item.get("publicationDate") or None,
-                "date_submitted_to_congress": item.get("dateSubmittedToCongress")
-                or None,
-                "date_required": item.get("dateRequiredToBeSubmittedToGPO") or None,
-                "is_on_time": item.get("isOnTime") == "true",
-                "pdf": item.get("pdfLink") or (package_urls(pkg)["pdf"] if pkg else ""),
-                "details_link": item.get("detailsLink", ""),
-                "mods_link": item.get("modsLink", ""),
-            }
-        )
-    return records
-
-
 _CMR_LINE2_RE = re.compile(r"Reports\. (.*?)\. \d+\w\w Congress")
 
 
-async def _fetch_cmr_wssearch(congress: int, pagesize: int, offset: int) -> list[dict]:
-    """Fetch Mandated Reports from the keyless GovInfo search, newest first."""
+async def fetch_cmr(congress: int, pagesize: int = 100, offset: int = 0) -> list[dict]:
+    """Fetch Congressionally Mandated Reports from the keyless GovInfo search.
+
+    Newest first. The search pages by index, so ``offset`` is rounded down to a
+    whole page of ``pagesize``.
+    """
     from datetime import datetime
 
-    # shortcut: search carries no submission/deadline dates, so those stay empty
-    # and is_on_time is None; drop this when the link route answers again.
     response = await wssearch(
         f"collection:CMR AND congress:{congress}",
-        offset=offset // max(pagesize, 1),  # wssearch offset is a page index
+        offset=offset // max(pagesize, 1),
         pagesize=pagesize,
     )
     records: list[dict] = []
@@ -1262,7 +1224,6 @@ async def _fetch_cmr_wssearch(congress: int, pagesize: int, offset: int) -> list
                     if date
                     else None
                 ),
-                "is_on_time": None,
                 "pdf": package_urls(pkg)["pdf"] if pkg else "",
                 "details_link": f"{GOVINFO_BASE}/app/details/{pkg}",
             }

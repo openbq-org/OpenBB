@@ -371,12 +371,8 @@ _CMR_RECORD = {
     "title": "Report One",
     "submitting_agency": "Agency X",
     "publication_date": "2026-03-13",
-    "date_submitted_to_congress": "2026-03-13",
-    "date_required": "2026-03-01",
-    "is_on_time": True,
     "pdf": "https://x/CMR-A98-1.pdf",
     "details_link": "https://x/details",
-    "mods_link": "https://x/mods.xml",
 }
 
 

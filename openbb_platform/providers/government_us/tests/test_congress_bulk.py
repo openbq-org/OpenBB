@@ -878,63 +878,9 @@ def test_filter_calendars():
     assert len(bulk.filter_calendars(records, limit=0)) == 3
 
 
-def test_parse_cmr():
-    """parse_cmr maps raw resultSet records to the data-model shape."""
-    result_set = [
-        {
-            "packageId": "CMR-A98-00199920",
-            "title": "Report One",
-            "submittingAgency": "Agency X",
-            "publicationDate": "2026-03-13",
-            "dateSubmittedToCongress": "2026-03-13",
-            "dateRequiredToBeSubmittedToGPO": "2026-03-01",
-            "isOnTime": "true",
-            "pdfLink": "https://www.govinfo.gov/content/pkg/CMR-A98-00199920/pdf/CMR-A98-00199920.pdf",
-            "detailsLink": "https://www.govinfo.gov/app/details/CMR-A98-00199920",
-            "modsLink": "https://www.govinfo.gov/metadata/pkg/CMR-A98-00199920/mods.xml",
-        },
-        {"packageId": "CMR-X1-00000001", "title": "Two", "isOnTime": "false"},
-    ]
-    out = bulk.parse_cmr(result_set)
-    assert out[0]["package_id"] == "CMR-A98-00199920"
-    assert out[0]["is_on_time"] is True
-    assert out[0]["submitting_agency"] == "Agency X"
-    assert out[1]["is_on_time"] is False
-    assert out[1]["pdf"].endswith("/CMR-X1-00000001/pdf/CMR-X1-00000001.pdf")
-
-
 def test_fetch_cmr(monkeypatch):
-    """fetch_cmr requests the link API and returns parsed records."""
+    """fetch_cmr reads the GovInfo search and maps each hit to a report record."""
     captured = {}
-
-    async def _fake_amake_request(url, *args, **kwargs):
-        captured["url"] = url
-        return {
-            "resultSet": [{"packageId": "CMR-A98-1", "title": "T", "isOnTime": "true"}]
-        }
-
-    monkeypatch.setattr(core_helpers, "amake_request", _fake_amake_request)
-    out = asyncio.run(bulk.fetch_cmr(119, pagesize=5, offset=10))
-    assert out[0]["package_id"] == "CMR-A98-1"
-    assert "congress=119" in captured["url"]
-    assert "pagesize=5" in captured["url"]
-    assert "offset=10" in captured["url"]
-
-
-@pytest.mark.parametrize(
-    "response",
-    [
-        None,
-        # GovInfo's answer (HTTP 500) while the link route is missing.
-        {"message": "No static resource cmr/tableofreports for request."},
-    ],
-)
-def test_fetch_cmr_falls_back_to_search(monkeypatch, response):
-    """Without a resultSet from the link API the reports come from the search."""
-    captured = {}
-
-    async def _fake(url, *args, **kwargs):
-        return response
 
     async def _search(query, **kwargs):
         captured.update(kwargs, query=query)
@@ -943,41 +889,41 @@ def test_fetch_cmr_falls_back_to_search(monkeypatch, response):
                 {
                     "line1": "Quarterly Report",
                     "line2": (
-                        "Congressionally Mandated Reports. Department of Veterans"
-                        " Affairs. 119th Congress. November 6, 2026."
+                        "Congressionally Mandated Reports. Veterans Affairs"
+                        " Department. 119th Congress, Received by Committee on"
+                        " Veterans' Affairs. Friday, November 6, 2026."
                     ),
                     "fieldMap": {"packageid": "CMR-VA1-00203071"},
                 }
             ]
         }
 
-    monkeypatch.setattr(core_helpers, "amake_request", _fake)
     monkeypatch.setattr(bulk, "wssearch", _search)
     out = asyncio.run(bulk.fetch_cmr(119, pagesize=5, offset=10))
+    # The search pages by index: offset 10 at 5 per page is page 2.
     assert captured == {
         "query": "collection:CMR AND congress:119",
         "offset": 2,
         "pagesize": 5,
     }
-    assert len(out) == 1
-    assert out[0]["package_id"] == "CMR-VA1-00203071"
-    assert out[0]["title"] == "Quarterly Report"
-    assert out[0]["submitting_agency"] == "Department of Veterans Affairs"
-    assert out[0]["publication_date"] == "2026-11-06"
-    assert out[0]["is_on_time"] is None
-    assert out[0]["pdf"].endswith("/CMR-VA1-00203071/pdf/CMR-VA1-00203071.pdf")
+    assert out == [
+        {
+            "package_id": "CMR-VA1-00203071",
+            "title": "Quarterly Report",
+            "submitting_agency": "Veterans Affairs Department",
+            "publication_date": "2026-11-06",
+            "pdf": "https://www.govinfo.gov/content/pkg/CMR-VA1-00203071/pdf/CMR-VA1-00203071.pdf",
+            "details_link": "https://www.govinfo.gov/app/details/CMR-VA1-00203071",
+        }
+    ]
 
 
 def test_fetch_cmr_search_item_without_agency_or_date(monkeypatch):
     """A search item whose summary line has no agency or date is still listed."""
 
-    async def _fake(url, *args, **kwargs):
-        return None
-
     async def _search(query, **kwargs):
         return {"resultSet": [{"line1": "T", "line2": "", "fieldMap": {}}]}
 
-    monkeypatch.setattr(core_helpers, "amake_request", _fake)
     monkeypatch.setattr(bulk, "wssearch", _search)
     out = asyncio.run(bulk.fetch_cmr(119))
     assert out[0]["submitting_agency"] == ""

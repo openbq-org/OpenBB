@@ -1152,12 +1152,8 @@ _CMR_RECORDS = [
         "title": "Report One",
         "submitting_agency": "Agency X",
         "publication_date": "2026-03-13",
-        "date_submitted_to_congress": "2026-03-13",
-        "date_required": "2026-03-01",
-        "is_on_time": True,
         "pdf": "https://x/CMR-A98-1.pdf",
         "details_link": "https://x/details",
-        "mods_link": "https://x/mods.xml",
     },
 ]
 
@@ -1190,7 +1186,7 @@ def test_mandated_reports_extract_and_transform(monkeypatch):
 
     out = CongressMandatedReportsFetcher.transform_data(q, result)
     assert out[0].package_id == "CMR-A98-1"
-    assert out[0].is_on_time is True
+    assert out[0].submitting_agency == "Agency X"
     assert out[0].publication_date == date(2026, 3, 13)
 
 
