@@ -256,6 +256,48 @@ def _read_dated(
     return frame
 
 
+def survey_sheet(content: bytes, names: tuple[str, ...]) -> str:
+    """Return the workbook's sheet among ``names``, else its only sheet.
+
+    The Dallas Fed has renamed the data sheet of its survey workbooks.
+
+    Parameters
+    ----------
+    content : bytes
+        The workbook.
+    names : tuple[str, ...]
+        The names the sheet has been published under, in order of preference.
+
+    Returns
+    -------
+    str
+        The name of the sheet to read.
+
+    Raises
+    ------
+    OpenBBError
+        When no name matches in a workbook of several sheets.
+    """
+    from io import BytesIO
+
+    from openbb_core.app.model.abstract.error import OpenBBError
+    from pandas import ExcelFile
+
+    sheets = ExcelFile(BytesIO(content)).sheet_names
+
+    for name in names:
+        if name in sheets:
+            return name
+
+    if len(sheets) == 1:
+        return str(sheets[0])
+
+    raise OpenBBError(
+        f"The Dallas Fed workbook has no sheet named {' or '.join(names)};"
+        f" it has {', '.join(map(str, sheets))}."
+    )
+
+
 def parse_survey(
     content: bytes,
     sheet: str,

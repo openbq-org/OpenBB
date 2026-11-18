@@ -85,12 +85,13 @@ class FederalReserveDallasManufacturingFetcher(
         from openbb_federal_reserve.utils.dallas_survey import (
             MANUFACTURING_INDICATORS,
             parse_survey,
+            survey_sheet,
         )
         from openbb_federal_reserve.utils.workbook import pivot_wide
 
         records = parse_survey(
             data[0]["_raw"],
-            "Index",
+            survey_sheet(data[0]["_raw"], ("Index", "Sheet1")),
             MANUFACTURING_INDICATORS,
             date_format="%b-%y",
             start_date=query.start_date,
