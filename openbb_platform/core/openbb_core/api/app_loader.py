@@ -6,7 +6,11 @@ from fastapi import APIRouter, FastAPI
 from fastapi.exceptions import ResponseValidationError
 from pydantic import ValidationError
 
-from openbb_core.api.exception_handlers import ExceptionHandlers
+from openbb_core.api.exception_handlers import (
+    NON_JSON_ERRORS,
+    TIMEOUT_ERRORS,
+    ExceptionHandlers,
+)
 from openbb_core.app.model.abstract.error import OpenBBError
 from openbb_core.app.route_iter import iter_included_routers
 from openbb_core.app.router import RouterLoader
@@ -95,6 +99,9 @@ class AppLoader:
     def add_exception_handlers(app: FastAPI):
         """Add exception handlers."""
         app.add_exception_handler(Exception, ExceptionHandlers.exception)
+        # Handled inside the CORS middleware, unlike the Exception catch-all.
+        for error in (*TIMEOUT_ERRORS, *NON_JSON_ERRORS):
+            app.add_exception_handler(error, ExceptionHandlers.exception)
         app.add_exception_handler(ValidationError, ExceptionHandlers.validation)  # ty: ignore[invalid-argument-type]
         app.add_exception_handler(ResponseValidationError, ExceptionHandlers.validation)  # ty: ignore[invalid-argument-type]
         app.add_exception_handler(OpenBBError, ExceptionHandlers.openbb)  # ty: ignore[invalid-argument-type]
