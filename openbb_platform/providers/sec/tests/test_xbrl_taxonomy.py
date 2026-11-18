@@ -1303,6 +1303,38 @@ class TestLabelUrlForImport:
     def test_sec_dei(self):
         out = get_label_url_for_import("https://xbrl.sec.gov/dei/2024/dei-2024.xsd")
         assert out == "https://xbrl.sec.gov/dei/2024/dei-2024_lab.xsd"
+        assert (
+            get_label_url_for_import("https://xbrl.sec.gov/dei/2020/dei-2020-01-31.xsd")
+            == "https://xbrl.sec.gov/dei/2020/dei-lab-2020-01-31.xml"
+        )
+
+    @pytest.mark.parametrize(
+        "taxonomy",
+        ["country", "currency", "exch", "naics", "sic", "stpr"],
+    )
+    def test_sec_reference_taxonomies_use_entire_schema(self, taxonomy):
+        url = f"https://xbrl.sec.gov/{taxonomy}/2025/{taxonomy}-2025.xsd"
+        expected = f"https://xbrl.sec.gov/{taxonomy}/2025/{taxonomy}-entire-2025.xsd"
+        assert get_label_url_for_import(url) == expected
+        assert get_label_url_for_import(expected) == expected
+        assert (
+            TAXONOMIES[taxonomy].label_file_pattern == f"{taxonomy}-entire-{{year}}.xsd"
+        )
+
+    def test_sec_reference_legacy_2020_format(self):
+        assert (
+            get_label_url_for_import(
+                "https://xbrl.sec.gov/country/2020/country-2020-01-31.xsd"
+            )
+            == "https://xbrl.sec.gov/country/2020/country-lab-2020-01-31.xml"
+        )
+
+    def test_sec_snj_uses_doc_schema(self):
+        assert (
+            get_label_url_for_import("https://xbrl.sec.gov/snj/2025/snj-2025.xsd")
+            == "https://xbrl.sec.gov/snj/2025/snj-2025_doc.xsd"
+        )
+        assert TAXONOMIES["snj"].label_file_pattern == "snj-{year}_doc.xsd"
 
     def test_no_match_returns_none(self):
         assert get_label_url_for_import("https://example.com/whatever.xsd") is None
@@ -3047,6 +3079,25 @@ class TestEnsureLabels:
             manager._ensure_labels("ecd", 2024)
         # reference fallback produced documentation
         assert any(k == "ecd_X" for k in manager.parser.documentation)
+
+    def test_sec_entire_reference_preferred_for_country(self, manager: XBRLManager):
+        seen_frags: list[tuple[str, ...]] = []
+
+        def find(url, *frags):
+            seen_frags.append(frags)
+            if frags == ("country-entire-", "2025", ".xsd"):
+                return "https://xbrl.sec.gov/country/2025/country-entire-2025.xsd"
+            return None
+
+        with (
+            patch.object(manager.client, "find_file", side_effect=find),
+            patch.object(manager.client, "fetch_file", return_value=BytesIO(_LAB_XML)),
+        ):
+            manager._ensure_labels("country", 2025)
+
+        assert seen_frags[0] == ("country-entire-", "2025", ".xsd")
+        assert manager.parser.labels.get("ex_Item") == "Item Label"
+        assert ("country", 2025) in manager._labels_loaded_for
 
     def test_sec_label_fetch_error_continues(self, manager: XBRLManager):
         """A found SEC label URL whose fetch fails is skipped (line 2899-2900)."""
