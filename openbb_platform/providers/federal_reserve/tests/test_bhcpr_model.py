@@ -220,6 +220,22 @@ class TestFiledPeriods:
         )
         assert _filed_periods("1039502") == ["20260331", "20251231"]
 
+    def test_listed_quarter_with_no_report_yet_is_left_out(self, monkeypatch):
+        """A quarter the NIC lists before its report is published is skipped."""
+        reports = {
+            "BHCPR": {
+                "periods": [
+                    {"year": 2026, "quarter": 3, "pdf_available": False},
+                    {"year": 2026, "quarter": 2, "pdf_available": True},
+                ]
+            }
+        }
+        monkeypatch.setattr(
+            "openbb_federal_reserve.utils.ffiec.fetch_institution_financial_reports",
+            lambda rssd: reports,
+        )
+        assert _filed_periods("1039502") == ["20260630"]
+
     def test_blank_rssd_returns_empty(self):
         """A blank RSSD yields no filed periods without a fetch."""
         assert _filed_periods("") == []

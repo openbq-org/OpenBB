@@ -74,6 +74,8 @@ def _filed_periods(rssd: str) -> list[str]:
     return [
         _quarter_end(int(period["year"]), int(period["quarter"]))
         for period in reports.get("BHCPR", {}).get("periods", [])
+        # NIC lists a quarter before its report is published; its CSV is an error page.
+        if period.get("pdf_available", True)
     ]
 
 
