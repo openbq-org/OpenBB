@@ -52,7 +52,9 @@ class EiaDataBrowserQueryParams(QueryParams):
         default=None,
         gt=0,
         description="Maximum number of rows to return."
-        " The default returns all rows, paginating requests as needed.",
+        " The default returns all rows, paginating requests as needed."
+        " A request matching more than 500,000 rows returns the newest 5,000"
+        " unless a limit is set.",
     )
 
     @field_validator("route", mode="after")
