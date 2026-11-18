@@ -95,8 +95,8 @@ class CongressMandatedReportsData(Data):
         default=None,
         description="The statutory deadline for submission to the GPO.",
     )
-    is_on_time: bool = Field(
-        description="Whether the report met its submission deadline."
+    is_on_time: bool | None = Field(
+        default=None, description="Whether the report met its submission deadline."
     )
     pdf: str = Field(
         description="URL to the report in PDF format.",

@@ -921,14 +921,68 @@ def test_fetch_cmr(monkeypatch):
     assert "offset=10" in captured["url"]
 
 
-def test_fetch_cmr_non_dict(monkeypatch):
-    """fetch_cmr returns an empty list when the response is not a dict."""
+@pytest.mark.parametrize(
+    "response",
+    [
+        None,
+        # GovInfo's answer (HTTP 500) while the link route is missing.
+        {"message": "No static resource cmr/tableofreports for request."},
+    ],
+)
+def test_fetch_cmr_falls_back_to_search(monkeypatch, response):
+    """Without a resultSet from the link API the reports come from the search."""
+    captured = {}
+
+    async def _fake(url, *args, **kwargs):
+        return response
+
+    async def _search(query, **kwargs):
+        captured.update(kwargs, query=query)
+        return {
+            "resultSet": [
+                {
+                    "line1": "Quarterly Report",
+                    "line2": (
+                        "Congressionally Mandated Reports. Department of Veterans"
+                        " Affairs. 119th Congress. November 6, 2026."
+                    ),
+                    "fieldMap": {"packageid": "CMR-VA1-00203071"},
+                }
+            ]
+        }
+
+    monkeypatch.setattr(core_helpers, "amake_request", _fake)
+    monkeypatch.setattr(bulk, "wssearch", _search)
+    out = asyncio.run(bulk.fetch_cmr(119, pagesize=5, offset=10))
+    assert captured == {
+        "query": "collection:CMR AND congress:119",
+        "offset": 2,
+        "pagesize": 5,
+    }
+    assert len(out) == 1
+    assert out[0]["package_id"] == "CMR-VA1-00203071"
+    assert out[0]["title"] == "Quarterly Report"
+    assert out[0]["submitting_agency"] == "Department of Veterans Affairs"
+    assert out[0]["publication_date"] == "2026-11-06"
+    assert out[0]["is_on_time"] is None
+    assert out[0]["pdf"].endswith("/CMR-VA1-00203071/pdf/CMR-VA1-00203071.pdf")
+
+
+def test_fetch_cmr_search_item_without_agency_or_date(monkeypatch):
+    """A search item whose summary line has no agency or date is still listed."""
 
     async def _fake(url, *args, **kwargs):
         return None
 
+    async def _search(query, **kwargs):
+        return {"resultSet": [{"line1": "T", "line2": "", "fieldMap": {}}]}
+
     monkeypatch.setattr(core_helpers, "amake_request", _fake)
-    assert asyncio.run(bulk.fetch_cmr(119)) == []
+    monkeypatch.setattr(bulk, "wssearch", _search)
+    out = asyncio.run(bulk.fetch_cmr(119))
+    assert out[0]["submitting_agency"] == ""
+    assert out[0]["publication_date"] is None
+    assert out[0]["pdf"] == ""
 
 
 _WSSEARCH_ITEM = {

@@ -1201,8 +1201,10 @@ async def fetch_cmr(congress: int, pagesize: int = 100, offset: int = 0) -> list
         f"&link-type=json&pagesize={pagesize}&offset={offset}"
     )
     response = await amake_request(url)
-    result_set = response.get("resultSet", []) if isinstance(response, dict) else []
-    records = parse_cmr(result_set)
+    if not isinstance(response, dict) or "resultSet" not in response:
+        # GovInfo's link service answers 500 "No static resource" for this route.
+        return await _fetch_cmr_wssearch(congress, pagesize, offset)
+    records = parse_cmr(response["resultSet"])
     records.sort(key=lambda r: r.get("publication_date") or "", reverse=True)
     return records
 
@@ -1225,6 +1227,44 @@ def parse_cmr(result_set: list[dict]) -> list[dict]:
                 "pdf": item.get("pdfLink") or (package_urls(pkg)["pdf"] if pkg else ""),
                 "details_link": item.get("detailsLink", ""),
                 "mods_link": item.get("modsLink", ""),
+            }
+        )
+    return records
+
+
+_CMR_LINE2_RE = re.compile(r"Reports\. (.*?)\. \d+\w\w Congress")
+
+
+async def _fetch_cmr_wssearch(congress: int, pagesize: int, offset: int) -> list[dict]:
+    """Fetch Mandated Reports from the keyless GovInfo search, newest first."""
+    from datetime import datetime
+
+    # shortcut: search carries no submission/deadline dates, so those stay empty
+    # and is_on_time is None; drop this when the link route answers again.
+    response = await wssearch(
+        f"collection:CMR AND congress:{congress}",
+        offset=offset // max(pagesize, 1),  # wssearch offset is a page index
+        pagesize=pagesize,
+    )
+    records: list[dict] = []
+    for item in response.get("resultSet", []):
+        pkg = item.get("fieldMap", {}).get("packageid", "")
+        line2 = item.get("line2", "")
+        agency = _CMR_LINE2_RE.search(line2)
+        date = _DATE_RE.search(line2)
+        records.append(
+            {
+                "package_id": pkg,
+                "title": item.get("line1", ""),
+                "submitting_agency": agency.group(1) if agency else "",
+                "publication_date": (
+                    datetime.strptime(date.group(1), "%B %d, %Y").date().isoformat()
+                    if date
+                    else None
+                ),
+                "is_on_time": None,
+                "pdf": package_urls(pkg)["pdf"] if pkg else "",
+                "details_link": f"{GOVINFO_BASE}/app/details/{pkg}",
             }
         )
     return records
