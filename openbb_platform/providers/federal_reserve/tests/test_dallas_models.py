@@ -762,3 +762,18 @@ class TestLeadingIndex:
         query = FederalReserveDallasLeadingIndexFetcher.transform_query({})
         with pytest.raises(EmptyDataError):
             FederalReserveDallasLeadingIndexFetcher.extract_data(query, None)
+
+
+@pytest.mark.parametrize(
+    "fetcher, header",
+    [
+        (FederalReserveDallasManufacturingFetcher, ["date", "Prod", "Fprod"]),
+        (FederalReserveDallasServiceSectorFetcher, ["date ", "rev", "frev"]),
+    ],
+)
+@pytest.mark.parametrize("sheet", ["Index", "Sheet1"])
+def test_survey_sheet_named_index_or_sheet1(fetcher, header, sheet):
+    """The survey workbook is read whether its sheet is ``Index`` or ``Sheet1``."""
+    raw = _workbook(sheet, [header, ["Jun-04", 38, 50]])
+    rows = fetcher.transform_data(fetcher.transform_query({}), [{"_raw": raw}])
+    assert [r.date for r in rows] == [date(2004, 6, 1)]

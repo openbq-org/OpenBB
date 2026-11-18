@@ -82,15 +82,31 @@ class FederalReserveDallasServiceSectorFetcher(
         **kwargs: Any,
     ) -> list[FederalReserveDallasServiceSectorData]:
         """Decode every indicator, then pivot indicator-horizon to wide rows."""
+        from io import BytesIO
+
+        from pandas import ExcelFile
+
         from openbb_federal_reserve.utils.dallas_survey import (
             SERVICE_INDICATORS,
             parse_survey,
         )
         from openbb_federal_reserve.utils.workbook import pivot_wide
 
+        # The workbook's sheet was renamed upstream: old name, new name, then the only sheet.
+        sheets = ExcelFile(BytesIO(data[0]["_raw"])).sheet_names
+        names = ("Index", "Sheet1")
+        sheet = next(
+            (s for s in names if s in sheets), sheets[0] if len(sheets) == 1 else None
+        )
+        if sheet is None:  # renamed again, in a workbook of several sheets
+            from openbb_core.app.model.abstract.error import OpenBBError
+
+            raise OpenBBError(
+                f"The Dallas Fed workbook has no sheet named {' or '.join(names)}; it has {', '.join(sheets)}."
+            )
         records = parse_survey(
             data[0]["_raw"],
-            "Index",
+            sheet,
             SERVICE_INDICATORS,
             date_format="%b-%y",
             start_date=query.start_date,
