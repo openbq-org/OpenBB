@@ -16,7 +16,6 @@ SPECIES: dict[str, dict] = {
         "monthly": "/media/5608/beef-and-veal-monthly-us-trade-carcass-weight"
         "-1000-pounds.xlsx",
         "unit": CARCASS_UNIT,
-        "unit_in_label": False,
     },
     "cattle": {
         "label": "Cattle",
@@ -24,7 +23,6 @@ SPECIES: dict[str, dict] = {
         "-us-trade-head.xlsx",
         "monthly": "/media/5609/cattle-monthly-us-trade-head.xlsx",
         "unit": HEAD_UNIT,
-        "unit_in_label": False,
     },
     "pork": {
         "label": "Pork",
@@ -32,7 +30,6 @@ SPECIES: dict[str, dict] = {
         "-us-trade-carcass-weight-1000-pounds.xlsx",
         "monthly": "/media/5610/pork-monthly-us-trade-carcass-weight-1000-pounds.xlsx",
         "unit": CARCASS_UNIT,
-        "unit_in_label": False,
     },
     "hogs": {
         "label": "Hogs",
@@ -40,7 +37,6 @@ SPECIES: dict[str, dict] = {
         "-us-trade-head.xlsx",
         "monthly": "/media/5611/hogs-monthly-us-trade-head.xlsx",
         "unit": HEAD_UNIT,
-        "unit_in_label": False,
     },
     "lamb_mutton": {
         "label": "Lamb and mutton",
@@ -49,7 +45,6 @@ SPECIES: dict[str, dict] = {
         "monthly": "/media/5612/lamb-and-mutton-monthly-us-trade-carcass-weight"
         "-1000-pounds.xlsx",
         "unit": CARCASS_UNIT,
-        "unit_in_label": False,
     },
     "sheep_goats": {
         "label": "Sheep and goats",
@@ -57,7 +52,6 @@ SPECIES: dict[str, dict] = {
         "-us-trade-head.xlsx",
         "monthly": "/media/5613/sheep-and-goats-monthly-us-trade-head.xlsx",
         "unit": HEAD_UNIT,
-        "unit_in_label": False,
     },
     "poultry_eggs": {
         "label": "Chickens, turkeys, and eggs",
@@ -65,7 +59,6 @@ SPECIES: dict[str, dict] = {
         "-year-to-date-us-trade.xlsx",
         "monthly": "/media/5614/chickens-turkeys-and-eggs-monthly-us-trade.xlsx",
         "unit": None,
-        "unit_in_label": True,
     },
 }
 
@@ -103,7 +96,6 @@ NULL_TOKENS = frozenset({"", "-", "--", "---", "n/a", "na", "null", "none", "nan
 YEAR_CELL = re.compile(r"^\d{4}$")
 MONTH_CELL = re.compile(r"^([A-Za-z]{3})-(\d{2})$")
 YTD_CELL = re.compile(r"^([A-Za-z]{3}-[A-Za-z]{3})[\s-]+(\d{2})$")
-UNIT_PAREN = re.compile(r"\s*\(([^()]*)\)\s*$")
 
 
 def normalize_label(value) -> str:
@@ -136,42 +128,6 @@ def expand_year(two_digit: int) -> int:
         The four-digit year, mapping 00-49 to the 2000s and 50-99 to the 1900s.
     """
     return 2000 + two_digit if two_digit < 50 else 1900 + two_digit
-
-
-def parse_block_label(
-    label: str, unit_in_label: bool, default_unit: str | None
-) -> tuple[str, str, str | None]:
-    """Split a block label into trade direction, product, and unit.
-
-    Parameters
-    ----------
-    label : str
-        Normalized block label, e.g. 'Cattle imports, total'.
-    unit_in_label : bool
-        Whether the trailing parenthetical carries the data unit, as for the
-        chickens-turkeys-and-eggs workbook whose blocks mix meat and egg units.
-    default_unit : str | None
-        Unit to use when the label does not carry one.
-
-    Returns
-    -------
-    tuple[str, str, str | None]
-        The direction ('imports' or 'exports'), the product with the direction
-        word removed, and the unit.
-    """
-    text = label
-    unit = default_unit
-    direction = "exports" if "export" in text.lower() else "imports"
-    if unit_in_label:
-        match = UNIT_PAREN.search(text)
-        if match:
-            unit = match.group(1).strip()
-            text = text[: match.start()].strip()
-    word = "exports" if direction == "exports" else "imports"
-    product = re.sub(rf"\b{word}\b", "", text, count=1, flags=re.IGNORECASE)
-    product = re.sub(r"\s+,", ",", product)
-    product = re.sub(r"\s+", " ", product).strip(" ,")
-    return direction, product, unit
 
 
 def coerce_value(value) -> float | None:
@@ -360,7 +316,7 @@ def parse_workbook(
     want_direction : str
         Trade direction to keep: 'imports' or 'exports'.
     want_product : str
-        Product block to keep, matching parse_block_label's product.
+        Product to keep, as listed by parse_products.
 
     Returns
     -------

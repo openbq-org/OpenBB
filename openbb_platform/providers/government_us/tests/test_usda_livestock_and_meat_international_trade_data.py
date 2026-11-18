@@ -26,13 +26,12 @@ from openbb_government_us.usda.utils.ers_livestock_and_meat_international_trade_
     coerce_value,
     expand_year,
     normalize_label,
-    parse_block_label,
     parse_products,
     parse_time_header,
     parse_workbook,
 )
 
-HEAD_ENTRY = {"unit": "Head", "unit_in_label": False}
+HEAD_ENTRY = {"unit": "Head"}
 
 DESCRIPTORS = [
     "Commodity description",
@@ -125,7 +124,7 @@ class TestErsLivestockAndMeatInternationalTradeDataUtils:
         assert set(SPECIES) == set(SPECIES_LABELS)
         assert SPECIES["beef_veal"]["annual"].startswith("/media/5598/")
         assert SPECIES["beef_veal"]["monthly"].startswith("/media/5608/")
-        assert SPECIES["poultry_eggs"]["unit_in_label"] is True
+        assert SPECIES["poultry_eggs"]["unit"] is None
         assert SPECIES["cattle"]["unit"] == "Head"
         assert DIRECTIONS == ("imports", "exports")
         assert FREQUENCIES == ("annual", "monthly")
@@ -145,43 +144,6 @@ class TestErsLivestockAndMeatInternationalTradeDataUtils:
         assert expand_year(26) == 2026
         assert expand_year(49) == 2049
         assert expand_year(50) == 1950
-
-    def test_parse_block_label_direction_at_end(self):
-        """A trailing direction word yields the leading product and file unit."""
-        assert parse_block_label("Beef and veal imports", False, "Head") == (
-            "imports",
-            "Beef and veal",
-            "Head",
-        )
-        assert parse_block_label("Mutton exports", False, "Head") == (
-            "exports",
-            "Mutton",
-            "Head",
-        )
-
-    def test_parse_block_label_subcategory(self):
-        """A species-direction-subcategory label keeps the subcategory."""
-        assert parse_block_label("Cattle imports, total", False, "Head") == (
-            "imports",
-            "Cattle, total",
-            "Head",
-        )
-        assert parse_block_label(
-            "Hog imports, less than 7 kilograms (15.4 pounds)", False, "Head"
-        ) == ("imports", "Hog, less than 7 kilograms (15.4 pounds)", "Head")
-
-    def test_parse_block_label_unit_in_label(self):
-        """The chickens-turkeys-and-eggs blocks pull the unit from the label."""
-        assert parse_block_label("Broiler imports (1,000 pounds)", True, None) == (
-            "imports",
-            "Broiler",
-            "1,000 pounds",
-        )
-        assert parse_block_label(
-            "Egg imports, including products (shell-egg equivalent, 1,000 dozen)",
-            True,
-            None,
-        ) == ("imports", "Egg, including products", "shell-egg equivalent, 1,000 dozen")
 
     def test_coerce_value(self):
         """Values keep full precision; blanks, placeholders, and text become None."""
