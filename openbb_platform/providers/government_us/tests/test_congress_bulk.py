@@ -1364,6 +1364,45 @@ def test_memoized_dedupes_concurrent_loads(monkeypatch, tmp_path):
     assert store.bills_loaded(119, "hr")
 
 
+def test_memoized_load_lock_is_per_event_loop():
+    """A load on a second event loop does not reuse the first loop's lock."""
+    import threading
+
+    key = "TEST_LOAD_LOCK_ACROSS_LOOPS"
+    holding, release, outcome = threading.Event(), threading.Event(), {}
+
+    async def _slow():
+        holding.set()
+        while not release.is_set():
+            await asyncio.sleep(0.01)
+        return ["first"]
+
+    async def _contend():
+        # The second waiter is what binds an asyncio.Lock to its loop.
+        return await asyncio.gather(
+            bulk._memoized(key, _slow), bulk._memoized(key, _slow)
+        )
+
+    thread = threading.Thread(
+        target=lambda: outcome.update(first=asyncio.run(_contend()))
+    )
+    thread.start()
+    try:
+        assert holding.wait(5)
+
+        async def _other():
+            return ["second"]
+
+        # One lock per key raised "is bound to a different event loop" here.
+        assert asyncio.run(bulk._memoized(key, _other)) == ["second"]
+    finally:
+        release.set()
+        thread.join(5)
+    assert len(outcome["first"]) == 2
+    # No lock, and so no event loop, outlives its load.
+    assert not any(k[1] == key for k in bulk._LOAD_LOCKS)
+
+
 def test_ensure_billstatus_in_memory_short_circuit(monkeypatch):
     """A warmed key returns instantly without any download."""
     BillsState().bulk.clear()
