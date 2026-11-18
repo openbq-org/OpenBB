@@ -65,7 +65,7 @@ def _rows(quotes: list, specs: dict, spot: float) -> list:
     """
     from datetime import datetime, timezone
 
-    from openbb_deribit.utils.helpers import from_timestamp
+    from openbb_deribit.utils.helpers import days_to_expiration, from_timestamp
     from openbb_deribit.utils.options.greeks import SECONDS_PER_YEAR, greeks
 
     now = datetime.now(timezone.utc).timestamp()
@@ -88,7 +88,7 @@ def _rows(quotes: list, specs: dict, spot: float) -> list:
             {
                 "contract_symbol": name,
                 "expiration": from_timestamp(spec["expiration_timestamp"]).date(),
-                "dte": max(int(years * 365), 0),
+                "dte": days_to_expiration(spec["expiration_timestamp"], now * 1000),
                 "strike": strike,
                 "option_type": option_type,
                 "contract_size": float(spec.get("contract_size") or 1),

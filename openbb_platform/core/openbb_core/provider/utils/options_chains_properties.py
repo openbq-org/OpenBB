@@ -529,6 +529,7 @@ class OptionsChainsProperties(Data):
         moneyness: float | None = None,
     ) -> dict:
         """Get the nearest put and call strikes at a given percent OTM from the underlying price.
+        Only strikes available for the requested expiration are considered.
         This method is not intended to be called directly.
 
         Parameters
@@ -568,14 +569,13 @@ class OptionsChainsProperties(Data):
         if date is not None:
             date = self._get_nearest_expiration(date)
             df = df[df.expiration.astype(str) == date]
-            strikes = Series(df.strike.unique().tolist())
 
         last_price = (
             underlying_price
             if underlying_price is not None
             else df.underlying_price.iloc[0]
         )
-        strikes = Series(self.strikes)
+        strikes = Series(sorted(df.strike.unique().tolist()))
 
         upper = last_price * (1 + moneyness)
         lower = last_price * (1 - moneyness)

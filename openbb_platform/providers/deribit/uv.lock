@@ -1730,6 +1730,7 @@ dev = [
     { name = "openbb-charting" },
     { name = "openbb-devtools" },
     { name = "openbb-platform-api" },
+    { name = "time-machine" },
 ]
 
 [package.metadata]
@@ -1744,6 +1745,7 @@ dev = [
     { name = "openbb-charting", specifier = ">=3.0.0" },
     { name = "openbb-devtools", specifier = ">=2.0.1" },
     { name = "openbb-platform-api", specifier = ">=2.0.0" },
+    { name = "time-machine", specifier = ">=2.19.0" },
 ]
 
 [[package]]
