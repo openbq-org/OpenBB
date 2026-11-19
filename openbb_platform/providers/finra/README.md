@@ -45,8 +45,8 @@ openbb.build()
 
 **FINRA Query API** (`api.finra.org`) serves the OTC transparency and short interest datasets. Each symbol's full history is read in one request - the weekly summary back to December 2021, the consolidated short interest back to December 2017. Without a symbol, `equity.darkpool.otc` ranks every symbol of the tier's latest published week by share volume.
 
-**The security list** is FINRA's traded universe - every symbol in the latest week of OTC and ATS volume for each tier, about 21,000 - classified by the Market Data Center.
-The classification of every symbol known at build time ships in `openbb_finra/assets/security_types.json.gz`, so a call reads the current universe in a handful of requests and looks up only the symbols that are new since the build.
+**The security list** is FINRA's traded universe - every symbol in the latest week of OTC and ATS volume for each tier, about 21,000 - classified by the bundled security types.
+The classification of every symbol known at build time ships in `openbb_finra/assets/security_types.json.gz`, so a call reads the current universe in a handful of requests. A symbol that is new since the build is listed without a classification, because the Market Data Center lookup it came from now redirects to the FINRA Investments Explorer. It matches `security_type="all"` and `"other"` only, and a rebuild keeps the classification a symbol already has.
 The asset is produced by the Hatchling build hook in `hatch_build.py`; it is reused when present and regenerated with `OPENBB_FINRA_FORCE_ASSET_REBUILD=1`, or at any time with `generate-finra-security-types`.
 
 **FINRA Market Data Center** (`finra-markets.morningstar.com`) serves the security search and the reference profiles. Search matches ticker prefixes, words of names, and exact ISINs, capped by the service at between four and sixteen hits per security type. Profiles resolve tickers, CUSIPs, and Morningstar ids, up to 100 at a time.
