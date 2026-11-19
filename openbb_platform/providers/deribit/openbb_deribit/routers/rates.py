@@ -1,5 +1,6 @@
 """Deribit Rates sub-router."""
 
+from datetime import UTC
 from typing import Annotated
 
 from fastapi import Query as FastAPIQuery
@@ -128,12 +129,12 @@ async def funding_value(
     ] = None,
 ) -> float:
     """Get the funding one perpetual paid over a span, as a single rate."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     from openbb_deribit.utils.client import request
     from openbb_deribit.utils.helpers import get_perpetual_symbols, to_timestamp
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     perpetuals = await get_perpetual_symbols()
 
     return await request(

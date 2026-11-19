@@ -513,7 +513,7 @@ def test_get_form_4_timeout_wrapped():
     """An asyncio.TimeoutError is re-raised as an OpenBBError."""
 
     async def _urls(symbol, start_date, end_date, use_cache):
-        raise asyncio.TimeoutError
+        raise TimeoutError
 
     with patch.object(form4, "get_form_4_urls", _urls):
         with pytest.raises(OpenBBError, match="timeout error"):

@@ -9,6 +9,7 @@ quoted volatility instead.
 """
 
 import asyncio
+from datetime import UTC
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -63,12 +64,12 @@ def _rows(quotes: list, specs: dict, spot: float) -> list:
     quote currency at the index level, which is what the chain endpoint does and
     what the valuation layer expects.
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from openbb_deribit.utils.helpers import days_to_expiration, from_timestamp
     from openbb_deribit.utils.options.greeks import SECONDS_PER_YEAR, greeks
 
-    now = datetime.now(timezone.utc).timestamp()
+    now = datetime.now(UTC).timestamp()
     built: list[dict] = []
 
     for quote in quotes:

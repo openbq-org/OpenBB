@@ -1,5 +1,7 @@
 """Tests for the Deribit options charts and the commands that serve them."""
 
+from datetime import UTC
+
 import pytest
 
 from openbb_deribit.routers import options as router
@@ -23,12 +25,12 @@ class TestLoading:
     @pytest.fixture
     def exchange(self, responder):
         """Publish one synthetic underlying over the three REST calls."""
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
         from openbb_deribit.utils.helpers import to_timestamp
 
         def install(root="BTC", inverse=True, size=1.0, strikes=(0.31, 100.0)):
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             expiry = to_timestamp(now + timedelta(days=30))
             names = [
                 f"{root}-30OCT26-{strike:g}-{side}"
@@ -191,11 +193,11 @@ class TestLoading:
     @pytest.mark.asyncio
     async def test_only_the_asked_for_root_is_kept(self, exchange, responder):
         """One settlement currency serves several roots, so the root is matched."""
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
         from openbb_deribit.utils.helpers import to_timestamp
 
-        expiry = to_timestamp(datetime.now(timezone.utc) + timedelta(days=30))
+        expiry = to_timestamp(datetime.now(UTC) + timedelta(days=30))
         specs = [
             {
                 "instrument_name": f"{root}-30OCT26-100-C",

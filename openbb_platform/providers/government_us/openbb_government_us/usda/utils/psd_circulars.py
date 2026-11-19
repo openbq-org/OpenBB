@@ -2,7 +2,7 @@
 
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 CIRCULAR_HOST = "apps.fas.usda.gov"
@@ -79,11 +79,11 @@ def compute_ttl(next_release: str | None, now: datetime | None = None) -> int:
         return DEFAULT_TTL
     try:
         expiry = datetime.strptime(next_release.strip(), RELEASE_FORMAT).replace(
-            tzinfo=timezone.utc
+            tzinfo=UTC
         )
     except ValueError:
         return DEFAULT_TTL
-    remaining = int((expiry - (now or datetime.now(timezone.utc))).total_seconds())
+    remaining = int((expiry - (now or datetime.now(UTC))).total_seconds())
     if remaining <= 0:
         return DEFAULT_TTL
     return max(remaining, MIN_TTL)

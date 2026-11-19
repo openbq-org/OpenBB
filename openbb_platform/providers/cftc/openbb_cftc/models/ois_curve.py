@@ -1,7 +1,10 @@
 """DTCC Overnight Index Swap Curve Model."""
 
 from collections.abc import Iterable
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 from typing import Any, Literal
 
 from openbb_core.provider.abstract.annotated_result import AnnotatedResult
@@ -386,7 +389,7 @@ class CftcOisCurveFetcher(Fetcher[CftcOisCurveQueryParams, list[CftcOisCurveData
         **kwargs: Any,
     ) -> tuple[Iterable[dict], str | None, tuple[dateType, float] | None]:
         """Fetch the interest-rate transactions the curve is built from."""
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
         from openbb_core.app.model.abstract.error import OpenBBError
 
@@ -454,7 +457,7 @@ class CftcOisCurveFetcher(Fetcher[CftcOisCurveQueryParams, list[CftcOisCurveData
 
             return records, report_date, anchor
 
-        end_date = query.date or datetime.now(timezone.utc).date()
+        end_date = query.date or datetime.now(UTC).date()
         records = await search_trades(
             "rates",
             start_date=end_date - timedelta(days=query.lookback_days - 1),

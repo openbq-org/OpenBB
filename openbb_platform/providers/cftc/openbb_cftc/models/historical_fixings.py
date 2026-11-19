@@ -1,6 +1,9 @@
 """CFTC Historical Fixings Model."""
 
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 from typing import Any
 
 from openbb_core.provider.abstract.annotated_result import AnnotatedResult
@@ -135,10 +138,10 @@ class CftcHistoricalFixingsFetcher(
     @staticmethod
     def transform_query(params: dict[str, Any]) -> CftcHistoricalFixingsQueryParams:
         """Transform the query params."""
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
         transformed = dict(params)
-        today = datetime.now(timezone.utc).date()
+        today = datetime.now(UTC).date()
 
         if not transformed.get("end_date"):
             transformed["end_date"] = today
@@ -157,7 +160,7 @@ class CftcHistoricalFixingsFetcher(
         **kwargs: Any,
     ) -> dict[dateType, float]:
         """Fetch the index's published fixings over the window."""
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
         from openbb_core.provider.utils.errors import EmptyDataError
 
@@ -169,7 +172,7 @@ class CftcHistoricalFixingsFetcher(
                 f" {', '.join(FIXING_CHOICES)}."
             )
 
-        end_date = query.end_date or datetime.now(timezone.utc).date()
+        end_date = query.end_date or datetime.now(UTC).date()
         start_date = query.start_date or end_date - timedelta(
             days=DEFAULT_LOOKBACK_DAYS
         )

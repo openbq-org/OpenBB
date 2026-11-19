@@ -1,5 +1,7 @@
 """Tests for the TradingView UDF feed."""
 
+from datetime import UTC
+
 import pytest
 
 from openbb_tmx.routers import udf
@@ -307,9 +309,9 @@ class TestSessionMetadata:
 
     async def test_bar_timestamps_are_utc_epochs(self, gql):
         bars = await udf.history(symbol="AC", resolution="D", from_=0, to=2_000_000_000)
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        stamped = datetime.fromtimestamp(bars["t"][-1], tz=timezone.utc)
+        stamped = datetime.fromtimestamp(bars["t"][-1], tz=UTC)
         assert stamped.year == 2026
         assert bars["t"] == sorted(bars["t"])
 

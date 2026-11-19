@@ -69,7 +69,7 @@ include = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py311"
 fix = true
 
 [tool.ruff.lint]
@@ -103,7 +103,7 @@ convention = "numpy"
 
 [tool.ty]
 [tool.ty.environment]
-python-version = "3.10"
+python-version = "3.11"
 
 [tool.ty.src]
 include = ["openbb_government_us"]

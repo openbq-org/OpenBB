@@ -2,9 +2,9 @@
 
 from collections.abc import Iterable
 from datetime import (
+    UTC,
     date as dateType,
     datetime,
-    timezone,
 )
 from typing import Any, Literal
 
@@ -1101,7 +1101,7 @@ def _curve_ok(day_records: Iterable[dict], currency: str, day: str, memo: dict) 
         return memo[key]
 
     cache_key = f"priceable-curve:{day}:{currency}"
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     persisted = store.get_curve(cache_key) if day < today else None
 
     if persisted is not None:
@@ -1140,7 +1140,7 @@ def _spot_ok(
         return memo[key]
 
     cache_key = f"priceable-spot:{day}:{other_currency}/{currency}"
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     persisted = store.get_curve(cache_key) if day < today else None
 
     if persisted is not None:
@@ -1313,7 +1313,7 @@ async def _keep_priceable(
             fx_records = []
 
     index_levels = await _inflation_levels(filtered, query.use_cache)
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     memo: dict = {}
 
     return [
@@ -1393,11 +1393,11 @@ def _apply_filters(
     records: Iterable[dict], query: CftcSwapTradesQueryParams
 ) -> list[dict]:
     """Narrow a report date's transactions to those matching the query."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from openbb_cftc.utils.curve import parse_notional
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     results: list[dict] = []
 
     for record in records:
@@ -1510,7 +1510,7 @@ class CftcSwapTradesFetcher(
             from openbb_cftc.utils.search import search_trades
             from openbb_cftc.utils.swap import record_disseminated_day
 
-            today = datetime.now(timezone.utc).date()
+            today = datetime.now(UTC).date()
             search_end = anchor or today
             search_start = query.start_date or (
                 search_end

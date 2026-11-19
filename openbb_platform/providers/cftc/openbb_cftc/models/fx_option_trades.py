@@ -2,6 +2,7 @@
 
 from collections.abc import Iterable
 from datetime import (
+    UTC,
     date as dateType,
     datetime,
 )
@@ -534,13 +535,13 @@ class CftcFxOptionTradesFetcher(
             )
 
         if query.ticker:
-            from datetime import datetime, timedelta, timezone
+            from datetime import datetime, timedelta
 
             from openbb_cftc.utils.dtcc import MAX_LOOKBACK_DAYS
             from openbb_cftc.utils.search import search_trades
             from openbb_cftc.utils.swap import record_disseminated_day
 
-            end_date = query.date or datetime.now(timezone.utc).date()
+            end_date = query.date or datetime.now(UTC).date()
             start_date = query.date or end_date - timedelta(days=MAX_LOOKBACK_DAYS - 1)
             records = await search_trades(
                 "forex",

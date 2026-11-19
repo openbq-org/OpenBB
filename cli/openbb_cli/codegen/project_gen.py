@@ -93,7 +93,7 @@ packages = ["{package_name}"]
 {provenance_block}
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "D"]

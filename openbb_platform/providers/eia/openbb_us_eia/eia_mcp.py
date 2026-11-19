@@ -379,7 +379,7 @@ async def mcp_reverse_proxy(
         try:
             async for chunk in upstream.content.iter_any():
                 yield chunk
-        except (asyncio.CancelledError, asyncio.TimeoutError, aiohttp.ClientError):
+        except (TimeoutError, asyncio.CancelledError, aiohttp.ClientError):
             return
         finally:
             upstream.release()
