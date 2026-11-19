@@ -421,3 +421,35 @@ def test_parse_13f_hr_table_fallback_indexes_as_list():
     filing = "<edgarSubmission><table><row>1</row></table></edgarSubmission>"
     with pytest.raises(KeyError, match="informationTable"):
         asyncio.run(parse_13f.parse_13f_hr(filing))
+
+
+def test_parse_13f_hr_preserves_ampersand_in_issuer_name():
+    """Ensure issuer names containing character entities (such as &amp; in S&P500)
+    survive SGML-wrapped complete submission files without having the ampersand stripped."""
+    filing = """<SEC-DOCUMENT>
+COMPANY CONFORMED NAME: AT&T INC.
+<DOCUMENT>
+<TYPE>INFORMATION TABLE
+<TEXT>
+<XML>
+<edgarSubmission>
+<headerData><filerInfo><periodOfReport>03-31-2023</periodOfReport></filerInfo></headerData>
+<informationTable xmlns="http://www.sec.gov/edgar/document/thirteenf/informationtable">
+ <infoTable>
+  <nameOfIssuer>S&amp;P500 EQL WGT</nameOfIssuer>
+  <titleOfClass>COM</titleOfClass>
+  <cusip>78462F103</cusip>
+  <value>1000</value>
+  <shrsOrPrnAmt><sshPrnamt>100</sshPrnamt><sshPrnamtType>SH</sshPrnamtType></shrsOrPrnAmt>
+  <investmentDiscretion>SOLE</investmentDiscretion>
+ </infoTable>
+</informationTable>
+</edgarSubmission>
+</XML>
+</TEXT>
+</DOCUMENT>
+</SEC-DOCUMENT>"""
+    records = asyncio.run(parse_13f.parse_13f_hr(filing))
+    assert len(records) == 1
+    assert records[0]["nameOfIssuer"] == "S&P500 EQL WGT"
+
