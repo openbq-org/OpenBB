@@ -70,7 +70,7 @@ include = ["openbb_news"]
 exclude = ["tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"
 
 [tool.coverage.run]
 omit = ["openbb_news/news_router.py"]

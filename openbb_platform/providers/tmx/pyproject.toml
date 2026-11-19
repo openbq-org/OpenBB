@@ -89,7 +89,7 @@ include = ["openbb_tmx"]
 exclude = ["tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"
 
 [[tool.ty.overrides]]
 include = ["openbb_tmx/models/**"]

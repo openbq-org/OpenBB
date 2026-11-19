@@ -93,7 +93,7 @@ include = ["openbb_bls"]
 exclude = ["tests", "integration", "openbb_bls/utils/generate_cache.py"]
 
 [tool.ty.rules]
-unresolved-import = "ignore"
+import-not-found = "ignore"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

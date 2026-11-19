@@ -108,7 +108,7 @@ include = ["openbb_imf"]
 exclude = ["tests", "integration", "openbb_imf/utils/generate_cache.py"]
 
 [tool.ty.rules]
-unresolved-import = "ignore"
+import-not-found = "ignore"
 
 [[tool.ty.overrides]]
 include = ["openbb_imf/models/**"]

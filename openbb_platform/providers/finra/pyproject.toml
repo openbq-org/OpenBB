@@ -80,7 +80,7 @@ include = ["openbb_finra"]
 exclude = ["tests", "integration", "openbb_finra/scripts"]
 
 [tool.ty.rules]
-unresolved-import = "ignore"
+import-not-found = "ignore"
 
 [tool.coverage.run]
 source = ["openbb_finra"]

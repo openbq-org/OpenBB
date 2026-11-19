@@ -91,7 +91,7 @@ include = ["openbb_us_eia"]
 exclude = ["tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "ignore"
+import-not-found = "ignore"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

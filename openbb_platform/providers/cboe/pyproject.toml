@@ -77,7 +77,7 @@ include = ["openbb_cboe"]
 exclude = ["tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"
 
 # The models extend the platform's standard models by overriding their fields:
 # a query parameter narrowed to a ``Literal`` (core derives the parameter's choices

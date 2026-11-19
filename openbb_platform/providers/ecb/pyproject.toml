@@ -101,7 +101,7 @@ include = ["openbb_ecb"]
 exclude = ["tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

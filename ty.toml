@@ -1,4 +1,4 @@
 # ty configuration for the OpenBB monorepo.
 
 [rules]
-unresolved-import = "warn"
+import-not-found = "warn"

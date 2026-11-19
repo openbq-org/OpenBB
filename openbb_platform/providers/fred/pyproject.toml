@@ -81,7 +81,7 @@ include = ["openbb_fred"]
 exclude = ["tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"
 
 [[tool.ty.overrides]]
 include = ["openbb_fred/models/**"]

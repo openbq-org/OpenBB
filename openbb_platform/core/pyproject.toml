@@ -143,7 +143,7 @@ exclude = [
 ]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"
 
 [[tool.ty.overrides]]
 # file_lock.py is cross-platform (fcntl/msvcrt) - silence platform-specific noise.

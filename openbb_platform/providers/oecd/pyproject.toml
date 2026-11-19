@@ -96,7 +96,7 @@ include = ["openbb_oecd"]
 exclude = ["tests", "integration", "openbb_oecd/utils/generate_cache.py"]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

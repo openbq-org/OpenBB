@@ -131,4 +131,4 @@ include = ["openbb_cli"]
 exclude = ["openbb_cli/assets", "tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"

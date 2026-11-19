@@ -69,4 +69,4 @@ include = ["openbb_crypto"]
 exclude = ["tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"

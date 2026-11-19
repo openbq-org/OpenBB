@@ -73,4 +73,4 @@ include = ["openbb_etf"]
 exclude = ["tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"

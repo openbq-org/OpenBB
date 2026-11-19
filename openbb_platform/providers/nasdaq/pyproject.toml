@@ -75,7 +75,7 @@ include = ["openbb_nasdaq"]
 exclude = ["tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "ignore"
+import-not-found = "ignore"
 
 [[tool.ty.overrides]]
 include = ["openbb_nasdaq/models/**"]
