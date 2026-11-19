@@ -1071,6 +1071,23 @@ class TestOptionsChains:
         assert set(result.result.option_type) == {"call", "put"}
         assert result.result.dte
 
+    def test_transform_parses_digit_root_contracts(self, raw_options_chain):
+        """Contract symbols with digits in the root (e.g. B1SPY, 1SPY) are correctly parsed (#7813)."""
+        import copy
+
+        sample_opt1 = copy.deepcopy(raw_options_chain["data"]["options"][0])
+        sample_opt1["option"] = "B1SPY261106C00740000"
+        sample_opt2 = copy.deepcopy(raw_options_chain["data"]["options"][0])
+        sample_opt2["option"] = "1SPY261106P00740000"
+        raw_options_chain["data"]["options"].extend([sample_opt1, sample_opt2])
+
+        query = CboeOptionsChainsFetcher.transform_query({"symbol": "CLX"})
+        result = CboeOptionsChainsFetcher.transform_data(query, raw_options_chain)
+
+        symbols = set(result.result.underlying_symbol)
+        assert "B1SPY" in symbols
+        assert "1SPY" in symbols
+
     def test_normalizes_underlying_percentages(self, raw_options_chain):
         """The underlying percent-change fields are normalized in the metadata."""
         raw_options_chain["data"]["percent_change"] = 2.0
