@@ -142,6 +142,8 @@ async def document_download(params: Annotated[dict, Body()]) -> list:
     from openbb_core.provider.utils.helpers import make_request
 
     urls = params.get("url", [])
+    if urls is None:
+        urls = []
     if isinstance(urls, str):
         urls = [urls]
     results: list = []
