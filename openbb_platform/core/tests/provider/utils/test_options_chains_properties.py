@@ -619,6 +619,32 @@ class TestNearestHelpers:
 
 @requires_pandas
 class TestStrategyEdges:
+    def test_straddle_passes_over_an_expiration_with_strikes_on_one_side(self):
+        """A nearest expiration listing one strike above the price is not chosen."""
+        near = date.today() + timedelta(days=14)
+        far = date.today() + timedelta(days=16)
+        rows = [(near, 125.0, "call")] + [
+            (far, strike, kind)
+            for strike in (95.0, 100.0, 105.0)
+            for kind in ("call", "put")
+        ]
+        one_sided = OptionsChainsData(
+            underlying_symbol=["FAKE"] * len(rows),
+            underlying_price=[100.0] * len(rows),
+            contract_symbol=[f"FAKE{i}" for i in range(len(rows))],
+            expiration=[row[0] for row in rows],
+            dte=[(row[0] - date.today()).days for row in rows],
+            strike=[row[1] for row in rows],
+            option_type=[row[2] for row in rows],
+            bid=[1.0] * len(rows),
+            ask=[1.2] * len(rows),
+            last_trade_price=[1.1] * len(rows),
+        )
+
+        result = one_sided.straddle(days=14)
+
+        assert result.loc["Expiration"].iloc[0] == far.strftime("%Y-%m-%d")
+
     def test_straddle_days_zero_and_short(self, chain):
         zero_day = chain.straddle(days=0)
         short = chain.straddle(strike=-100.0)
