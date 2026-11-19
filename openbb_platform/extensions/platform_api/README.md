@@ -250,6 +250,9 @@ To create a PDF widget, import the custom response model below and define it as 
 The model handles conversion of the document, from a bytes object, to a base64 encoded string.
 
 ```python
+from typing import Annotated, Optional
+
+from fastapi import Query
 from openbb_platform_api.response_models import PdfResponseModel
 
 
@@ -266,7 +269,7 @@ async def open_pdf(
         Optional[str],
         Query(
             description="Filename to associate with the PDF internally.",
-            title="Fiilename",
+            title="Filename",
         ),
     ] = "",
     user_agent: Annotated[
