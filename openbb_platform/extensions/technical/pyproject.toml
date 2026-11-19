@@ -83,8 +83,6 @@ python-version = "3.10"
 include = ["openbb_technical"]
 exclude = ["tests", "integration"]
 
-[tool.ty.rules]
-unresolved-import = "warn"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
