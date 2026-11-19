@@ -420,6 +420,19 @@ class MethodDefinition:
         return field.default
 
     @staticmethod
+    def get_model_field_default(field: FieldInfo) -> Any:
+        """Get the signature default of a pydantic model field.
+
+        A field with a ``default_factory`` is optional, so it gets the value the
+        factory returns instead of being turned into a required argument.
+        """
+        if field.is_required():
+            return Parameter.empty
+        if field.default_factory is not None:
+            return field.get_default(call_default_factory=True)
+        return field.default
+
+    @staticmethod
     def get_extra(field: FieldInfo) -> dict:
         """Get json schema extra."""
         field_default = getattr(field, "default", None)
@@ -603,11 +616,7 @@ class MethodDefinition:
             )
             for field_name, field in fields.items():
                 type_ = field.annotation
-                default = (
-                    field.default
-                    if field.default is not PydanticUndefined
-                    else Parameter.empty
-                )
+                default = MethodDefinition.get_model_field_default(field)
                 description = getattr(field, "description", "")
                 extra = getattr(field, "json_schema_extra", {}) or {}
                 new_type = MethodDefinition.get_expanded_type(field_name, extra, type_)
@@ -719,11 +728,7 @@ class MethodDefinition:
                 )
                 for field_name, field in model_fields.items():
                     type_ = field.annotation
-                    default = (
-                        field.default
-                        if field.default is not PydanticUndefined
-                        else Parameter.empty
-                    )
+                    default = MethodDefinition.get_model_field_default(field)
                     description = getattr(field, "description", "") or ""
                     extra = getattr(field, "json_schema_extra", {}) or {}
                     new_type = MethodDefinition.get_expanded_type(
@@ -804,12 +809,7 @@ class MethodDefinition:
                     else:
                         updated_type = Union[field_anno, new_type]  # noqa
 
-                    if field.is_required():
-                        field_default: Any = Parameter.empty
-                    elif field.default_factory is not None:
-                        field_default = field.get_default(call_default_factory=True)
-                    else:
-                        field_default = field.default
+                    field_default = MethodDefinition.get_model_field_default(field)
                     formatted[field_name] = Parameter(
                         name=field_name,
                         kind=Parameter.POSITIONAL_OR_KEYWORD,
