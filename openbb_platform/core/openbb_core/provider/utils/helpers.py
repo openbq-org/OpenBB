@@ -51,12 +51,13 @@ def check_item(item: str, allowed: list[str], threshold: float = 0.75) -> None:
         If the item is not in the allowed list.
     """
     if item not in allowed:
-        similarities = map(
-            lambda c: (c, SequenceMatcher(None, item, c).ratio()), allowed
-        )
-        similar, score = max(similarities, key=lambda x: x[1])
-        if score > threshold:
-            raise ValueError(f"'{item}' is not available. Did you mean '{similar}'?")
+        similarities = [(c, SequenceMatcher(None, item, c).ratio()) for c in allowed]
+        if similarities:
+            similar, score = max(similarities, key=lambda x: x[1])
+            if score > threshold:
+                raise ValueError(
+                    f"'{item}' is not available. Did you mean '{similar}'?"
+                )
         raise ValueError(f"'{item}' is not available.")
 
 
@@ -478,13 +479,14 @@ def combine_certificates(cert: str, bundle: str | None = None) -> str:
     from pathlib import Path
     from warnings import warn
 
-    if not Path(cert).exists():
+    path = Path(cert)
+    if not path.exists():
         raise FileNotFoundError(f"Certificate file '{cert}' not found")
 
-    if cert.split(".", maxsplit=1)[0].endswith("_combined"):
+    if path.stem.endswith("_combined"):
         return cert
 
-    combined_cert = cert.split(".", maxsplit=1)[0] + "_combined." + cert.split(".")[1]
+    combined_cert = str(path.with_name(f"{path.stem}_combined{path.suffix}"))
 
     if Path(combined_cert).exists():
         return combined_cert
@@ -616,6 +618,11 @@ def filter_by_dates(
     """Filter data by dates."""
     if start_date is None and end_date is None:
         return data
+
+    if isinstance(start_date, datetime):
+        start_date = start_date.date()
+    if isinstance(end_date, datetime):
+        end_date = end_date.date()
 
     def _filter(d: D) -> bool:
         _date = getattr(d, "date", None)
