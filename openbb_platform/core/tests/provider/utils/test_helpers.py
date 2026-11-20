@@ -195,6 +195,11 @@ def test_check_item_no_similar_message():
         check_item("zzz", ["apple", "banana"], threshold=0.99)
 
 
+def test_check_item_empty_allowed():
+    with pytest.raises(ValueError, match="'zzz' is not available\\."):
+        check_item("zzz", [])
+
+
 def test_to_snake_case_collapses_double_underscores():
     from openbb_core.provider.utils.helpers import to_snake_case
 
@@ -769,6 +774,49 @@ def test_combine_certificates_cleanup_tolerates_missing_file(tmp_path, monkeypat
         func(*args, **kwargs)
 
 
+def test_combine_certificates_dir_with_dots(tmp_path, monkeypatch):
+    """Path containing dots in directory name must not break combined file name."""
+    import certifi
+
+    from openbb_core.provider.utils.helpers import combine_certificates
+
+    sub_dir = tmp_path / "my.custom.certs"
+    sub_dir.mkdir()
+    cert = sub_dir / "ca.pem"
+    cert.write_text("CERT")
+    bundle = tmp_path / "bundle.pem"
+    bundle.write_text("BUNDLE")
+    monkeypatch.setattr(certifi, "where", lambda: str(bundle))
+
+    out = combine_certificates(str(cert))
+    out_path = Path(out)
+    assert out_path.exists()
+    assert out_path.name == "ca_combined.pem"
+    assert out_path.parent == sub_dir
+    assert "BUNDLE" in out_path.read_text()
+    out_path.unlink(missing_ok=True)
+
+
+def test_combine_certificates_no_extension(tmp_path, monkeypatch):
+    """File without extension must combine without raising IndexError."""
+    import certifi
+
+    from openbb_core.provider.utils.helpers import combine_certificates
+
+    cert = tmp_path / "ca_cert"
+    cert.write_text("CERT")
+    bundle = tmp_path / "bundle.pem"
+    bundle.write_text("BUNDLE")
+    monkeypatch.setattr(certifi, "where", lambda: str(bundle))
+
+    out = combine_certificates(str(cert))
+    out_path = Path(out)
+    assert out_path.exists()
+    assert out_path.name == "ca_cert_combined"
+    assert "BUNDLE" in out_path.read_text()
+    out_path.unlink(missing_ok=True)
+
+
 def test_make_request_timeout_from_preferences(monkeypatch):
     captured = {}
 
@@ -888,3 +936,19 @@ def test_filter_by_dates_only_end_and_missing_date():
     data = [_Item(dt.date(2024, 3, 1)), _NoDate()]
     out = filter_by_dates(data, end_date=dt.date(2024, 2, 1))
     assert out == []
+
+
+def test_filter_by_dates_datetime_bounds():
+    """datetime instances for start_date or end_date must be normalised and not raise TypeError."""
+    data = [
+        _Item(dt.date(2024, 1, 1)),
+        _Item(dt.date(2024, 2, 1)),
+        _Item(dt.date(2024, 3, 1)),
+    ]
+    out = filter_by_dates(
+        data,
+        start_date=dt.datetime(2024, 1, 15, 12, 0),
+        end_date=dt.datetime(2024, 2, 15, 18, 30),
+    )
+    assert len(out) == 1
+    assert out[0].date == dt.date(2024, 2, 1)
