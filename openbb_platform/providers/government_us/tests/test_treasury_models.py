@@ -1562,6 +1562,27 @@ _PRICES_CSV = (
 )
 
 
+_PRICES_FORM = '<input type="hidden" name="_csrf" value="tok-1" />'
+
+
+def _patch_prices_requests(monkeypatch, response, form_text=_PRICES_FORM):
+    """Serve the price form on GET and the canned response on POST, recording both."""
+    calls: list[dict] = []
+    session = object()
+
+    def _fake(url=None, method="GET", **kwargs):
+        calls.append({"url": url, "method": method, **kwargs})
+        if method == "GET":
+            form = _FakeHTTPResponse(status_code=response.status_code)
+            form.text = form_text
+            return form
+        return response
+
+    monkeypatch.setattr(core_helpers, "make_request", _fake)
+    monkeypatch.setattr(core_helpers, "get_requests_session", lambda **_: session)
+    return calls
+
+
 class TestUsTreasuryPricesUnit:
     """Tests for the UsTreasuryPrices fetcher."""
 
@@ -1584,21 +1605,35 @@ class TestUsTreasuryPricesUnit:
     def test_extract_data_posts_form_payload(self, monkeypatch):
         """The date fields form the POST payload and the body decodes to text."""
         response = _FakeHTTPResponse(content=_PRICES_CSV.encode("utf-8"))
-        captured = _patch_make_request(monkeypatch, response)
+        calls = _patch_prices_requests(monkeypatch, response)
         fetcher = treasury_prices.UsTreasuryPricesFetcher
         query = fetcher.transform_query({"date": "2026-04-01"})
         data = fetcher.extract_data(query, None)
         assert data == _PRICES_CSV
-        assert captured["method"] == "POST"
-        assert captured["data"] == (
+        form, download = calls
+        assert form["method"] == "GET"
+        assert form["url"].endswith("/selectSecurityPriceDate")
+        assert download["method"] == "POST"
+        assert download["data"] == (
             "priceDateDay=1&priceDateMonth=4&priceDateYear=2026"
-            "&fileType=csv&csv=CSV+FORMAT"
+            "&fileType=csv&csv=CSV+FORMAT&_csrf=tok-1"
         )
-        assert captured["url"].endswith("/securityPriceDetail")
+        assert download["url"].endswith("/securityPriceDetail")
+        # The download rides the session that fetched the form, for its cookie.
+        assert download["session"] is form["session"]
+
+    def test_extract_data_raises_without_csrf_token(self, monkeypatch):
+        """A price form with no CSRF token raises OpenBBError before the download."""
+        calls = _patch_prices_requests(monkeypatch, _FakeHTTPResponse(), form_text="")
+        fetcher = treasury_prices.UsTreasuryPricesFetcher
+        query = fetcher.transform_query({"date": "2026-04-01"})
+        with pytest.raises(OpenBBError, match="no CSRF token"):
+            fetcher.extract_data(query, None)
+        assert len(calls) == 1
 
     def test_extract_data_raises_on_http_error(self, monkeypatch):
         """A non-200 status raises OpenBBError with the status code."""
-        _patch_make_request(monkeypatch, _FakeHTTPResponse(status_code=404))
+        _patch_prices_requests(monkeypatch, _FakeHTTPResponse(status_code=404))
         fetcher = treasury_prices.UsTreasuryPricesFetcher
         query = fetcher.transform_query({"date": "2026-04-01"})
         with pytest.raises(OpenBBError, match="Error with the request: 404"):
@@ -1606,7 +1641,7 @@ class TestUsTreasuryPricesUnit:
 
     def test_extract_data_raises_on_unexpected_encoding(self, monkeypatch):
         """A response encoding other than ISO-8859-1 raises OpenBBError."""
-        _patch_make_request(monkeypatch, _FakeHTTPResponse(encoding="utf-8"))
+        _patch_prices_requests(monkeypatch, _FakeHTTPResponse(encoding="utf-8"))
         fetcher = treasury_prices.UsTreasuryPricesFetcher
         query = fetcher.transform_query({"date": "2026-04-01"})
         with pytest.raises(OpenBBError, match="Expected ISO-8859-1 encoding"):

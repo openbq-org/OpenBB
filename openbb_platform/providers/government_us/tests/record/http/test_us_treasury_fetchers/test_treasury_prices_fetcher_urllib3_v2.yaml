@@ -1,6 +1,174 @@
 interactions:
 - request:
-    body: priceDateDay=26&priceDateMonth=6&priceDateYear=2024&fileType=csv&csv=CSV+FORMAT
+    body: null
+    headers:
+      Accept:
+      - text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+      Accept-Encoding:
+      - gzip, deflate, br
+      Accept-Language:
+      - en-CA,en-US;q=0.7,en;q=0.3
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/x-www-form-urlencoded
+      Origin:
+      - https://www.treasurydirect.gov
+      Referer:
+      - https://www.treasurydirect.gov/GA-FI/FedInvest/selectSecurityPriceDate
+    method: GET
+    uri: https://www.treasurydirect.gov/GA-FI/FedInvest/selectSecurityPriceDate
+  response:
+    body:
+      string: "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n\n
+        \n\n\n\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<meta http-equiv=\"Content-Type\"
+        content=\"text/html; charset=ISO-8859-1\" />\n<meta name=\"GENERATOR\" content=\"Rational
+        Application Developer\" />\n\t<link type=\"text/css\" rel=\"stylesheet\" media=\"screen\"
+        href = \"/GA-FI/FedInvest/static/css/global_null.css\" />\n\t<link type=\"text/css\"
+        rel=\"stylesheet\" media=\"screen\" href = \"/GA-FI/FedInvest/static/css/gw_govt_screen.css\"
+        />\n\t<link type=\"text/css\" rel=\"stylesheet\" media=\"screen\" href = \"/GA-FI/FedInvest/static/css/ga_all.css\"
+        />\n\t<link type=\"text/css\" rel=\"stylesheet\" media=\"print\" href = \"/GA-FI/FedInvest/static/css/govt_print.css\"
+        />\n\n\t<link type=\"text/css\" rel=\"alternate stylesheet\" media=\"all\"
+        title=\"66\" href = \"/GA-FI/FedInvest/static/css/global_fontsize66.css\"
+        />\n\t<link type=\"text/css\" rel=\"stylesheet\" media=\"all\" title=\"76\"
+        href = \"/GA-FI/FedInvest/static/css/global_fontsize76.css\" />\n\t<link type=\"text/css\"
+        rel=\"alternate stylesheet\" media=\"all\" title=\"86\" href = \"/GA-FI/FedInvest/static/css/global_fontsize86.css\"
+        />\n\t<link type=\"text/css\" rel=\"alternate stylesheet\" media=\"all\" title=\"96\"
+        href = \"/GA-FI/FedInvest/static/css/global_fontsize96.css\" />\n<title>Historical
+        Prices</title>\n</head>\n<body id=\"govt\">\n\t<div id=\"container\">\n\n<!--
+        BEGIN HEADER -->\n<div id=\"header\">\n\n\t<!-- BEGIN LOGO -->\n\t<div id=\"logo\">\n\t\t<a
+        href=\"/tdhome.htm\"><img src=\"/GA-FI/FedInvest/static/images/td_logo.gif\"
+        width=\"232\" height=\"50\" alt=\"TreasuryDirect Logo\" /></a>\n\t</div>\n\t<!--
+        END LOGO -->\n\n\t<!-- BEGIN TYPE NAVIGATION -->\n\t<div id=\"typenav\">\n\t\t<ul
+        id=\"investortype\">\n\t\t\t<li>You are in:</li>\n\t\t\t<li><a href=\"/indiv/indiv.htm\">Individual</a></li>\n\t\t\t<li>&nbsp;|&nbsp;</li>\n\t\t\t<li><a
+        href=\"/instit/instit.htm\">Institutional</a></li>\n\t\t\t<li>&nbsp;|&nbsp;</li>\n\t\t\t<li><strong>&gt;
+        Government</strong></li>\n\t\t</ul>\n\t</div>\n\t<!-- END TYPE NAVIGATION
+        -->\n\n\t<!-- BEGIN SEARCH BOX -->\n\t<div id=\"searchbox\">\n\t\t<form id=\"gs\"
+        method=\"get\" action=\"https://search.treas.gov/search\">\n\t\t    <fieldset>\n\t\t
+        \   \t<label for=\"q\">Search: </label>\n\t\t\t\t<input type=\"text\" name=\"q\"
+        id=\"q\" size=\"25\" maxlength=\"256\" value=\"\" />\n\t\t\t\t<input name=\"btnG\"
+        value=\"Search\" class=\"button\" type=\"image\" src=\"/GA-FI/FedInvest/static/images/go.gif\"
+        alt=\"Go\" />\n\t\t\t\t<input type=\"hidden\" name=\"sort\" value=\"date:D:L:d1\"
+        />\n\t\t\t\t<input type=\"hidden\" name=\"output\" value=\"xml_no_dtd\" />\n\t\t\t\t<input
+        type=\"hidden\" name=\"ie\" value=\"UTF-8\" />\n\t\t\t\t<input type=\"hidden\"
+        name=\"oe\" value=\"UTF-8\" />\n\t\t\t\t<input type=\"hidden\" name=\"client\"
+        value=\"BPD-treasurydirect\" />\n\t\t\t\t<input type=\"hidden\" name=\"proxystylesheet\"
+        value=\"BPD-treasurydirect\" />\n\t\t\t\t<input type=\"hidden\" name=\"site\"
+        value=\"BPD-treasurydirect\" />\n\t\t\t</fieldset>\n\t\t</form>\n\t</div>\n\t<!--
+        END SEARCH BOX -->\n\n\t<!-- BEGIN UTILITY NAVIGATION -->\n\t<div id=\"utilitynav\">\n\t\t<ul>\n\t\t\t<li><a
+        href=\"/maillist/maillist.htm\">Mailing Lists</a></li>\n\t\t\t<li>&nbsp;|&nbsp;</li>\n\t\t\t<li><a
+        href=\"/news/news.htm\">News</a></li>\n\t\t\t<li>&nbsp;|&nbsp;</li>\n\t\t\t<li><a
+        href=\"/about.htm\">About</a></li>\n\t\t\t<li>&nbsp;|&nbsp;</li>\n\t\t\t<li><a
+        href=\"/sitemap.htm\">Sitemap</a></li>\n\t\t\t<li>&nbsp;|&nbsp;</li>\n\t\t\t<li><a
+        href=\"/email.htm\">Contact Us</a></li>\n\t\t</ul>\n\t</div>\n\t<!-- END UTILITY
+        NAVIGATION -->\n\n</div>\n<!-- END HEADER -->\n\n<!-- BEGIN PERSISTENT NAVIGATION
+        -->\n<div id=\"persistentnav\">\n\t\n\t\t<ul>\n\t<li class=\"doubleline\"><a
+        class=\"nonactive\" href=\"/govt/apps/apps.htm\">Applications &amp; Programs</a></li>\n\t<li
+        class=\"singleline\"><a class=\"nonactive\" href=\"/govt/reports/reports.htm\">Reports</a></li>\n\t<li
+        class=\"doubleline\"><a class=\"active\" href=\"/govt/rates/rates.htm\">Interest
+        Rates<br /> &amp; Prices</a></li>\n\t<li class=\"singleline\"><a class=\"nonactive\"
+        href=\"/govt/charts/charts.htm\">Charts &amp; Analysis</a></li>\n\t<li class=\"singleline\"><a
+        class=\"nonactive\" href=\"/govt/resources/resources.htm\">Resources</a></li>\n</ul>\n\t\n</div>\n<!--
+        END PERSISTENT NAVIGATION -->\n\n<div id=\"contentwrap\">\n\n<!-- BEGIN BREADCRUMBNAV
+        -->\n<div id=\"breadcrumbnav\">\n\t<ul id=\"breadcrumb\">\n\t\t<li><a href=\"https://www.treasurydirect.gov\">Home</a></li>\n\t\t<li>&#8250;</li>\n\t\t\n\t\t<li><a
+        href=\"/govt/govt.htm\">Government</a></li>\n\t\t<li>&#8250;</li>\n\t\t\t\n\t\t<li><a
+        href=\"/govt/rates/rates.htm\">Interest Rate Data</a></li>\n\t\t<li>&#8250;</li>\n\t\t\n\t\t<li><a
+        href=\"/govt/rates/rates_fip.htm\">Federal Investments Program Rates and Prices</a></li>\n\n\t\t<li>Historical
+        Prices</li>\n\t</ul>\n</div>\n<!-- END BREADCRUMBNAV -->\n\n  \t\t<!-- BEGIN
+        LOCALNAV -->\n<div id=\"localnav\">\n\t\n\t<h1>INTEREST RATES AND PRICES</h1>\n<div
+        id=\"verticalline\">\n\t<ul>\n\t\t<li class=\"open\"><a href=\"/govt/rates/rates_fip.htm\"
+        class=\"active\">Federal Investments Program Rates and Prices</a>\n\t\t\t<div
+        class=\"subindent\"><a href=\"/GA-FI/FedInvest/todaySecurityPriceDate.htm\">Today's
+        Prices</a></div>\n\t\t\t<div class=\"subindent\"><a href=\"/GA-FI/FedInvest/selectOvernightRateDate.htm\">Overnight
+        Rates</a></div>\n\t\t\t<div class=\"subindent2\"><a href=\"/GA-FI/FedInvest/selectSecurityPriceDate.htm\"
+        class=\"active\">Historical Prices</a></div>\n</li>\n\t\t<li class=\"closed\"><a
+        href=\"/govt/rates/slgs/slgs.htm\">SLGS Rates</a></li>\n\t\t<li class=\"closed\"><a
+        href=\"/govt/rates/rates_irstcb.htm\">IRS Tax Credit Bonds Rates</a></li>\n\t\t<li
+        class=\"closed\"><a href=\"/govt/rates/tcir/tcir.htm\">Treasury's Certified
+        Interest Rates</a></li>\n\t\t<li class=\"closed\"><a href=\"/govt/rates/avg/avg.htm\">Average
+        Interest Rates</a></li>\n\t\t<li class=\"closedlast\"><a href=\"/govt/rates/rates_tfr.htm\">UTF
+        Quarterly Yields</a></li>\n\t</ul>\n</div>\n\n<!-- BEGIN ACCOUNT CENTER -->\n<div
+        id=\"login\">\n<h2>ACCOUNT CENTER</h2>\n<h3>Log in now</h3>\n<ul>\n\t<li><a
+        href=\"/SZ/BPDLogin?application=spss\">SLGSafe<sup>&reg;</sup></a></li>\n\t<li><a
+        href=\"/FD/FedInvestGateway.htm\">FedInvest<sup>&reg;</sup></a></li>\n</ul>\n<ul
+        id=\"openacct\">\n\t<li><a href=\"/govt/govt_acctsetup.htm\">Set up an account</a></li>\n</ul>\n</div>\n<!--
+        END ACCOUNT CENTER -->\n\n\t<noscript>\n\t\t<div id=\"acsialert\"><p><img
+        src=\"/GA-FI/FedInvest/static/images/alertmessage.gif\" width=\"16\" height=\"16\"
+        alt=\"Exclamation Point\" />We're pleased to hear from our customers regarding
+        their satisfaction with our website. Although your browser settings don't
+        allow you to view the website survey we're conducting, please <a href=\"mailto:oadmin@fiscal.treasury.gov\">e-mail</a>
+        your comments.</p></div>\n\t</noscript>\n</div>\n<!-- END LOCALNAV -->\n<!--
+        BEGIN CONTENT -->\n<div id=\"content\"> \n\n<img src=\"/GA-FI/FedInvest/static/images/fedinvest3.gif\"
+        width=\"190\" height=\"64\" alt=\"Fed Invest\" />\n<p><br /></p>\n<h1>Historical
+        Prices</h1>\n\n\n\n<p>To access historical prices, enter your requested date
+        below and click the button to view the prices.</p>\n\n\n\n<form id=\"fromToDate\"
+        action=\"/GA-FI/FedInvest/selectSecurityPriceDate\" method=\"post\">\n\n\n\n\t\t<h2
+        class=\"center\">Enter Requested Date</h2>\n\t\t<fieldset>\n\t\t<table class=\"data0\">\n\t\t\t<thead>\n\t\t\t\t<tr>\n\t\t\t\t\t<th
+        colspan=\"3\">Date</th>\n\t\t\t\t</tr>\n\t\t\t</thead>\n\t\t\t<tbody>\n\t\t\t\t<tr>\n\t\t\t\t\t<td><input
+        id=\"priceDate\" name=\"priceDate\" type=\"date\" value=\"2026-11-17\" required=\"required\"
+        value=\"2026-11-17\"/></td>\n\t\t\t\n\t\t\t\t</tr>\n\t\t\t</tbody>\n\t\t</table>\n\t\t</fieldset>\n\t\t<div
+        class=\"center\">\n\t\t\t<div class=\"buttons\">\n\t\t\t\t<input type=\"submit\"
+        value=\"Show Prices\" class=\"action\" name=\"submit\" />\n\t\t\t</div>\n\t\t</div>\n\t\t\n<div>\n<input
+        type=\"hidden\" name=\"_csrf\" value=\"MOCK_CSRF_TOKEN\"
+        />\n</div></form>\n\n\t\t</div>\n<!-- END CONTENT --> \n\n<!-- BEGIN SUBLOCALNAV
+        -->\n<div id=\"right\">\n\t\n\t<img src=\"/GA-FI/FedInvest/static/images/relatedlinks.gif\"
+        width=\"170\" height=\"20\" alt=\"Related Links\" />\n<ul class=\"relatedlinks\">\n\t<li><a
+        href=\"/govt/reports/fip/fip.htm\">Federal Investments Program Reports</a></li>\n\t<li><a
+        href=\"/govt/apps/fip/fip.htm\">Federal Investments Program</a></li>\n\t<li><a
+        href=\"/govt/resources/faq/faq_fedinvest.htm\">FAQ</a></li>\n</ul>\n</div>\n<!--
+        END SUBLOCALNAV -->\n\t\t</div>\n  \t\t<!-- BEGIN FOOTER -->\n<div id=\"footer\">\n\t<ul>\n\t\t<li><a
+        href=\"/foia.htm\">Freedom of Information Act</a></li>\n\t\t<li>|</li>\n\t\t<li><a
+        href=\"/law_and_guidance.htm\">Law &amp; Guidance</a></li>\n\t\t<li>|</li>\n\t\t<li><a
+        href=\"/privacy.htm\">Privacy &amp; Legal Notices</a></li>\n\t\t<li>|</li>\n\t\t<li><a
+        href=\"/terms.htm\">Website Terms &amp; Conditions</a></li>\n\t\t<li>|</li>\n\t\t<li><a
+        href=\"/accessibility.htm\">Accessibility</a></li>\n\t\t<li>|</li>\n\t\t<li><a
+        href=\"/data_quality.htm\">Data Quality</a></li>\n\t</ul>\n\t<p><a href=\"https://www.fiscal.treasury.gov/\">U.S.
+        Department of the Treasury, Bureau of the Fiscal Service</a></p>\n\t<p><em>Last
+        Updated January 15, 2026</em></p>\n</div>\n<!-- END FOOTER -->\n\t</div>\n</body>\n</html>\n\n"
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Encoding:
+      - gzip
+      Content-Language:
+      - en-CA
+      Content-Security-Policy:
+      - default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none';
+        img-src 'self' data:; font-src 'self'; script-src 'self'; style-src 'self';
+        upgrade-insecure-requests
+      Content-Type:
+      - text/html;charset=ISO-8859-1
+      Date:
+      - Wed, 18 Nov 2026 15:03:16 GMT
+      Feature-Policy:
+      - geolocation 'none'; midi 'none'; notifications 'none'; microphone 'none';
+        camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; vibrate
+        'none'; payment 'none'; push 'none'; sync-xhr 'none'
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - JSESSIONID=MOCK; Path=/GA-FI/FedInvest; Secure;
+        HttpOnly; SameSite=Lax
+      - ARRAffinity=MOCK;Path=/;HttpOnly;Secure;Domain=www.treasurydirect.gov
+      - BIGipServer~www.treasurydirect.gov~main~myPool-7444=MOCK;
+        path=/; Httponly; Secure
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: priceDateDay=25&priceDateMonth=6&priceDateYear=2024&fileType=csv&csv=CSV+FORMAT&_csrf=MOCK_CSRF_TOKEN
     headers:
       Accept:
       - text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
@@ -11,448 +179,961 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '79'
+      - '182'
       Content-Type:
       - application/x-www-form-urlencoded
+      Cookie:
+      - JSESSIONID=MOCK; BIGipServer~www.treasurydirect.gov~main~myPool-7444=MOCK;
+        ARRAffinity=MOCK
       Origin:
-      - https://treasurydirect.gov
+      - https://www.treasurydirect.gov
       Referer:
-      - https://treasurydirect.gov/
+      - https://www.treasurydirect.gov/GA-FI/FedInvest/selectSecurityPriceDate
     method: POST
-    uri: https://treasurydirect.gov/GA-FI/FedInvest/securityPriceDetail
+    uri: https://www.treasurydirect.gov/GA-FI/FedInvest/securityPriceDetail
   response:
     body:
-      string: "912796Y45,MARKET BASED BILL,0.0,06/27/2024,,0.000000,99.985500,0.000000\r\n912797KH9,MARKET
-        BASED BILL,0.0,07/02/2024,,0.000000,99.912833,0.000000\r\n912796Y52,MARKET
-        BASED BILL,0.0,07/05/2024,,99.869125,99.868750,0.000000\r\n912797KN6,MARKET
-        BASED BILL,0.0,07/09/2024,,99.810958,99.810778,0.000000\r\n912797GB7,MARKET
-        BASED BILL,0.0,07/11/2024,,99.782500,99.781667,0.000000\r\n912797KP1,MARKET
-        BASED BILL,0.0,07/16/2024,,99.709722,99.708889,0.000000\r\n912797JS7,MARKET
-        BASED BILL,0.0,07/18/2024,,99.680389,99.679778,0.000000\r\n912797KQ9,MARKET
-        BASED BILL,0.0,07/23/2024,,99.607750,99.607000,0.000000\r\n912797JT5,MARKET
-        BASED BILL,0.0,07/25/2024,,99.579097,99.578694,0.000000\r\n912797KR7,MARKET
-        BASED BILL,0.0,07/30/2024,,99.507000,99.506056,0.000000\r\n912797JU2,MARKET
-        BASED BILL,0.0,08/01/2024,,99.477000,99.476000,0.000000\r\n912797KW6,MARKET
-        BASED BILL,0.0,08/06/2024,,99.404931,99.404361,0.000000\r\n912797GK7,MARKET
-        BASED BILL,0.0,08/08/2024,,99.372917,99.371722,0.000000\r\n912797KX4,MARKET
-        BASED BILL,0.0,08/13/2024,,99.302000,99.301333,0.000000\r\n912797KB2,MARKET
-        BASED BILL,0.0,08/15/2024,,99.275694,99.275000,0.000000\r\n912797KY2,MARKET
-        BASED BILL,0.0,08/20/2024,,99.198681,99.197917,0.000000\r\n912797KC0,MARKET
-        BASED BILL,0.0,08/22/2024,,99.175875,99.175083,0.000000\r\n912797KZ9,MARKET
-        BASED BILL,0.0,08/27/2024,,99.099278,99.097556,0.000000\r\n912797KD8,MARKET
-        BASED BILL,0.0,08/29/2024,,99.067556,99.066667,0.000000\r\n912797LA3,MARKET
-        BASED BILL,0.0,09/03/2024,,99.000458,98.999500,0.000000\r\n912797GL5,MARKET
-        BASED BILL,0.0,09/05/2024,,98.972472,98.970500,0.000000\r\n912797LG0,MARKET
-        BASED BILL,0.0,09/10/2024,,98.899056,98.898000,0.000000\r\n912797KK2,MARKET
-        BASED BILL,0.0,09/12/2024,,98.869000,98.866833,0.000000\r\n912797LH8,MARKET
-        BASED BILL,0.0,09/17/2024,,98.797653,98.796500,0.000000\r\n912797KL0,MARKET
-        BASED BILL,0.0,09/19/2024,,98.769861,98.767500,0.000000\r\n912797LJ4,MARKET
-        BASED BILL,0.0,09/24/2024,,98.702500,98.700000,0.000000\r\n912797KM8,MARKET
-        BASED BILL,0.0,09/26/2024,,98.662167,98.660889,0.000000\r\n912797LK1,MARKET
-        BASED BILL,0.0,10/01/2024,,98.594847,98.593500,0.000000\r\n912797GW1,MARKET
-        BASED BILL,0.0,10/03/2024,,98.575500,98.572750,0.000000\r\n912797LS4,MARKET
-        BASED BILL,0.0,10/08/2024,,98.493444,98.492000,0.000000\r\n912797KT3,MARKET
-        BASED BILL,0.0,10/10/2024,,98.470361,98.468889,0.000000\r\n912797LT2,MARKET
-        BASED BILL,0.0,10/15/2024,,98.392042,98.390500,0.000000\r\n912797KU0,MARKET
-        BASED BILL,0.0,10/17/2024,,98.366208,98.364639,0.000000\r\n912797LU9,MARKET
-        BASED BILL,0.0,10/22/2024,,98.289000,98.289000,0.000000\r\n912797KV8,MARKET
-        BASED BILL,0.0,10/24/2024,,98.265000,98.263333,0.000000\r\n912797HE0,MARKET
-        BASED BILL,0.0,10/31/2024,,98.177903,98.176139,0.000000\r\n912797LC9,MARKET
-        BASED BILL,0.0,11/07/2024,,98.077472,98.075611,0.000000\r\n912797LD7,MARKET
-        BASED BILL,0.0,11/14/2024,,97.977042,97.975083,0.000000\r\n912797LE5,MARKET
-        BASED BILL,0.0,11/21/2024,,97.876611,97.874556,0.000000\r\n912797HP5,MARKET
-        BASED BILL,0.0,11/29/2024,,97.779167,97.777000,0.000000\r\n912797LF2,MARKET
-        BASED BILL,0.0,12/05/2024,,97.684750,97.682500,0.000000\r\n912797LP0,MARKET
-        BASED BILL,0.0,12/12/2024,,97.589403,97.587056,0.000000\r\n912797LQ8,MARKET
-        BASED BILL,0.0,12/19/2024,,97.487111,97.487111,0.000000\r\n912796ZV4,MARKET
-        BASED BILL,0.0,12/26/2024,,97.389708,97.387167,0.000000\r\n912797JR9,MARKET
-        BASED BILL,0.0,01/23/2025,,97.142708,97.133917,0.000000\r\n912797KA4,MARKET
-        BASED BILL,0.0,02/20/2025,,96.703792,96.700472,0.000000\r\n912797KJ5,MARKET
-        BASED BILL,0.0,03/20/2025,,96.328750,96.321333,0.000000\r\n912797KS5,MARKET
-        BASED BILL,0.0,04/17/2025,,95.960139,95.951944,0.000000\r\n912797LB1,MARKET
-        BASED BILL,0.0,05/15/2025,,95.599125,95.594639,0.000000\r\n912797LN5,MARKET
-        BASED BILL,0.0,06/12/2025,,95.237125,95.232250,0.000000\r\n9128286Z8,MARKET
-        BASED NOTE,0.0175,06/30/2024,,0.000000,99.937500,0.000000\r\n912828XX3,MARKET
-        BASED NOTE,0.02,06/30/2024,,0.000000,99.937500,0.000000\r\n91282CEX5,MARKET
-        BASED NOTE,0.03,06/30/2024,,0.000000,99.968750,0.000000\r\n91282CCL3,MARKET
-        BASED NOTE,0.00375,07/15/2024,,0.000000,99.750000,0.000000\r\n912828Y87,MARKET
-        BASED NOTE,0.0175,07/31/2024,,0.000000,99.656250,0.000000\r\n9128282N9,MARKET
-        BASED NOTE,0.02125,07/31/2024,,0.000000,99.687500,0.000000\r\n91282CFA4,MARKET
-        BASED NOTE,0.03,07/31/2024,,0.000000,99.750000,0.000000\r\n912828D56,MARKET
-        BASED NOTE,0.02375,08/15/2024,,0.000000,99.593750,0.000000\r\n91282CCT6,MARKET
-        BASED NOTE,0.00375,08/15/2024,,0.000000,99.312500,0.000000\r\n912828YE4,MARKET
-        BASED NOTE,0.0125,08/31/2024,,0.000000,99.250000,0.000000\r\n9128282U3,MARKET
-        BASED NOTE,0.01875,08/31/2024,,0.000000,99.343750,0.000000\r\n91282CFG1,MARKET
-        BASED NOTE,0.0325,08/31/2024,,0.000000,99.593750,0.000000\r\n91282CCX7,MARKET
-        BASED NOTE,0.00375,09/15/2024,,0.000000,98.906250,0.000000\r\n912828YH7,MARKET
-        BASED NOTE,0.015,09/30/2024,,0.000000,99.000000,0.000000\r\n9128282Y5,MARKET
-        BASED NOTE,0.02125,09/30/2024,,0.000000,99.156250,0.000000\r\n91282CFN6,MARKET
-        BASED NOTE,0.0425,09/30/2024,,0.000000,99.687500,0.000000\r\n91282CDB4,MARKET
-        BASED NOTE,0.00625,10/15/2024,,0.000000,98.562500,0.000000\r\n912828YM6,MARKET
-        BASED NOTE,0.015,10/31/2024,,0.000000,98.656250,0.000000\r\n9128283D0,MARKET
-        BASED NOTE,0.0225,10/31/2024,,0.000000,98.937500,0.000000\r\n91282CFQ9,MARKET
-        BASED NOTE,0.04375,10/31/2024,,0.000000,99.625000,0.000000\r\n91282CDH1,MARKET
-        BASED NOTE,0.0075,11/15/2024,,0.000000,98.250000,0.000000\r\n912828G38,MARKET
-        BASED NOTE,0.0225,11/15/2024,,0.000000,98.812500,0.000000\r\n9128283J7,MARKET
-        BASED NOTE,0.02125,11/30/2024,,0.000000,98.656250,0.000000\r\n912828YV6,MARKET
-        BASED NOTE,0.015,11/30/2024,,0.000000,98.375000,0.000000\r\n91282CFX4,MARKET
-        BASED NOTE,0.045,11/30/2024,,0.000000,99.656250,0.000000\r\n91282CDN8,MARKET
-        BASED NOTE,0.01,12/15/2024,,0.000000,98.031250,0.000000\r\n91282CGD7,MARKET
-        BASED NOTE,0.0425,12/31/2024,,99.453125,99.437500,0.000000\r\n912828YY0,MARKET
-        BASED NOTE,0.0175,12/31/2024,,98.218750,98.187500,0.000000\r\n9128283P3,MARKET
-        BASED NOTE,0.0225,12/31/2024,,98.468750,98.437500,0.000000\r\n91282CDS7,MARKET
-        BASED NOTE,0.01125,01/15/2025,,97.765625,97.750000,0.000000\r\n91282CGG0,MARKET
-        BASED NOTE,0.04125,01/31/2025,,99.328125,99.312500,0.000000\r\n9128283V0,MARKET
-        BASED NOTE,0.025,01/31/2025,,98.375000,98.343750,0.000000\r\n912828Z52,MARKET
-        BASED NOTE,0.01375,01/31/2025,,97.734375,97.718750,0.000000\r\n912828J27,MARKET
-        BASED NOTE,0.02,02/15/2025,,97.953125,97.937500,0.000000\r\n91282CDZ1,MARKET
-        BASED NOTE,0.015,02/15/2025,,97.640625,97.625000,0.000000\r\n91282CGN5,MARKET
-        BASED NOTE,0.04625,02/28/2025,,99.578125,99.562500,0.000000\r\n9128283Z1,MARKET
-        BASED NOTE,0.0275,02/28/2025,,98.359375,98.343750,0.000000\r\n912828ZC7,MARKET
-        BASED NOTE,0.01125,02/28/2025,,97.296875,97.281250,0.000000\r\n91282CED9,MARKET
-        BASED NOTE,0.0175,03/15/2025,,97.578125,97.562500,0.000000\r\n91282CGU9,MARKET
-        BASED NOTE,0.03875,03/31/2025,,99.015625,99.000000,0.000000\r\n912828ZF0,MARKET
-        BASED NOTE,0.005,03/31/2025,,96.546875,96.531250,0.000000\r\n9128284F4,MARKET
-        BASED NOTE,0.02625,03/31/2025,,98.109375,98.093750,0.000000\r\n91282CEH0,MARKET
-        BASED NOTE,0.02625,04/15/2025,,98.015625,98.000000,0.000000\r\n91282CGX3,MARKET
-        BASED NOTE,0.03875,04/30/2025,,98.937500,98.906250,0.000000\r\n9128284M9,MARKET
-        BASED NOTE,0.02875,04/30/2025,,98.109375,98.093750,0.000000\r\n912828ZL7,MARKET
-        BASED NOTE,0.00375,04/30/2025,,96.078125,96.062500,0.000000\r\n912828XB1,MARKET
-        BASED NOTE,0.02125,05/15/2025,,97.406250,97.375000,0.000000\r\n91282CEQ0,MARKET
-        BASED NOTE,0.0275,05/15/2025,,97.921875,97.906250,0.000000\r\n91282CHD6,MARKET
-        BASED NOTE,0.0425,05/31/2025,,99.171875,99.156250,0.000000\r\n9128284R8,MARKET
-        BASED NOTE,0.02875,05/31/2025,,97.937500,97.906250,0.000000\r\n912828ZT0,MARKET
-        BASED NOTE,0.0025,05/31/2025,,95.578125,95.562500,0.000000\r\n91282CEU1,MARKET
-        BASED NOTE,0.02875,06/15/2025,,97.859375,97.843750,0.000000\r\n91282CHL8,MARKET
-        BASED NOTE,0.04625,06/30/2025,,99.515625,99.500000,0.000000\r\n912828ZW3,MARKET
-        BASED NOTE,0.0025,06/30/2025,,95.265625,95.250000,0.000000\r\n912828XZ8,MARKET
-        BASED NOTE,0.0275,06/30/2025,,97.703125,97.687500,0.000000\r\n91282CEY3,MARKET
-        BASED NOTE,0.03,07/15/2025,,97.890625,97.875000,0.000000\r\n91282CHN4,MARKET
-        BASED NOTE,0.0475,07/31/2025,,99.640625,99.625000,0.000000\r\n912828Y79,MARKET
-        BASED NOTE,0.02875,07/31/2025,,97.687500,97.656250,0.000000\r\n91282CAB7,MARKET
-        BASED NOTE,0.0025,07/31/2025,,94.937500,94.906250,0.000000\r\n912828K74,MARKET
-        BASED NOTE,0.02,08/15/2025,,96.656250,96.625000,0.000000\r\n91282CFE6,MARKET
-        BASED NOTE,0.03125,08/15/2025,,97.890625,97.875000,0.000000\r\n91282CHV6,MARKET
-        BASED NOTE,0.05,08/31/2025,,99.921875,99.906250,0.000000\r\n9128284Z0,MARKET
-        BASED NOTE,0.0275,08/31/2025,,97.375000,97.343750,0.000000\r\n91282CAJ0,MARKET
-        BASED NOTE,0.0025,08/31/2025,,94.562500,94.531250,0.000000\r\n91282CFK2,MARKET
-        BASED NOTE,0.035,09/15/2025,,98.187500,98.156250,0.000000\r\n91282CJB8,MARKET
-        BASED NOTE,0.05,09/30/2025,,99.953125,99.937500,0.000000\r\n91282CAM3,MARKET
-        BASED NOTE,0.0025,09/30/2025,,94.250000,94.218750,0.000000\r\n9128285C0,MARKET
-        BASED NOTE,0.03,09/30/2025,,97.562500,97.531250,0.000000\r\n91282CFP1,MARKET
-        BASED NOTE,0.0425,10/15/2025,,99.062500,99.031250,0.000000\r\n91282CJE2,MARKET
-        BASED NOTE,0.05,10/31/2025,,100.015625,100.000000,0.000000\r\n9128285J5,MARKET
-        BASED NOTE,0.03,10/31/2025,,97.468750,97.437500,0.000000\r\n91282CAT8,MARKET
-        BASED NOTE,0.0025,10/31/2025,,93.937500,93.906250,0.000000\r\n912828M56,MARKET
-        BASED NOTE,0.0225,11/15/2025,,96.406250,96.375000,0.000000\r\n91282CFW6,MARKET
-        BASED NOTE,0.045,11/15/2025,,99.390625,99.375000,0.000000\r\n91282CJL6,MARKET
-        BASED NOTE,0.04875,11/30/2025,,99.875000,99.875000,0.000000\r\n9128285N6,MARKET
-        BASED NOTE,0.02875,11/30/2025,,97.187500,97.156250,0.000000\r\n91282CAZ4,MARKET
-        BASED NOTE,0.00375,11/30/2025,,93.765625,93.750000,0.000000\r\n91282CGA3,MARKET
-        BASED NOTE,0.04,12/15/2025,,98.687500,98.656250,0.000000\r\n91282CJS1,MARKET
-        BASED NOTE,0.0425,12/31/2025,,99.031250,99.031250,0.000000\r\n91282CBC4,MARKET
-        BASED NOTE,0.00375,12/31/2025,,93.453125,93.437500,0.000000\r\n9128285T3,MARKET
-        BASED NOTE,0.02625,12/31/2025,,96.703125,96.687500,0.000000\r\n91282CGE5,MARKET
-        BASED NOTE,0.03875,01/15/2026,,98.453125,98.437500,0.000000\r\n91282CJV4,MARKET
-        BASED NOTE,0.0425,01/31/2026,,99.015625,99.000000,0.000000\r\n9128286A3,MARKET
-        BASED NOTE,0.02625,01/31/2026,,96.546875,96.500000,0.000000\r\n91282CBH3,MARKET
-        BASED NOTE,0.00375,01/31/2026,,93.140625,93.125000,0.000000\r\n912828P46,MARKET
-        BASED NOTE,0.01625,02/15/2026,,94.937500,94.906250,0.000000\r\n91282CGL9,MARKET
-        BASED NOTE,0.04,02/15/2026,,98.609375,98.593750,0.000000\r\n91282CKB6,MARKET
-        BASED NOTE,0.04625,02/28/2026,,99.609375,99.593750,0.000000\r\n9128286F2,MARKET
-        BASED NOTE,0.025,02/28/2026,,96.218750,96.187500,0.000000\r\n91282CBQ3,MARKET
-        BASED NOTE,0.005,02/28/2026,,93.046875,93.031250,0.000000\r\n91282CGR6,MARKET
-        BASED NOTE,0.04625,03/15/2026,,99.609375,99.593750,0.000000\r\n91282CKH3,MARKET
-        BASED NOTE,0.045,03/31/2026,,99.437500,99.437500,0.000000\r\n91282CBT7,MARKET
-        BASED NOTE,0.0075,03/31/2026,,93.203125,93.187500,0.000000\r\n9128286L9,MARKET
-        BASED NOTE,0.0225,03/31/2026,,95.671875,95.656250,0.000000\r\n91282CGV7,MARKET
-        BASED NOTE,0.0375,04/15/2026,,98.171875,98.156250,0.000000\r\n91282CKK6,MARKET
-        BASED NOTE,0.04875,04/30/2026,,100.109375,100.093750,0.000000\r\n9128286S4,MARKET
-        BASED NOTE,0.02375,04/30/2026,,95.750000,95.718750,0.000000\r\n91282CBW0,MARKET
-        BASED NOTE,0.0075,04/30/2026,,92.937500,92.906250,0.000000\r\n912828R36,MARKET
-        BASED NOTE,0.01625,05/15/2026,,94.328125,94.312500,0.000000\r\n91282CHB0,MARKET
-        BASED NOTE,0.03625,05/15/2026,,97.921875,97.906250,0.000000\r\n91282CKS9,MARKET
-        BASED NOTE,0.04875,05/31/2026,,100.156250,100.156250,0.000000\r\n9128286X3,MARKET
-        BASED NOTE,0.02125,05/31/2026,,95.156250,95.125000,0.000000\r\n91282CCF6,MARKET
-        BASED NOTE,0.0075,05/31/2026,,92.671875,92.656250,0.000000\r\n91282CHH7,MARKET
-        BASED NOTE,0.04125,06/15/2026,,98.796875,98.781250,0.000000\r\n91282CCJ8,MARKET
-        BASED NOTE,0.00875,06/30/2026,,92.671875,92.656250,0.000000\r\n9128287B0,MARKET
-        BASED NOTE,0.01875,06/30/2026,,94.546875,94.531250,0.000000\r\n91282CHM6,MARKET
-        BASED NOTE,0.045,07/15/2026,,99.515625,99.500000,0.000000\r\n912828Y95,MARKET
-        BASED NOTE,0.01875,07/31/2026,,94.359375,94.343750,0.000000\r\n91282CCP4,MARKET
-        BASED NOTE,0.00625,07/31/2026,,91.921875,91.906250,0.000000\r\n9128282A7,MARKET
-        BASED NOTE,0.015,08/15/2026,,93.515625,93.468750,0.000000\r\n91282CHU8,MARKET
-        BASED NOTE,0.04375,08/15/2026,,99.296875,99.281250,0.000000\r\n912828YD6,MARKET
-        BASED NOTE,0.01375,08/31/2026,,93.187500,93.156250,0.000000\r\n91282CCW9,MARKET
-        BASED NOTE,0.0075,08/31/2026,,91.906250,91.875000,0.000000\r\n91282CHY0,MARKET
-        BASED NOTE,0.04625,09/15/2026,,99.828125,99.812500,0.000000\r\n91282CCZ2,MARKET
-        BASED NOTE,0.00875,09/30/2026,,91.984375,91.968750,0.000000\r\n912828YG9,MARKET
-        BASED NOTE,0.01625,09/30/2026,,93.531250,93.500000,0.000000\r\n91282CJC6,MARKET
-        BASED NOTE,0.04625,10/15/2026,,99.890625,99.875000,0.000000\r\n91282CDG3,MARKET
-        BASED NOTE,0.01125,10/31/2026,,92.234375,92.218750,0.000000\r\n912828YQ7,MARKET
-        BASED NOTE,0.01625,10/31/2026,,93.312500,93.281250,0.000000\r\n912828U24,MARKET
-        BASED NOTE,0.02,11/15/2026,,94.046875,94.000000,0.000000\r\n91282CJK8,MARKET
-        BASED NOTE,0.04625,11/15/2026,,99.921875,99.906250,0.000000\r\n91282CDK4,MARKET
-        BASED NOTE,0.0125,11/30/2026,,92.296875,92.281250,0.000000\r\n912828YU8,MARKET
-        BASED NOTE,0.01625,11/30/2026,,93.140625,93.125000,0.000000\r\n91282CJP7,MARKET
-        BASED NOTE,0.04375,12/15/2026,,99.406250,99.406250,0.000000\r\n91282CDQ1,MARKET
-        BASED NOTE,0.0125,12/31/2026,,92.140625,92.125000,0.000000\r\n912828YX2,MARKET
-        BASED NOTE,0.0175,12/31/2026,,93.296875,93.281250,0.000000\r\n91282CJT9,MARKET
-        BASED NOTE,0.04,01/15/2027,,98.515625,98.500000,0.000000\r\n912828Z78,MARKET
-        BASED NOTE,0.015,01/31/2027,,92.484375,92.468750,0.000000\r\n912828V98,MARKET
-        BASED NOTE,0.0225,02/15/2027,,94.234375,94.218750,0.000000\r\n91282CKA8,MARKET
-        BASED NOTE,0.04125,02/15/2027,,98.828125,98.812500,0.000000\r\n91282CEC1,MARKET
-        BASED NOTE,0.01875,02/28/2027,,93.234375,93.218750,0.000000\r\n912828ZB9,MARKET
-        BASED NOTE,0.01125,02/28/2027,,91.390625,91.375000,0.000000\r\n91282CKE0,MARKET
-        BASED NOTE,0.0425,03/15/2027,,99.171875,99.156250,0.000000\r\n91282CEF4,MARKET
-        BASED NOTE,0.025,03/31/2027,,94.750000,94.718750,0.000000\r\n912828ZE3,MARKET
-        BASED NOTE,0.00625,03/31/2027,,89.906250,89.875000,0.000000\r\n91282CKJ9,MARKET
-        BASED NOTE,0.045,04/15/2027,,99.828125,99.812500,0.000000\r\n91282CEN7,MARKET
-        BASED NOTE,0.0275,04/30/2027,,95.234375,95.218750,0.000000\r\n912828ZN3,MARKET
-        BASED NOTE,0.005,04/30/2027,,89.312500,89.281250,0.000000\r\n912828X88,MARKET
-        BASED NOTE,0.02375,05/15/2027,,94.140625,94.093750,0.000000\r\n91282CKR1,MARKET
-        BASED NOTE,0.045,05/15/2027,,99.843750,99.843750,0.000000\r\n91282CET4,MARKET
-        BASED NOTE,0.02625,05/31/2027,,94.765625,94.750000,0.000000\r\n912828ZS2,MARKET
-        BASED NOTE,0.005,05/31/2027,,89.046875,89.031250,0.000000\r\n91282CKV2,MARKET
-        BASED NOTE,0.04625,06/15/2027,,100.281250,100.281250,0.000000\r\n91282CEW7,MARKET
-        BASED NOTE,0.0325,06/30/2027,,96.453125,96.437500,0.000000\r\n912828ZV5,MARKET
-        BASED NOTE,0.005,06/30/2027,,88.812500,88.781250,0.000000\r\n91282CAD3,MARKET
-        BASED NOTE,0.00375,07/31/2027,,88.156250,88.125000,0.000000\r\n91282CFB2,MARKET
-        BASED NOTE,0.0275,07/31/2027,,94.921875,94.906250,0.000000\r\n9128282R0,MARKET
-        BASED NOTE,0.0225,08/15/2027,,93.421875,93.375000,0.000000\r\n91282CAH4,MARKET
-        BASED NOTE,0.005,08/31/2027,,88.250000,88.218750,0.000000\r\n91282CFH9,MARKET
-        BASED NOTE,0.03125,08/31/2027,,95.921875,95.906250,0.000000\r\n91282CFM8,MARKET
-        BASED NOTE,0.04125,09/30/2027,,98.890625,98.875000,0.000000\r\n91282CAL5,MARKET
-        BASED NOTE,0.00375,09/30/2027,,87.640625,87.625000,0.000000\r\n91282CAU5,MARKET
-        BASED NOTE,0.005,10/31/2027,,87.750000,87.718750,0.000000\r\n91282CFU0,MARKET
-        BASED NOTE,0.04125,10/31/2027,,98.859375,98.843750,0.000000\r\n9128283F5,MARKET
-        BASED NOTE,0.0225,11/15/2027,,93.015625,92.968750,0.000000\r\n91282CAY7,MARKET
-        BASED NOTE,0.00625,11/30/2027,,87.875000,87.843750,0.000000\r\n91282CFZ9,MARKET
-        BASED NOTE,0.03875,11/30/2027,,98.078125,98.062500,0.000000\r\n91282CGC9,MARKET
-        BASED NOTE,0.03875,12/31/2027,,98.078125,98.062500,0.000000\r\n91282CBB6,MARKET
-        BASED NOTE,0.00625,12/31/2027,,87.609375,87.593750,0.000000\r\n91282CBJ9,MARKET
-        BASED NOTE,0.0075,01/31/2028,,87.765625,87.750000,0.000000\r\n91282CGH8,MARKET
-        BASED NOTE,0.035,01/31/2028,,96.828125,96.812500,0.000000\r\n9128283W8,MARKET
-        BASED NOTE,0.0275,02/15/2028,,94.281250,94.250000,0.000000\r\n91282CBP5,MARKET
-        BASED NOTE,0.01125,02/29/2028,,88.796875,88.781250,0.000000\r\n91282CGP0,MARKET
-        BASED NOTE,0.04,02/29/2028,,98.484375,98.468750,0.000000\r\n91282CGT2,MARKET
-        BASED NOTE,0.03625,03/31/2028,,97.203125,97.187500,0.000000\r\n91282CBS9,MARKET
-        BASED NOTE,0.0125,03/31/2028,,89.031250,89.000000,0.000000\r\n91282CBZ3,MARKET
-        BASED NOTE,0.0125,04/30/2028,,88.828125,88.812500,0.000000\r\n91282CHA2,MARKET
-        BASED NOTE,0.035,04/30/2028,,96.734375,96.718750,0.000000\r\n9128284N7,MARKET
-        BASED NOTE,0.02875,05/15/2028,,94.453125,94.437500,0.000000\r\n91282CCE9,MARKET
-        BASED NOTE,0.0125,05/31/2028,,88.640625,88.625000,0.000000\r\n91282CHE4,MARKET
-        BASED NOTE,0.03625,05/31/2028,,97.140625,97.125000,0.000000\r\n91282CHK0,MARKET
-        BASED NOTE,0.04,06/30/2028,,98.484375,98.468750,0.000000\r\n91282CCH2,MARKET
-        BASED NOTE,0.0125,06/30/2028,,88.453125,88.437500,0.000000\r\n91282CCR0,MARKET
-        BASED NOTE,0.01,07/31/2028,,87.343750,87.312500,0.000000\r\n91282CHQ7,MARKET
-        BASED NOTE,0.04125,07/31/2028,,98.953125,98.937500,0.000000\r\n9128284V9,MARKET
-        BASED NOTE,0.02875,08/15/2028,,94.203125,94.156250,0.000000\r\n91282CCV1,MARKET
-        BASED NOTE,0.01125,08/31/2028,,87.593750,87.562500,0.000000\r\n91282CHX2,MARKET
-        BASED NOTE,0.04375,08/31/2028,,99.890625,99.875000,0.000000\r\n91282CJA0,MARKET
-        BASED NOTE,0.04625,09/30/2028,,100.859375,100.843750,0.000000\r\n91282CCY5,MARKET
-        BASED NOTE,0.0125,09/30/2028,,87.875000,87.843750,0.000000\r\n91282CJF9,MARKET
-        BASED NOTE,0.04875,10/31/2028,,101.890625,101.875000,0.000000\r\n91282CDF5,MARKET
-        BASED NOTE,0.01375,10/31/2028,,88.187500,88.156250,0.000000\r\n9128285M8,MARKET
-        BASED NOTE,0.03125,11/15/2028,,94.968750,94.937500,0.000000\r\n91282CDL2,MARKET
-        BASED NOTE,0.015,11/30/2028,,88.500000,88.468750,0.000000\r\n91282CJN2,MARKET
-        BASED NOTE,0.04375,11/30/2028,,100.000000,100.000000,0.000000\r\n91282CJR3,MARKET
-        BASED NOTE,0.0375,12/31/2028,,97.468750,97.468750,0.000000\r\n91282CDP3,MARKET
-        BASED NOTE,0.01375,12/31/2028,,87.828125,87.812500,0.000000\r\n91282CDW8,MARKET
-        BASED NOTE,0.0175,01/31/2029,,89.187500,89.156250,0.000000\r\n91282CJW2,MARKET
-        BASED NOTE,0.04,01/31/2029,,98.484375,98.468750,0.000000\r\n9128286B1,MARKET
-        BASED NOTE,0.02625,02/15/2029,,92.718750,92.687500,0.000000\r\n91282CKD2,MARKET
-        BASED NOTE,0.0425,02/28/2029,,99.578125,99.562500,0.000000\r\n91282CEB3,MARKET
-        BASED NOTE,0.01875,02/28/2029,,89.562500,89.531250,0.000000\r\n91282CEE7,MARKET
-        BASED NOTE,0.02375,03/31/2029,,91.484375,91.437500,0.000000\r\n91282CKG5,MARKET
-        BASED NOTE,0.04125,03/31/2029,,99.015625,99.000000,0.000000\r\n91282CKP5,MARKET
-        BASED NOTE,0.04625,04/30/2029,,101.187500,101.187500,0.000000\r\n91282CEM9,MARKET
-        BASED NOTE,0.02875,04/30/2029,,93.531250,93.500000,0.000000\r\n9128286T2,MARKET
-        BASED NOTE,0.02375,05/15/2029,,91.343750,91.312500,0.000000\r\n91282CES6,MARKET
-        BASED NOTE,0.0275,05/31/2029,,92.921875,92.906250,0.000000\r\n91282CKT7,MARKET
-        BASED NOTE,0.045,05/31/2029,,100.718750,100.718750,0.000000\r\n91282CEV9,MARKET
-        BASED NOTE,0.0325,06/30/2029,,95.046875,95.031250,0.000000\r\n91282CFC0,MARKET
-        BASED NOTE,0.02625,07/31/2029,,92.171875,92.156250,0.000000\r\n912828YB0,MARKET
-        BASED NOTE,0.01625,08/15/2029,,87.656250,87.593750,0.000000\r\n91282CFJ5,MARKET
-        BASED NOTE,0.03125,08/31/2029,,94.359375,94.343750,0.000000\r\n91282CFL0,MARKET
-        BASED NOTE,0.03875,09/30/2029,,97.781250,97.750000,0.000000\r\n91282CFT3,MARKET
-        BASED NOTE,0.04,10/31/2029,,98.359375,98.343750,0.000000\r\n912828YS3,MARKET
-        BASED NOTE,0.0175,11/15/2029,,87.859375,87.781250,0.000000\r\n91282CFY2,MARKET
-        BASED NOTE,0.03875,11/30/2029,,97.750000,97.718750,0.000000\r\n91282CGB1,MARKET
-        BASED NOTE,0.03875,12/31/2029,,97.734375,97.718750,0.000000\r\n91282CGJ4,MARKET
-        BASED NOTE,0.035,01/31/2030,,95.859375,95.843750,0.000000\r\n912828Z94,MARKET
-        BASED NOTE,0.015,02/15/2030,,85.937500,85.906250,0.000000\r\n91282CGQ8,MARKET
-        BASED NOTE,0.04,02/28/2030,,98.296875,98.281250,0.000000\r\n91282CGS4,MARKET
-        BASED NOTE,0.03625,03/31/2030,,96.390625,96.375000,0.000000\r\n91282CGZ8,MARKET
-        BASED NOTE,0.035,04/30/2030,,95.703125,95.687500,0.000000\r\n912828ZQ6,MARKET
-        BASED NOTE,0.00625,05/15/2030,,80.921875,80.875000,0.000000\r\n91282CHF1,MARKET
-        BASED NOTE,0.0375,05/31/2030,,96.953125,96.937500,0.000000\r\n91282CHJ3,MARKET
-        BASED NOTE,0.0375,06/30/2030,,96.921875,96.906250,0.000000\r\n91282CHR5,MARKET
-        BASED NOTE,0.04,07/31/2030,,98.218750,98.187500,0.000000\r\n91282CAE1,MARKET
-        BASED NOTE,0.00625,08/15/2030,,80.250000,80.187500,0.000000\r\n91282CHW4,MARKET
-        BASED NOTE,0.04125,08/31/2030,,98.859375,98.843750,0.000000\r\n91282CHZ7,MARKET
-        BASED NOTE,0.04625,09/30/2030,,101.562500,101.531250,0.000000\r\n91282CJG7,MARKET
-        BASED NOTE,0.04875,10/31/2030,,102.984375,102.968750,0.000000\r\n91282CAV3,MARKET
-        BASED NOTE,0.00875,11/15/2030,,81.000000,80.968750,0.000000\r\n91282CJM4,MARKET
-        BASED NOTE,0.04375,11/30/2030,,100.234375,100.218750,0.000000\r\n91282CJQ5,MARKET
-        BASED NOTE,0.0375,12/31/2030,,96.765625,96.750000,0.000000\r\n91282CJX0,MARKET
-        BASED NOTE,0.04,01/31/2031,,98.140625,98.125000,0.000000\r\n91282CBL4,MARKET
-        BASED NOTE,0.01125,02/15/2031,,81.937500,81.906250,0.000000\r\n91282CKC4,MARKET
-        BASED NOTE,0.0425,02/28/2031,,99.593750,99.593750,0.000000\r\n91282CKF7,MARKET
-        BASED NOTE,0.04125,03/31/2031,,98.859375,98.843750,0.000000\r\n91282CKN0,MARKET
-        BASED NOTE,0.04625,04/30/2031,,101.828125,101.812500,0.000000\r\n91282CCB5,MARKET
-        BASED NOTE,0.01625,05/15/2031,,84.109375,84.062500,0.000000\r\n91282CKU4,MARKET
-        BASED NOTE,0.04625,05/31/2031,,101.828125,101.812500,0.000000\r\n91282CCS8,MARKET
-        BASED NOTE,0.0125,08/15/2031,,81.343750,81.312500,0.000000\r\n91282CDJ7,MARKET
-        BASED NOTE,0.01375,11/15/2031,,81.546875,81.531250,0.000000\r\n91282CDY4,MARKET
-        BASED NOTE,0.01875,02/15/2032,,84.234375,84.218750,0.000000\r\n91282CEP2,MARKET
-        BASED NOTE,0.02875,05/15/2032,,90.421875,90.406250,0.000000\r\n91282CFF3,MARKET
-        BASED NOTE,0.0275,08/15/2032,,89.312500,89.281250,0.000000\r\n91282CFV8,MARKET
-        BASED NOTE,0.04125,11/15/2032,,98.671875,98.656250,0.000000\r\n91282CGM7,MARKET
-        BASED NOTE,0.035,02/15/2033,,94.109375,94.093750,0.000000\r\n91282CHC8,MARKET
-        BASED NOTE,0.03375,05/15/2033,,93.078125,93.062500,0.000000\r\n91282CHT1,MARKET
-        BASED NOTE,0.03875,08/15/2033,,96.609375,96.593750,0.000000\r\n91282CJJ1,MARKET
-        BASED NOTE,0.045,11/15/2033,,101.359375,101.343750,0.000000\r\n91282CJZ5,MARKET
-        BASED NOTE,0.04,02/15/2034,,97.515625,97.500000,0.000000\r\n91282CKQ3,MARKET
-        BASED NOTE,0.04375,05/15/2034,,100.500000,100.500000,0.000000\r\n912810ES3,MARKET
-        BASED BOND,0.075,11/15/2024,,0.000000,100.843750,0.000000\r\n912810ET1,MARKET
-        BASED BOND,0.07625,02/15/2025,,101.812500,101.531250,0.000000\r\n912810EV6,MARKET
-        BASED BOND,0.06875,08/15/2025,,102.359375,102.187500,0.000000\r\n912810EW4,MARKET
-        BASED BOND,0.06,02/15/2026,,102.093750,101.843750,0.000000\r\n912810EX2,MARKET
-        BASED BOND,0.0675,08/15/2026,,104.500000,104.218750,0.000000\r\n912810EY0,MARKET
-        BASED BOND,0.065,11/15/2026,,105.265625,105.062500,0.000000\r\n912810EZ7,MARKET
-        BASED BOND,0.06625,02/15/2027,,105.500000,105.250000,0.000000\r\n912810FA1,MARKET
-        BASED BOND,0.06375,08/15/2027,,105.609375,105.437500,0.000000\r\n912810FB9,MARKET
-        BASED BOND,0.06125,11/15/2027,,105.250000,105.125000,0.000000\r\n912810FE3,MARKET
-        BASED BOND,0.055,08/15/2028,,104.484375,104.343750,0.000000\r\n912810FF0,MARKET
-        BASED BOND,0.0525,11/15/2028,,103.546875,103.343750,0.000000\r\n912810FG8,MARKET
-        BASED BOND,0.0525,02/15/2029,,104.015625,103.781250,0.000000\r\n912810FJ2,MARKET
-        BASED BOND,0.06125,08/15/2029,,108.156250,108.031250,0.000000\r\n912810FM5,MARKET
-        BASED BOND,0.0625,05/15/2030,,109.859375,109.656250,0.000000\r\n912810FP8,MARKET
-        BASED BOND,0.05375,02/15/2031,,106.578125,106.375000,0.000000\r\n912810FT0,MARKET
-        BASED BOND,0.045,02/15/2036,,102.468750,102.343750,0.000000\r\n912810PT9,MARKET
-        BASED BOND,0.0475,02/15/2037,,104.500000,104.343750,0.000000\r\n912810PU6,MARKET
-        BASED BOND,0.05,05/15/2037,,106.921875,106.750000,0.000000\r\n912810PW2,MARKET
-        BASED BOND,0.04375,02/15/2038,,100.593750,100.468750,0.000000\r\n912810PX0,MARKET
-        BASED BOND,0.045,05/15/2038,,101.781250,101.656250,0.000000\r\n912810QA9,MARKET
-        BASED BOND,0.035,02/15/2039,,90.796875,90.656250,0.000000\r\n912810QB7,MARKET
-        BASED BOND,0.0425,05/15/2039,,98.593750,98.531250,0.000000\r\n912810QC5,MARKET
-        BASED BOND,0.045,08/15/2039,,101.281250,101.218750,0.000000\r\n912810QD3,MARKET
-        BASED BOND,0.04375,11/15/2039,,99.812500,99.750000,0.000000\r\n912810QE1,MARKET
-        BASED BOND,0.04625,02/15/2040,,102.562500,102.500000,0.000000\r\n912810QH4,MARKET
-        BASED BOND,0.04375,05/15/2040,,99.593750,99.500000,0.000000\r\n912810SR0,MARKET
-        BASED BOND,0.01125,05/15/2040,,62.250000,62.156250,0.000000\r\n912810QK7,MARKET
-        BASED BOND,0.03875,08/15/2040,,93.656250,93.562500,0.000000\r\n912810SQ2,MARKET
-        BASED BOND,0.01125,08/15/2040,,61.671875,61.593750,0.000000\r\n912810QL5,MARKET
-        BASED BOND,0.0425,11/15/2040,,97.828125,97.750000,0.000000\r\n912810ST6,MARKET
-        BASED BOND,0.01375,11/15/2040,,63.859375,63.781250,0.000000\r\n912810SW9,MARKET
-        BASED BOND,0.01875,02/15/2041,,69.218750,69.156250,0.000000\r\n912810QN1,MARKET
-        BASED BOND,0.0475,02/15/2041,,103.703125,103.625000,0.000000\r\n912810QQ4,MARKET
-        BASED BOND,0.04375,05/15/2041,,99.109375,99.031250,0.000000\r\n912810SY5,MARKET
-        BASED BOND,0.0225,05/15/2041,,73.171875,73.093750,0.000000\r\n912810TA6,MARKET
-        BASED BOND,0.0175,08/15/2041,,66.953125,66.875000,0.000000\r\n912810QS0,MARKET
-        BASED BOND,0.0375,08/15/2041,,91.328125,91.250000,0.000000\r\n912810QT8,MARKET
-        BASED BOND,0.03125,11/15/2041,,83.359375,83.281250,0.000000\r\n912810TC2,MARKET
-        BASED BOND,0.02,11/15/2041,,69.546875,69.468750,0.000000\r\n912810TF5,MARKET
-        BASED BOND,0.02375,02/15/2042,,73.687500,73.625000,0.000000\r\n912810QU5,MARKET
-        BASED BOND,0.03125,02/15/2042,,83.046875,82.968750,0.000000\r\n912810QW1,MARKET
-        BASED BOND,0.03,05/15/2042,,81.171875,81.093750,0.000000\r\n912810TH1,MARKET
-        BASED BOND,0.0325,05/15/2042,,84.109375,84.062500,0.000000\r\n912810TK4,MARKET
-        BASED BOND,0.03375,08/15/2042,,85.421875,85.375000,0.000000\r\n912810QX9,MARKET
-        BASED BOND,0.0275,08/15/2042,,77.812500,77.750000,0.000000\r\n912810QY7,MARKET
-        BASED BOND,0.0275,11/15/2042,,77.546875,77.468750,0.000000\r\n912810TM0,MARKET
-        BASED BOND,0.04,11/15/2042,,93.109375,93.062500,0.000000\r\n912810TQ1,MARKET
-        BASED BOND,0.03875,02/15/2043,,91.328125,91.281250,0.000000\r\n912810QZ4,MARKET
-        BASED BOND,0.03125,02/15/2043,,81.906250,81.843750,0.000000\r\n912810RB6,MARKET
-        BASED BOND,0.02875,05/15/2043,,78.593750,78.531250,0.000000\r\n912810TS7,MARKET
-        BASED BOND,0.03875,05/15/2043,,91.187500,91.156250,0.000000\r\n912810TU2,MARKET
-        BASED BOND,0.04375,08/15/2043,,97.531250,97.500000,0.000000\r\n912810RC4,MARKET
-        BASED BOND,0.03625,08/15/2043,,87.890625,87.812500,0.000000\r\n912810RD2,MARKET
-        BASED BOND,0.0375,11/15/2043,,89.390625,89.312500,0.000000\r\n912810TW8,MARKET
-        BASED BOND,0.0475,11/15/2043,,102.406250,102.375000,0.000000\r\n912810TZ1,MARKET
-        BASED BOND,0.045,02/15/2044,,99.171875,99.156250,0.000000\r\n912810RE0,MARKET
-        BASED BOND,0.03625,02/15/2044,,87.625000,87.562500,0.000000\r\n912810RG5,MARKET
-        BASED BOND,0.03375,05/15/2044,,84.265625,84.187500,0.000000\r\n912810UB2,MARKET
-        BASED BOND,0.04625,05/15/2044,,100.921875,100.906250,0.000000\r\n912810RH3,MARKET
-        BASED BOND,0.03125,08/15/2044,,80.859375,80.781250,0.000000\r\n912810RJ9,MARKET
-        BASED BOND,0.03,11/15/2044,,79.046875,78.968750,0.000000\r\n912810RK6,MARKET
-        BASED BOND,0.025,02/15/2045,,72.234375,72.156250,0.000000\r\n912810RM2,MARKET
-        BASED BOND,0.03,05/15/2045,,78.703125,78.625000,0.000000\r\n912810RN0,MARKET
-        BASED BOND,0.02875,08/15/2045,,76.890625,76.812500,0.000000\r\n912810RP5,MARKET
-        BASED BOND,0.03,11/15/2045,,78.421875,78.343750,0.000000\r\n912810RQ3,MARKET
-        BASED BOND,0.025,02/15/2046,,71.437500,71.375000,0.000000\r\n912810RS9,MARKET
-        BASED BOND,0.025,05/15/2046,,71.265625,71.187500,0.000000\r\n912810RT7,MARKET
-        BASED BOND,0.0225,08/15/2046,,67.625000,67.562500,0.000000\r\n912810RU4,MARKET
-        BASED BOND,0.02875,11/15/2046,,76.125000,76.062500,0.000000\r\n912810RV2,MARKET
-        BASED BOND,0.03,02/15/2047,,77.687500,77.625000,0.000000\r\n912810RX8,MARKET
-        BASED BOND,0.03,05/15/2047,,77.562500,77.500000,0.000000\r\n912810RY6,MARKET
-        BASED BOND,0.0275,08/15/2047,,73.906250,73.843750,0.000000\r\n912810RZ3,MARKET
-        BASED BOND,0.0275,11/15/2047,,73.765625,73.718750,0.000000\r\n912810SA7,MARKET
-        BASED BOND,0.03,02/15/2048,,77.218750,77.156250,0.000000\r\n912810SC3,MARKET
-        BASED BOND,0.03125,05/15/2048,,78.921875,78.875000,0.000000\r\n912810SD1,MARKET
-        BASED BOND,0.03,08/15/2048,,77.031250,76.968750,0.000000\r\n912810SE9,MARKET
-        BASED BOND,0.03375,11/15/2048,,82.421875,82.375000,0.000000\r\n912810SF6,MARKET
-        BASED BOND,0.03,02/15/2049,,76.921875,76.875000,0.000000\r\n912810SH2,MARKET
-        BASED BOND,0.02875,05/15/2049,,75.015625,74.968750,0.000000\r\n912810SJ8,MARKET
-        BASED BOND,0.0225,08/15/2049,,65.734375,65.687500,0.000000\r\n912810SK5,MARKET
-        BASED BOND,0.02375,11/15/2049,,67.484375,67.437500,0.000000\r\n912810SL3,MARKET
-        BASED BOND,0.02,02/15/2050,,61.765625,61.718750,0.000000\r\n912810SN9,MARKET
-        BASED BOND,0.0125,05/15/2050,,50.500000,50.437500,0.000000\r\n912810SP4,MARKET
-        BASED BOND,0.01375,08/15/2050,,52.140625,52.093750,0.000000\r\n912810SS8,MARKET
-        BASED BOND,0.01625,11/15/2050,,55.734375,55.687500,0.000000\r\n912810SU3,MARKET
-        BASED BOND,0.01875,02/15/2051,,59.453125,59.406250,0.000000\r\n912810SX7,MARKET
-        BASED BOND,0.02375,05/15/2051,,66.984375,66.937500,0.000000\r\n912810SZ2,MARKET
-        BASED BOND,0.02,08/15/2051,,61.109375,61.062500,0.000000\r\n912810TB4,MARKET
-        BASED BOND,0.01875,11/15/2051,,59.093750,59.062500,0.000000\r\n912810TD0,MARKET
-        BASED BOND,0.0225,02/15/2052,,64.765625,64.718750,0.000000\r\n912810TG3,MARKET
-        BASED BOND,0.02875,05/15/2052,,74.468750,74.437500,0.000000\r\n912810TJ7,MARKET
-        BASED BOND,0.03,08/15/2052,,76.468750,76.437500,0.000000\r\n912810TL2,MARKET
-        BASED BOND,0.04,11/15/2052,,92.531250,92.500000,0.000000\r\n912810TN8,MARKET
-        BASED BOND,0.03625,02/15/2053,,86.437500,86.406250,0.000000\r\n912810TR9,MARKET
-        BASED BOND,0.03625,05/15/2053,,86.484375,86.468750,0.000000\r\n912810TT5,MARKET
-        BASED BOND,0.04125,08/15/2053,,94.609375,94.593750,0.000000\r\n912810TV0,MARKET
-        BASED BOND,0.0475,11/15/2053,,105.015625,105.000000,0.000000\r\n912810TX6,MARKET
-        BASED BOND,0.0425,02/15/2054,,96.718750,96.718750,0.000000\r\n912810UA4,MARKET
-        BASED BOND,0.04625,05/15/2054,,102.937500,102.937500,0.000000\r\n912828WU0,TIPS,0.00125,07/15/2024,,0.000000,99.937500,0.000000\r\n912828YL8,TIPS,0.00125,10/15/2024,,0.000000,98.937500,0.000000\r\n912828H45,TIPS,0.0025,01/15/2025,,97.937500,97.906250,0.000000\r\n912810FR4,TIPS,0.02375,01/15/2025,,99.125000,99.125000,0.000000\r\n912828ZJ2,TIPS,0.00125,04/15/2025,,97.218750,97.187500,0.000000\r\n912828XL9,TIPS,0.00375,07/15/2025,,97.421875,97.406250,0.000000\r\n91282CAQ4,TIPS,0.00125,10/15/2025,,96.625000,96.593750,0.000000\r\n912828N71,TIPS,0.00625,01/15/2026,,96.625000,96.593750,0.000000\r\n912810FS2,TIPS,0.02,01/15/2026,,98.734375,98.718750,0.000000\r\n91282CCA7,TIPS,0.00125,04/15/2026,,95.359375,95.343750,0.000000\r\n912828S50,TIPS,0.00125,07/15/2026,,95.421875,95.406250,0.000000\r\n91282CDC2,TIPS,0.00125,10/15/2026,,95.000000,94.968750,0.000000\r\n912828V49,TIPS,0.00375,01/15/2027,,94.890625,94.875000,0.000000\r\n912810PS1,TIPS,0.02375,01/15/2027,,99.796875,99.750000,0.000000\r\n91282CEJ6,TIPS,0.00125,04/15/2027,,93.859375,93.843750,0.000000\r\n9128282L3,TIPS,0.00375,07/15/2027,,94.656250,94.625000,0.000000\r\n91282CFR7,TIPS,0.01625,10/15/2027,,98.171875,98.156250,0.000000\r\n9128283R9,TIPS,0.005,01/15/2028,,94.015625,94.000000,0.000000\r\n912810PV4,TIPS,0.0175,01/15/2028,,98.218750,98.187500,0.000000\r\n912810FD5,TIPS,0.03625,04/15/2028,,104.921875,104.875000,0.000000\r\n91282CGW5,TIPS,0.0125,04/15/2028,,96.375000,96.343750,0.000000\r\n912828Y38,TIPS,0.0075,07/15/2028,,94.843750,94.812500,0.000000\r\n91282CJH5,TIPS,0.02375,10/15/2028,,101.125000,101.093750,0.000000\r\n9128285W6,TIPS,0.00875,01/15/2029,,94.562500,94.531250,0.000000\r\n912810PZ5,TIPS,0.025,01/15/2029,,101.578125,101.531250,0.000000\r\n912810FH6,TIPS,0.03875,04/15/2029,,107.859375,107.812500,0.000000\r\n91282CKL4,TIPS,0.02125,04/15/2029,,99.968750,99.937500,0.000000\r\n9128287D6,TIPS,0.0025,07/15/2029,,91.656250,91.625000,0.000000\r\n912828Z37,TIPS,0.00125,01/15/2030,,89.906250,89.875000,0.000000\r\n912828ZZ6,TIPS,0.00125,07/15/2030,,89.484375,89.468750,0.000000\r\n91282CBF7,TIPS,0.00125,01/15/2031,,88.343750,88.312500,0.000000\r\n91282CCM1,TIPS,0.00125,07/15/2031,,87.906250,87.875000,0.000000\r\n91282CDX6,TIPS,0.00125,01/15/2032,,86.656250,86.625000,0.000000\r\n912810FQ6,TIPS,0.03375,04/15/2032,,109.312500,109.250000,0.000000\r\n91282CEZ0,TIPS,0.00625,07/15/2032,,89.812500,89.781250,0.000000\r\n91282CGK1,TIPS,0.01125,01/15/2033,,92.687500,92.656250,0.000000\r\n91282CHP9,TIPS,0.01375,07/15/2033,,94.656250,94.625000,0.000000\r\n91282CJY8,TIPS,0.0175,01/15/2034,,97.296875,97.281250,0.000000\r\n912810QF8,TIPS,0.02125,02/15/2040,,99.890625,99.781250,0.000000\r\n912810QP6,TIPS,0.02125,02/15/2041,,100.140625,100.031250,0.000000\r\n912810QV3,TIPS,0.0075,02/15/2042,,79.078125,78.968750,0.000000\r\n912810RA8,TIPS,0.00625,02/15/2043,,76.093750,76.000000,0.000000\r\n912810RF7,TIPS,0.01375,02/15/2044,,86.796875,86.687500,0.000000\r\n912810RL4,TIPS,0.0075,02/15/2045,,75.968750,75.875000,0.000000\r\n912810RR1,TIPS,0.01,02/15/2046,,79.156250,79.062500,0.000000\r\n912810RW0,TIPS,0.00875,02/15/2047,,76.250000,76.156250,0.000000\r\n912810SB5,TIPS,0.01,02/15/2048,,77.781250,77.687500,0.000000\r\n912810SG4,TIPS,0.01,02/15/2049,,77.187500,77.093750,0.000000\r\n912810SM1,TIPS,0.0025,02/15/2050,,62.203125,62.125000,0.000000\r\n912810SV1,TIPS,0.00125,02/15/2051,,59.000000,58.906250,0.000000\r\n912810TE8,TIPS,0.00125,02/15/2052,,57.984375,57.906250,0.000000\r\n912810TP3,TIPS,0.015,02/15/2053,,85.484375,85.437500,0.000000\r\n912810TY4,TIPS,0.02125,02/15/2054,,98.890625,98.843750,0.000000\r\n91282CFD8,MARKET
-        BASED FRN,0.05431240164,07/31/2024,,0.000000,99.993961,0.000000\r\n91282CFS5,MARKET
-        BASED FRN,0.055359567900000003,10/31/2024,,100.033522,100.021420,0.000000\r\n91282CGF2,MARKET
-        BASED FRN,0.05596956546,01/31/2025,,100.081397,100.069528,0.000000\r\n91282CGY1,MARKET
-        BASED FRN,0.0556543992,04/30/2025,,100.081698,100.063029,0.000000\r\n91282CHS3,MARKET
-        BASED FRN,0.05520706668,07/31/2025,,100.046353,100.030297,0.000000\r\n91282CJD4,MARKET
-        BASED FRN,0.05566456668,10/31/2025,,100.088609,100.060810,0.000000\r\n91282CJU6,MARKET
-        BASED FRN,0.05642706546,01/31/2026,,100.168715,100.157143,0.000000\r\n91282CKM2,MARKET
-        BASED FRN,0.05546123538,04/30/2026,,99.990191,99.981369,0.000000\r\n"
+      string: '912796Y45,MARKET BASED BILL,0.0,06/27/2024,,0.000000,99.971278,99.985611
+
+        912797KH9,MARKET BASED BILL,0.0,07/02/2024,,99.899181,99.898889,99.912833
+
+        912796Y52,MARKET BASED BILL,0.0,07/05/2024,,99.855694,99.855556,99.869000
+
+        912797KN6,MARKET BASED BILL,0.0,07/09/2024,,99.797778,99.797389,99.811139
+
+        912797GB7,MARKET BASED BILL,0.0,07/11/2024,,99.769111,99.768444,99.782083
+
+        912797KP1,MARKET BASED BILL,0.0,07/16/2024,,99.695792,99.694917,99.709444
+
+        912797JS7,MARKET BASED BILL,0.0,07/18/2024,,99.667458,99.667139,99.680389
+
+        912797KQ9,MARKET BASED BILL,0.0,07/23/2024,,99.594389,99.594000,99.607750
+
+        912797JT5,MARKET BASED BILL,0.0,07/25/2024,,99.566250,99.565000,99.579500
+
+        912797KR7,MARKET BASED BILL,0.0,07/30/2024,,99.493472,99.492500,99.506056
+
+        912797JU2,MARKET BASED BILL,0.0,08/01/2024,,99.463500,99.462472,99.475000
+
+        912797KW6,MARKET BASED BILL,0.0,08/06/2024,,99.390417,99.388667,99.403222
+
+        912797GK7,MARKET BASED BILL,0.0,08/08/2024,,99.360167,99.359556,99.371722
+
+        912797KX4,MARKET BASED BILL,0.0,08/13/2024,,99.286778,99.285417,99.301333
+
+        912797KB2,MARKET BASED BILL,0.0,08/15/2024,,99.262625,99.261917,99.275000
+
+        912797KY2,MARKET BASED BILL,0.0,08/20/2024,,99.183333,99.183333,99.197917
+
+        912797KC0,MARKET BASED BILL,0.0,08/22/2024,,99.159806,99.157389,99.173500
+
+        912797KZ9,MARKET BASED BILL,0.0,08/27/2024,,99.083875,99.081250,99.097556
+
+        912797KD8,MARKET BASED BILL,0.0,08/29/2024,,99.056597,99.055694,99.068444
+
+        912797LA3,MARKET BASED BILL,0.0,09/03/2024,,98.985000,98.983056,98.997583
+
+        912797GL5,MARKET BASED BILL,0.0,09/05/2024,,98.956000,98.954000,98.968528
+
+        912797LG0,MARKET BASED BILL,0.0,09/10/2024,,98.885639,98.883500,98.898000
+
+        912797KK2,MARKET BASED BILL,0.0,09/12/2024,,98.854500,98.852306,98.866833
+
+        912797LH8,MARKET BASED BILL,0.0,09/17/2024,,98.783167,98.782000,98.796500
+
+        912797KL0,MARKET BASED BILL,0.0,09/19/2024,,98.754194,98.753000,98.767500
+
+        912797LJ4,MARKET BASED BILL,0.0,09/24/2024,,98.681764,98.677972,98.697500
+
+        912797KM8,MARKET BASED BILL,0.0,09/26/2024,,98.655375,98.654083,98.668556
+
+        912797LK1,MARKET BASED BILL,0.0,10/01/2024,,98.581722,98.579000,98.593500
+
+        912797GW1,MARKET BASED BILL,0.0,10/03/2024,,98.562500,98.561111,98.575500
+
+        912797LS4,MARKET BASED BILL,0.0,10/08/2024,,98.478958,98.477500,98.492000
+
+        912797KT3,MARKET BASED BILL,0.0,10/10/2024,,98.455931,98.451472,98.465944
+
+        912797LT2,MARKET BASED BILL,0.0,10/15/2024,,98.377556,98.376000,98.393583
+
+        912797KU0,MARKET BASED BILL,0.0,10/17/2024,,98.351750,98.350167,98.364639
+
+        912797LU9,MARKET BASED BILL,0.0,10/22/2024,,98.276153,98.274500,98.289000
+
+        912797KV8,MARKET BASED BILL,0.0,10/24/2024,,98.252222,98.248861,98.263333
+
+        912797HE0,MARKET BASED BILL,0.0,10/31/2024,,98.161778,98.158222,98.172611
+
+        912797LC9,MARKET BASED BILL,0.0,11/07/2024,,98.061250,98.057500,98.075611
+
+        912797LD7,MARKET BASED BILL,0.0,11/14/2024,,97.962694,97.960722,97.979000
+
+        912797LE5,MARKET BASED BILL,0.0,11/21/2024,,97.864333,97.860194,97.878667
+
+        912797HP5,MARKET BASED BILL,0.0,11/29/2024,,97.762750,97.758389,97.772667
+
+        912797LF2,MARKET BASED BILL,0.0,12/05/2024,,97.670458,97.668194,97.682500
+
+        912797LP0,MARKET BASED BILL,0.0,12/12/2024,,97.575139,97.572778,97.587056
+
+        912797LQ8,MARKET BASED BILL,0.0,12/19/2024,,97.475292,97.472833,97.487111
+
+        912796ZV4,MARKET BASED BILL,0.0,12/26/2024,,97.390778,97.388222,97.412583
+
+        912797JR9,MARKET BASED BILL,0.0,01/23/2025,,97.126222,97.108556,97.133917
+
+        912797KA4,MARKET BASED BILL,0.0,02/20/2025,,96.696667,96.680000,96.707111
+
+        912797KJ5,MARKET BASED BILL,0.0,03/20/2025,,96.315000,96.307556,96.328750
+
+        912797KS5,MARKET BASED BILL,0.0,04/17/2025,,95.962889,95.954667,95.968333
+
+        912797LB1,MARKET BASED BILL,0.0,05/15/2025,,95.603500,95.599000,95.612583
+
+        912797LN5,MARKET BASED BILL,0.0,06/12/2025,,95.248000,95.248000,95.261500
+
+        9128286Z8,MARKET BASED NOTE,0.0175,06/30/2024,,0.000000,99.937500,99.937500
+
+        912828XX3,MARKET BASED NOTE,0.02,06/30/2024,,0.000000,99.937500,99.937500
+
+        91282CEX5,MARKET BASED NOTE,0.03,06/30/2024,,0.000000,99.937500,99.937500
+
+        91282CCL3,MARKET BASED NOTE,0.00375,07/15/2024,,0.000000,99.718750,99.718750
+
+        912828Y87,MARKET BASED NOTE,0.0175,07/31/2024,,0.000000,99.656250,99.656250
+
+        9128282N9,MARKET BASED NOTE,0.02125,07/31/2024,,0.000000,99.687500,99.687500
+
+        91282CFA4,MARKET BASED NOTE,0.03,07/31/2024,,0.000000,99.750000,99.750000
+
+        912828D56,MARKET BASED NOTE,0.02375,08/15/2024,,0.000000,99.562500,99.562500
+
+        91282CCT6,MARKET BASED NOTE,0.00375,08/15/2024,,0.000000,99.312500,99.312500
+
+        912828YE4,MARKET BASED NOTE,0.0125,08/31/2024,,0.000000,99.218750,99.250000
+
+        9128282U3,MARKET BASED NOTE,0.01875,08/31/2024,,0.000000,99.343750,99.343750
+
+        91282CFG1,MARKET BASED NOTE,0.0325,08/31/2024,,0.000000,99.593750,99.593750
+
+        91282CCX7,MARKET BASED NOTE,0.00375,09/15/2024,,0.000000,98.906250,98.906250
+
+        912828YH7,MARKET BASED NOTE,0.015,09/30/2024,,0.000000,98.968750,98.968750
+
+        9128282Y5,MARKET BASED NOTE,0.02125,09/30/2024,,0.000000,99.156250,99.156250
+
+        91282CFN6,MARKET BASED NOTE,0.0425,09/30/2024,,0.000000,99.687500,99.687500
+
+        91282CDB4,MARKET BASED NOTE,0.00625,10/15/2024,,0.000000,98.562500,98.562500
+
+        912828YM6,MARKET BASED NOTE,0.015,10/31/2024,,0.000000,98.656250,98.656250
+
+        9128283D0,MARKET BASED NOTE,0.0225,10/31/2024,,0.000000,98.906250,98.906250
+
+        91282CFQ9,MARKET BASED NOTE,0.04375,10/31/2024,,0.000000,99.625000,99.656250
+
+        91282CDH1,MARKET BASED NOTE,0.0075,11/15/2024,,0.000000,98.218750,98.250000
+
+        912828G38,MARKET BASED NOTE,0.0225,11/15/2024,,0.000000,98.812500,98.812500
+
+        9128283J7,MARKET BASED NOTE,0.02125,11/30/2024,,0.000000,98.625000,98.656250
+
+        912828YV6,MARKET BASED NOTE,0.015,11/30/2024,,0.000000,98.375000,98.375000
+
+        91282CFX4,MARKET BASED NOTE,0.045,11/30/2024,,0.000000,99.656250,99.656250
+
+        91282CDN8,MARKET BASED NOTE,0.01,12/15/2024,,0.000000,98.031250,98.031250
+
+        91282CGD7,MARKET BASED NOTE,0.0425,12/31/2024,,99.453125,99.437500,99.437500
+
+        912828YY0,MARKET BASED NOTE,0.0175,12/31/2024,,98.218750,98.187500,98.187500
+
+        9128283P3,MARKET BASED NOTE,0.0225,12/31/2024,,98.468750,98.437500,98.468750
+
+        91282CDS7,MARKET BASED NOTE,0.01125,01/15/2025,,97.765625,97.750000,97.718750
+
+        91282CGG0,MARKET BASED NOTE,0.04125,01/31/2025,,99.328125,99.312500,99.312500
+
+        9128283V0,MARKET BASED NOTE,0.025,01/31/2025,,98.375000,98.343750,98.343750
+
+        912828Z52,MARKET BASED NOTE,0.01375,01/31/2025,,97.734375,97.718750,97.718750
+
+        912828J27,MARKET BASED NOTE,0.02,02/15/2025,,97.953125,97.937500,97.937500
+
+        91282CDZ1,MARKET BASED NOTE,0.015,02/15/2025,,97.640625,97.625000,97.625000
+
+        91282CGN5,MARKET BASED NOTE,0.04625,02/28/2025,,99.609375,99.593750,99.593750
+
+        9128283Z1,MARKET BASED NOTE,0.0275,02/28/2025,,98.359375,98.343750,98.343750
+
+        912828ZC7,MARKET BASED NOTE,0.01125,02/28/2025,,97.296875,97.281250,97.281250
+
+        91282CED9,MARKET BASED NOTE,0.0175,03/15/2025,,97.593750,97.562500,97.562500
+
+        91282CGU9,MARKET BASED NOTE,0.03875,03/31/2025,,99.046875,99.031250,99.000000
+
+        912828ZF0,MARKET BASED NOTE,0.005,03/31/2025,,96.546875,96.531250,96.531250
+
+        9128284F4,MARKET BASED NOTE,0.02625,03/31/2025,,98.109375,98.093750,98.093750
+
+        91282CEH0,MARKET BASED NOTE,0.02625,04/15/2025,,98.031250,98.000000,98.000000
+
+        91282CGX3,MARKET BASED NOTE,0.03875,04/30/2025,,98.953125,98.937500,98.937500
+
+        9128284M9,MARKET BASED NOTE,0.02875,04/30/2025,,98.125000,98.093750,98.125000
+
+        912828ZL7,MARKET BASED NOTE,0.00375,04/30/2025,,96.093750,96.062500,96.062500
+
+        912828XB1,MARKET BASED NOTE,0.02125,05/15/2025,,97.406250,97.375000,97.406250
+
+        91282CEQ0,MARKET BASED NOTE,0.0275,05/15/2025,,97.937500,97.906250,97.937500
+
+        91282CHD6,MARKET BASED NOTE,0.0425,05/31/2025,,99.187500,99.156250,99.156250
+
+        9128284R8,MARKET BASED NOTE,0.02875,05/31/2025,,97.953125,97.937500,97.937500
+
+        912828ZT0,MARKET BASED NOTE,0.0025,05/31/2025,,95.609375,95.593750,95.593750
+
+        91282CEU1,MARKET BASED NOTE,0.02875,06/15/2025,,97.890625,97.875000,97.875000
+
+        91282CHL8,MARKET BASED NOTE,0.04625,06/30/2025,,99.546875,99.531250,99.531250
+
+        912828ZW3,MARKET BASED NOTE,0.0025,06/30/2025,,95.296875,95.281250,95.281250
+
+        912828XZ8,MARKET BASED NOTE,0.0275,06/30/2025,,97.734375,97.718750,97.718750
+
+        91282CEY3,MARKET BASED NOTE,0.03,07/15/2025,,97.921875,97.906250,97.906250
+
+        91282CHN4,MARKET BASED NOTE,0.0475,07/31/2025,,99.703125,99.687500,99.656250
+
+        912828Y79,MARKET BASED NOTE,0.02875,07/31/2025,,97.718750,97.687500,97.687500
+
+        91282CAB7,MARKET BASED NOTE,0.0025,07/31/2025,,94.953125,94.937500,94.937500
+
+        912828K74,MARKET BASED NOTE,0.02,08/15/2025,,96.687500,96.656250,96.656250
+
+        91282CFE6,MARKET BASED NOTE,0.03125,08/15/2025,,97.906250,97.875000,97.906250
+
+        91282CHV6,MARKET BASED NOTE,0.05,08/31/2025,,99.953125,99.937500,99.937500
+
+        9128284Z0,MARKET BASED NOTE,0.0275,08/31/2025,,97.406250,97.375000,97.375000
+
+        91282CAJ0,MARKET BASED NOTE,0.0025,08/31/2025,,94.578125,94.562500,94.562500
+
+        91282CFK2,MARKET BASED NOTE,0.035,09/15/2025,,98.203125,98.187500,98.187500
+
+        91282CJB8,MARKET BASED NOTE,0.05,09/30/2025,,99.984375,99.968750,100.000000
+
+        91282CAM3,MARKET BASED NOTE,0.0025,09/30/2025,,94.265625,94.250000,94.250000
+
+        9128285C0,MARKET BASED NOTE,0.03,09/30/2025,,97.593750,97.562500,97.562500
+
+        91282CFP1,MARKET BASED NOTE,0.0425,10/15/2025,,99.078125,99.062500,99.062500
+
+        91282CJE2,MARKET BASED NOTE,0.05,10/31/2025,,100.046875,100.031250,100.031250
+
+        9128285J5,MARKET BASED NOTE,0.03,10/31/2025,,97.484375,97.468750,97.468750
+
+        91282CAT8,MARKET BASED NOTE,0.0025,10/31/2025,,93.937500,93.906250,93.937500
+
+        912828M56,MARKET BASED NOTE,0.0225,11/15/2025,,96.437500,96.406250,96.437500
+
+        91282CFW6,MARKET BASED NOTE,0.045,11/15/2025,,99.421875,99.406250,99.406250
+
+        91282CJL6,MARKET BASED NOTE,0.04875,11/30/2025,,99.921875,99.906250,99.937500
+
+        9128285N6,MARKET BASED NOTE,0.02875,11/30/2025,,97.218750,97.187500,97.218750
+
+        91282CAZ4,MARKET BASED NOTE,0.00375,11/30/2025,,93.796875,93.781250,93.781250
+
+        91282CGA3,MARKET BASED NOTE,0.04,12/15/2025,,98.703125,98.687500,98.718750
+
+        91282CJS1,MARKET BASED NOTE,0.0425,12/31/2025,,99.046875,99.031250,99.062500
+
+        91282CBC4,MARKET BASED NOTE,0.00375,12/31/2025,,93.484375,93.468750,93.500000
+
+        9128285T3,MARKET BASED NOTE,0.02625,12/31/2025,,96.734375,96.718750,96.718750
+
+        91282CGE5,MARKET BASED NOTE,0.03875,01/15/2026,,98.515625,98.500000,98.500000
+
+        91282CJV4,MARKET BASED NOTE,0.0425,01/31/2026,,99.046875,99.031250,99.062500
+
+        9128286A3,MARKET BASED NOTE,0.02625,01/31/2026,,96.593750,96.562500,96.593750
+
+        91282CBH3,MARKET BASED NOTE,0.00375,01/31/2026,,93.171875,93.156250,93.156250
+
+        912828P46,MARKET BASED NOTE,0.01625,02/15/2026,,94.968750,94.937500,94.968750
+
+        91282CGL9,MARKET BASED NOTE,0.04,02/15/2026,,98.671875,98.656250,98.687500
+
+        91282CKB6,MARKET BASED NOTE,0.04625,02/28/2026,,99.656250,99.656250,99.687500
+
+        9128286F2,MARKET BASED NOTE,0.025,02/28/2026,,96.265625,96.250000,96.281250
+
+        91282CBQ3,MARKET BASED NOTE,0.005,02/28/2026,,93.093750,93.062500,93.093750
+
+        91282CGR6,MARKET BASED NOTE,0.04625,03/15/2026,,99.671875,99.656250,99.687500
+
+        91282CKH3,MARKET BASED NOTE,0.045,03/31/2026,,99.500000,99.500000,99.531250
+
+        91282CBT7,MARKET BASED NOTE,0.0075,03/31/2026,,93.234375,93.218750,93.250000
+
+        9128286L9,MARKET BASED NOTE,0.0225,03/31/2026,,95.734375,95.718750,95.750000
+
+        91282CGV7,MARKET BASED NOTE,0.0375,04/15/2026,,98.218750,98.218750,98.250000
+
+        91282CKK6,MARKET BASED NOTE,0.04875,04/30/2026,,100.171875,100.156250,100.187500
+
+        9128286S4,MARKET BASED NOTE,0.02375,04/30/2026,,95.796875,95.781250,95.812500
+
+        91282CBW0,MARKET BASED NOTE,0.0075,04/30/2026,,92.984375,92.968750,93.000000
+
+        912828R36,MARKET BASED NOTE,0.01625,05/15/2026,,94.406250,94.375000,94.406250
+
+        91282CHB0,MARKET BASED NOTE,0.03625,05/15/2026,,97.984375,97.968750,98.000000
+
+        91282CKS9,MARKET BASED NOTE,0.04875,05/31/2026,,100.218750,100.218750,100.250000
+
+        9128286X3,MARKET BASED NOTE,0.02125,05/31/2026,,95.234375,95.218750,95.250000
+
+        91282CCF6,MARKET BASED NOTE,0.0075,05/31/2026,,92.703125,92.687500,92.750000
+
+        91282CHH7,MARKET BASED NOTE,0.04125,06/15/2026,,98.890625,98.875000,98.906250
+
+        91282CCJ8,MARKET BASED NOTE,0.00875,06/30/2026,,92.734375,92.718750,92.750000
+
+        9128287B0,MARKET BASED NOTE,0.01875,06/30/2026,,94.625000,94.593750,94.625000
+
+        91282CHM6,MARKET BASED NOTE,0.045,07/15/2026,,99.593750,99.562500,99.625000
+
+        912828Y95,MARKET BASED NOTE,0.01875,07/31/2026,,94.437500,94.406250,94.437500
+
+        91282CCP4,MARKET BASED NOTE,0.00625,07/31/2026,,91.984375,91.968750,92.000000
+
+        9128282A7,MARKET BASED NOTE,0.015,08/15/2026,,93.593750,93.562500,93.593750
+
+        91282CHU8,MARKET BASED NOTE,0.04375,08/15/2026,,99.375000,99.343750,99.406250
+
+        912828YD6,MARKET BASED NOTE,0.01375,08/31/2026,,93.250000,93.218750,93.250000
+
+        91282CCW9,MARKET BASED NOTE,0.0075,08/31/2026,,91.984375,91.968750,92.000000
+
+        91282CHY0,MARKET BASED NOTE,0.04625,09/15/2026,,99.921875,99.906250,99.937500
+
+        91282CCZ2,MARKET BASED NOTE,0.00875,09/30/2026,,92.046875,92.031250,92.062500
+
+        912828YG9,MARKET BASED NOTE,0.01625,09/30/2026,,93.593750,93.562500,93.625000
+
+        91282CJC6,MARKET BASED NOTE,0.04625,10/15/2026,,99.984375,99.968750,100.000000
+
+        91282CDG3,MARKET BASED NOTE,0.01125,10/31/2026,,92.312500,92.281250,92.343750
+
+        912828YQ7,MARKET BASED NOTE,0.01625,10/31/2026,,93.390625,93.375000,93.437500
+
+        912828U24,MARKET BASED NOTE,0.02,11/15/2026,,94.140625,94.125000,94.156250
+
+        91282CJK8,MARKET BASED NOTE,0.04625,11/15/2026,,100.046875,100.031250,100.062500
+
+        91282CDK4,MARKET BASED NOTE,0.0125,11/30/2026,,92.390625,92.375000,92.437500
+
+        912828YU8,MARKET BASED NOTE,0.01625,11/30/2026,,93.234375,93.218750,93.250000
+
+        91282CJP7,MARKET BASED NOTE,0.04375,12/15/2026,,99.515625,99.500000,99.531250
+
+        91282CDQ1,MARKET BASED NOTE,0.0125,12/31/2026,,92.234375,92.218750,92.250000
+
+        912828YX2,MARKET BASED NOTE,0.0175,12/31/2026,,93.390625,93.375000,93.437500
+
+        91282CJT9,MARKET BASED NOTE,0.04,01/15/2027,,98.640625,98.625000,98.687500
+
+        912828Z78,MARKET BASED NOTE,0.015,01/31/2027,,92.609375,92.593750,92.625000
+
+        912828V98,MARKET BASED NOTE,0.0225,02/15/2027,,94.343750,94.312500,94.343750
+
+        91282CKA8,MARKET BASED NOTE,0.04125,02/15/2027,,98.953125,98.937500,99.000000
+
+        91282CEC1,MARKET BASED NOTE,0.01875,02/28/2027,,93.328125,93.312500,93.375000
+
+        912828ZB9,MARKET BASED NOTE,0.01125,02/28/2027,,91.500000,91.468750,91.531250
+
+        91282CKE0,MARKET BASED NOTE,0.0425,03/15/2027,,99.281250,99.281250,99.343750
+
+        91282CEF4,MARKET BASED NOTE,0.025,03/31/2027,,94.859375,94.843750,94.906250
+
+        912828ZE3,MARKET BASED NOTE,0.00625,03/31/2027,,90.000000,89.968750,90.031250
+
+        91282CKJ9,MARKET BASED NOTE,0.045,04/15/2027,,99.953125,99.937500,100.000000
+
+        91282CEN7,MARKET BASED NOTE,0.0275,04/30/2027,,95.359375,95.343750,95.375000
+
+        912828ZN3,MARKET BASED NOTE,0.005,04/30/2027,,89.437500,89.406250,89.468750
+
+        912828X88,MARKET BASED NOTE,0.02375,05/15/2027,,94.265625,94.250000,94.312500
+
+        91282CKR1,MARKET BASED NOTE,0.045,05/15/2027,,99.984375,99.968750,100.031250
+
+        91282CET4,MARKET BASED NOTE,0.02625,05/31/2027,,94.906250,94.875000,94.937500
+
+        912828ZS2,MARKET BASED NOTE,0.005,05/31/2027,,89.156250,89.125000,89.187500
+
+        91282CKV2,MARKET BASED NOTE,0.04625,06/15/2027,,100.406250,100.406250,100.468750
+
+        91282CEW7,MARKET BASED NOTE,0.0325,06/30/2027,,96.609375,96.593750,96.656250
+
+        912828ZV5,MARKET BASED NOTE,0.005,06/30/2027,,88.921875,88.906250,88.968750
+
+        91282CAD3,MARKET BASED NOTE,0.00375,07/31/2027,,88.281250,88.250000,88.312500
+
+        91282CFB2,MARKET BASED NOTE,0.0275,07/31/2027,,95.046875,95.031250,95.125000
+
+        9128282R0,MARKET BASED NOTE,0.0225,08/15/2027,,93.546875,93.531250,93.593750
+
+        91282CAH4,MARKET BASED NOTE,0.005,08/31/2027,,88.390625,88.375000,88.437500
+
+        91282CFH9,MARKET BASED NOTE,0.03125,08/31/2027,,96.078125,96.062500,96.125000
+
+        91282CFM8,MARKET BASED NOTE,0.04125,09/30/2027,,99.015625,99.000000,99.093750
+
+        91282CAL5,MARKET BASED NOTE,0.00375,09/30/2027,,87.765625,87.750000,87.812500
+
+        91282CAU5,MARKET BASED NOTE,0.005,10/31/2027,,87.875000,87.843750,87.906250
+
+        91282CFU0,MARKET BASED NOTE,0.04125,10/31/2027,,99.015625,99.000000,99.093750
+
+        9128283F5,MARKET BASED NOTE,0.0225,11/15/2027,,93.187500,93.156250,93.187500
+
+        91282CAY7,MARKET BASED NOTE,0.00625,11/30/2027,,88.015625,88.000000,88.062500
+
+        91282CFZ9,MARKET BASED NOTE,0.03875,11/30/2027,,98.234375,98.218750,98.281250
+
+        91282CGC9,MARKET BASED NOTE,0.03875,12/31/2027,,98.234375,98.218750,98.312500
+
+        91282CBB6,MARKET BASED NOTE,0.00625,12/31/2027,,87.765625,87.750000,87.812500
+
+        91282CBJ9,MARKET BASED NOTE,0.0075,01/31/2028,,87.953125,87.937500,88.000000
+
+        91282CGH8,MARKET BASED NOTE,0.035,01/31/2028,,96.984375,96.968750,97.062500
+
+        9128283W8,MARKET BASED NOTE,0.0275,02/15/2028,,94.437500,94.406250,94.468750
+
+        91282CBP5,MARKET BASED NOTE,0.01125,02/29/2028,,88.953125,88.937500,89.000000
+
+        91282CGP0,MARKET BASED NOTE,0.04,02/29/2028,,98.640625,98.625000,98.718750
+
+        91282CGT2,MARKET BASED NOTE,0.03625,03/31/2028,,97.375000,97.343750,97.437500
+
+        91282CBS9,MARKET BASED NOTE,0.0125,03/31/2028,,89.187500,89.156250,89.250000
+
+        91282CBZ3,MARKET BASED NOTE,0.0125,04/30/2028,,88.984375,88.968750,89.062500
+
+        91282CHA2,MARKET BASED NOTE,0.035,04/30/2028,,96.921875,96.906250,96.968750
+
+        9128284N7,MARKET BASED NOTE,0.02875,05/15/2028,,94.625000,94.593750,94.687500
+
+        91282CCE9,MARKET BASED NOTE,0.0125,05/31/2028,,88.812500,88.781250,88.875000
+
+        91282CHE4,MARKET BASED NOTE,0.03625,05/31/2028,,97.328125,97.312500,97.406250
+
+        91282CHK0,MARKET BASED NOTE,0.04,06/30/2028,,98.671875,98.656250,98.750000
+
+        91282CCH2,MARKET BASED NOTE,0.0125,06/30/2028,,88.640625,88.625000,88.687500
+
+        91282CCR0,MARKET BASED NOTE,0.01,07/31/2028,,87.515625,87.500000,87.562500
+
+        91282CHQ7,MARKET BASED NOTE,0.04125,07/31/2028,,99.140625,99.125000,99.218750
+
+        9128284V9,MARKET BASED NOTE,0.02875,08/15/2028,,94.375000,94.343750,94.437500
+
+        91282CCV1,MARKET BASED NOTE,0.01125,08/31/2028,,87.781250,87.750000,87.843750
+
+        91282CHX2,MARKET BASED NOTE,0.04375,08/31/2028,,100.093750,100.093750,100.156250
+
+        91282CJA0,MARKET BASED NOTE,0.04625,09/30/2028,,101.078125,101.062500,101.156250
+
+        91282CCY5,MARKET BASED NOTE,0.0125,09/30/2028,,88.062500,88.031250,88.125000
+
+        91282CJF9,MARKET BASED NOTE,0.04875,10/31/2028,,102.109375,102.093750,102.187500
+
+        91282CDF5,MARKET BASED NOTE,0.01375,10/31/2028,,88.375000,88.343750,88.437500
+
+        9128285M8,MARKET BASED NOTE,0.03125,11/15/2028,,95.156250,95.125000,95.218750
+
+        91282CDL2,MARKET BASED NOTE,0.015,11/30/2028,,88.687500,88.656250,88.750000
+
+        91282CJN2,MARKET BASED NOTE,0.04375,11/30/2028,,100.218750,100.218750,100.312500
+
+        91282CJR3,MARKET BASED NOTE,0.0375,12/31/2028,,97.671875,97.656250,97.750000
+
+        91282CDP3,MARKET BASED NOTE,0.01375,12/31/2028,,88.015625,88.000000,88.093750
+
+        91282CDW8,MARKET BASED NOTE,0.0175,01/31/2029,,89.390625,89.375000,89.468750
+
+        91282CJW2,MARKET BASED NOTE,0.04,01/31/2029,,98.703125,98.687500,98.781250
+
+        9128286B1,MARKET BASED NOTE,0.02625,02/15/2029,,92.937500,92.906250,93.000000
+
+        91282CKD2,MARKET BASED NOTE,0.0425,02/28/2029,,99.796875,99.781250,99.906250
+
+        91282CEB3,MARKET BASED NOTE,0.01875,02/28/2029,,89.765625,89.750000,89.843750
+
+        91282CEE7,MARKET BASED NOTE,0.02375,03/31/2029,,91.718750,91.687500,91.781250
+
+        91282CKG5,MARKET BASED NOTE,0.04125,03/31/2029,,99.250000,99.250000,99.343750
+
+        91282CKP5,MARKET BASED NOTE,0.04625,04/30/2029,,101.421875,101.406250,101.500000
+
+        91282CEM9,MARKET BASED NOTE,0.02875,04/30/2029,,93.781250,93.750000,93.843750
+
+        9128286T2,MARKET BASED NOTE,0.02375,05/15/2029,,91.562500,91.531250,91.625000
+
+        91282CES6,MARKET BASED NOTE,0.0275,05/31/2029,,93.156250,93.125000,93.218750
+
+        91282CKT7,MARKET BASED NOTE,0.045,05/31/2029,,100.968750,100.968750,101.062500
+
+        91282CEV9,MARKET BASED NOTE,0.0325,06/30/2029,,95.281250,95.250000,95.375000
+
+        91282CFC0,MARKET BASED NOTE,0.02625,07/31/2029,,92.421875,92.406250,92.500000
+
+        912828YB0,MARKET BASED NOTE,0.01625,08/15/2029,,87.921875,87.843750,87.937500
+
+        91282CFJ5,MARKET BASED NOTE,0.03125,08/31/2029,,94.609375,94.593750,94.687500
+
+        91282CFL0,MARKET BASED NOTE,0.03875,09/30/2029,,98.031250,98.000000,98.125000
+
+        91282CFT3,MARKET BASED NOTE,0.04,10/31/2029,,98.609375,98.593750,98.718750
+
+        912828YS3,MARKET BASED NOTE,0.0175,11/15/2029,,88.125000,88.062500,88.156250
+
+        91282CFY2,MARKET BASED NOTE,0.03875,11/30/2029,,98.015625,98.000000,98.093750
+
+        91282CGB1,MARKET BASED NOTE,0.03875,12/31/2029,,97.984375,97.968750,98.093750
+
+        91282CGJ4,MARKET BASED NOTE,0.035,01/31/2030,,96.125000,96.093750,96.218750
+
+        912828Z94,MARKET BASED NOTE,0.015,02/15/2030,,86.187500,86.156250,86.250000
+
+        91282CGQ8,MARKET BASED NOTE,0.04,02/28/2030,,98.578125,98.562500,98.687500
+
+        91282CGS4,MARKET BASED NOTE,0.03625,03/31/2030,,96.671875,96.656250,96.781250
+
+        91282CGZ8,MARKET BASED NOTE,0.035,04/30/2030,,95.984375,95.968750,96.093750
+
+        912828ZQ6,MARKET BASED NOTE,0.00625,05/15/2030,,81.171875,81.125000,81.250000
+
+        91282CHF1,MARKET BASED NOTE,0.0375,05/31/2030,,97.234375,97.218750,97.343750
+
+        91282CHJ3,MARKET BASED NOTE,0.0375,06/30/2030,,97.203125,97.187500,97.312500
+
+        91282CHR5,MARKET BASED NOTE,0.04,07/31/2030,,98.515625,98.500000,98.625000
+
+        91282CAE1,MARKET BASED NOTE,0.00625,08/15/2030,,80.515625,80.468750,80.593750
+
+        91282CHW4,MARKET BASED NOTE,0.04125,08/31/2030,,99.171875,99.156250,99.281250
+
+        91282CHZ7,MARKET BASED NOTE,0.04625,09/30/2030,,101.875000,101.843750,102.000000
+
+        91282CJG7,MARKET BASED NOTE,0.04875,10/31/2030,,103.296875,103.281250,103.437500
+
+        91282CAV3,MARKET BASED NOTE,0.00875,11/15/2030,,81.296875,81.250000,81.375000
+
+        91282CJM4,MARKET BASED NOTE,0.04375,11/30/2030,,100.578125,100.562500,100.687500
+
+        91282CJQ5,MARKET BASED NOTE,0.0375,12/31/2030,,97.078125,97.062500,97.187500
+
+        91282CJX0,MARKET BASED NOTE,0.04,01/31/2031,,98.484375,98.468750,98.593750
+
+        91282CBL4,MARKET BASED NOTE,0.01125,02/15/2031,,82.234375,82.187500,82.343750
+
+        91282CKC4,MARKET BASED NOTE,0.0425,02/28/2031,,99.921875,99.906250,100.062500
+
+        91282CKF7,MARKET BASED NOTE,0.04125,03/31/2031,,99.203125,99.187500,99.343750
+
+        91282CKN0,MARKET BASED NOTE,0.04625,04/30/2031,,102.171875,102.156250,102.312500
+
+        91282CCB5,MARKET BASED NOTE,0.01625,05/15/2031,,84.453125,84.406250,84.531250
+
+        91282CKU4,MARKET BASED NOTE,0.04625,05/31/2031,,102.187500,102.187500,102.312500
+
+        91282CCS8,MARKET BASED NOTE,0.0125,08/15/2031,,81.656250,81.625000,81.781250
+
+        91282CDJ7,MARKET BASED NOTE,0.01375,11/15/2031,,81.875000,81.843750,82.000000
+
+        91282CDY4,MARKET BASED NOTE,0.01875,02/15/2032,,84.578125,84.562500,84.687500
+
+        91282CEP2,MARKET BASED NOTE,0.02875,05/15/2032,,90.781250,90.750000,90.906250
+
+        91282CFF3,MARKET BASED NOTE,0.0275,08/15/2032,,89.703125,89.687500,89.812500
+
+        91282CFV8,MARKET BASED NOTE,0.04125,11/15/2032,,99.078125,99.062500,99.218750
+
+        91282CGM7,MARKET BASED NOTE,0.035,02/15/2033,,94.515625,94.500000,94.656250
+
+        91282CHC8,MARKET BASED NOTE,0.03375,05/15/2033,,93.484375,93.468750,93.625000
+
+        91282CHT1,MARKET BASED NOTE,0.03875,08/15/2033,,97.046875,97.031250,97.218750
+
+        91282CJJ1,MARKET BASED NOTE,0.045,11/15/2033,,101.828125,101.812500,102.000000
+
+        91282CJZ5,MARKET BASED NOTE,0.04,02/15/2034,,97.984375,97.968750,98.156250
+
+        91282CKQ3,MARKET BASED NOTE,0.04375,05/15/2034,,100.968750,100.968750,101.156250
+
+        912810ES3,MARKET BASED BOND,0.075,11/15/2024,,0.000000,100.875000,100.875000
+
+        912810ET1,MARKET BASED BOND,0.07625,02/15/2025,,101.812500,101.562500,101.593750
+
+        912810EV6,MARKET BASED BOND,0.06875,08/15/2025,,102.390625,102.218750,102.250000
+
+        912810EW4,MARKET BASED BOND,0.06,02/15/2026,,102.156250,101.937500,102.000000
+
+        912810EX2,MARKET BASED BOND,0.0675,08/15/2026,,104.578125,104.312500,104.406250
+
+        912810EY0,MARKET BASED BOND,0.065,11/15/2026,,105.328125,105.125000,105.156250
+
+        912810EZ7,MARKET BASED BOND,0.06625,02/15/2027,,105.656250,105.406250,105.468750
+
+        912810FA1,MARKET BASED BOND,0.06375,08/15/2027,,105.765625,105.593750,105.625000
+
+        912810FB9,MARKET BASED BOND,0.06125,11/15/2027,,105.453125,105.281250,105.312500
+
+        912810FE3,MARKET BASED BOND,0.055,08/15/2028,,104.734375,104.562500,104.656250
+
+        912810FF0,MARKET BASED BOND,0.0525,11/15/2028,,103.765625,103.593750,103.656250
+
+        912810FG8,MARKET BASED BOND,0.0525,02/15/2029,,104.281250,104.062500,104.125000
+
+        912810FJ2,MARKET BASED BOND,0.06125,08/15/2029,,108.437500,108.250000,108.375000
+
+        912810FM5,MARKET BASED BOND,0.0625,05/15/2030,,110.171875,109.968750,110.125000
+
+        912810FP8,MARKET BASED BOND,0.05375,02/15/2031,,106.937500,106.718750,106.843750
+
+        912810FT0,MARKET BASED BOND,0.045,02/15/2036,,103.046875,102.906250,103.125000
+
+        912810PT9,MARKET BASED BOND,0.0475,02/15/2037,,105.187500,105.031250,105.250000
+
+        912810PU6,MARKET BASED BOND,0.05,05/15/2037,,107.640625,107.468750,107.687500
+
+        912810PW2,MARKET BASED BOND,0.04375,02/15/2038,,101.328125,101.218750,101.437500
+
+        912810PX0,MARKET BASED BOND,0.045,05/15/2038,,102.546875,102.437500,102.656250
+
+        912810QA9,MARKET BASED BOND,0.035,02/15/2039,,91.562500,91.437500,91.656250
+
+        912810QB7,MARKET BASED BOND,0.0425,05/15/2039,,99.359375,99.281250,99.531250
+
+        912810QC5,MARKET BASED BOND,0.045,08/15/2039,,102.093750,102.031250,102.281250
+
+        912810QD3,MARKET BASED BOND,0.04375,11/15/2039,,100.625000,100.562500,100.812500
+
+        912810QE1,MARKET BASED BOND,0.04625,02/15/2040,,103.406250,103.343750,103.593750
+
+        912810QH4,MARKET BASED BOND,0.04375,05/15/2040,,100.421875,100.312500,100.593750
+
+        912810SR0,MARKET BASED BOND,0.01125,05/15/2040,,62.906250,62.812500,63.000000
+
+        912810QK7,MARKET BASED BOND,0.03875,08/15/2040,,94.437500,94.343750,94.593750
+
+        912810SQ2,MARKET BASED BOND,0.01125,08/15/2040,,62.281250,62.187500,62.375000
+
+        912810QL5,MARKET BASED BOND,0.0425,11/15/2040,,98.640625,98.562500,98.812500
+
+        912810ST6,MARKET BASED BOND,0.01375,11/15/2040,,64.500000,64.406250,64.625000
+
+        912810SW9,MARKET BASED BOND,0.01875,02/15/2041,,69.921875,69.843750,70.031250
+
+        912810QN1,MARKET BASED BOND,0.0475,02/15/2041,,104.546875,104.468750,104.718750
+
+        912810QQ4,MARKET BASED BOND,0.04375,05/15/2041,,99.906250,99.843750,100.093750
+
+        912810SY5,MARKET BASED BOND,0.0225,05/15/2041,,73.890625,73.812500,74.000000
+
+        912810TA6,MARKET BASED BOND,0.0175,08/15/2041,,67.609375,67.531250,67.718750
+
+        912810QS0,MARKET BASED BOND,0.0375,08/15/2041,,92.078125,92.000000,92.281250
+
+        912810QT8,MARKET BASED BOND,0.03125,11/15/2041,,84.078125,84.000000,84.250000
+
+        912810TC2,MARKET BASED BOND,0.02,11/15/2041,,70.234375,70.156250,70.343750
+
+        912810TF5,MARKET BASED BOND,0.02375,02/15/2042,,74.375000,74.312500,74.500000
+
+        912810QU5,MARKET BASED BOND,0.03125,02/15/2042,,83.796875,83.718750,83.968750
+
+        912810QW1,MARKET BASED BOND,0.03,05/15/2042,,81.875000,81.812500,82.031250
+
+        912810TH1,MARKET BASED BOND,0.0325,05/15/2042,,84.859375,84.812500,85.031250
+
+        912810TK4,MARKET BASED BOND,0.03375,08/15/2042,,86.156250,86.125000,86.375000
+
+        912810QX9,MARKET BASED BOND,0.0275,08/15/2042,,78.515625,78.437500,78.656250
+
+        912810QY7,MARKET BASED BOND,0.0275,11/15/2042,,78.250000,78.156250,78.406250
+
+        912810TM0,MARKET BASED BOND,0.04,11/15/2042,,93.875000,93.843750,94.125000
+
+        912810TQ1,MARKET BASED BOND,0.03875,02/15/2043,,92.078125,92.031250,92.312500
+
+        912810QZ4,MARKET BASED BOND,0.03125,02/15/2043,,82.625000,82.562500,82.781250
+
+        912810RB6,MARKET BASED BOND,0.02875,05/15/2043,,79.265625,79.187500,79.468750
+
+        912810TS7,MARKET BASED BOND,0.03875,05/15/2043,,91.937500,91.906250,92.187500
+
+        912810TU2,MARKET BASED BOND,0.04375,08/15/2043,,98.312500,98.281250,98.562500
+
+        912810RC4,MARKET BASED BOND,0.03625,08/15/2043,,88.656250,88.562500,88.812500
+
+        912810RD2,MARKET BASED BOND,0.0375,11/15/2043,,90.156250,90.093750,90.343750
+
+        912810TW8,MARKET BASED BOND,0.0475,11/15/2043,,103.234375,103.218750,103.500000
+
+        912810TZ1,MARKET BASED BOND,0.045,02/15/2044,,99.953125,99.937500,100.218750
+
+        912810RE0,MARKET BASED BOND,0.03625,02/15/2044,,88.359375,88.281250,88.562500
+
+        912810RG5,MARKET BASED BOND,0.03375,05/15/2044,,84.984375,84.906250,85.156250
+
+        912810UB2,MARKET BASED BOND,0.04625,05/15/2044,,101.765625,101.750000,102.031250
+
+        912810RH3,MARKET BASED BOND,0.03125,08/15/2044,,81.593750,81.531250,81.750000
+
+        912810RJ9,MARKET BASED BOND,0.03,11/15/2044,,79.750000,79.687500,79.937500
+
+        912810RK6,MARKET BASED BOND,0.025,02/15/2045,,72.921875,72.843750,73.062500
+
+        912810RM2,MARKET BASED BOND,0.03,05/15/2045,,79.421875,79.343750,79.593750
+
+        912810RN0,MARKET BASED BOND,0.02875,08/15/2045,,77.593750,77.531250,77.750000
+
+        912810RP5,MARKET BASED BOND,0.03,11/15/2045,,79.140625,79.062500,79.312500
+
+        912810RQ3,MARKET BASED BOND,0.025,02/15/2046,,72.109375,72.031250,72.281250
+
+        912810RS9,MARKET BASED BOND,0.025,05/15/2046,,71.937500,71.875000,72.125000
+
+        912810RT7,MARKET BASED BOND,0.0225,08/15/2046,,68.281250,68.218750,68.468750
+
+        912810RU4,MARKET BASED BOND,0.02875,11/15/2046,,76.843750,76.781250,77.031250
+
+        912810RV2,MARKET BASED BOND,0.03,02/15/2047,,78.421875,78.375000,78.625000
+
+        912810RX8,MARKET BASED BOND,0.03,05/15/2047,,78.281250,78.218750,78.468750
+
+        912810RY6,MARKET BASED BOND,0.0275,08/15/2047,,74.593750,74.531250,74.781250
+
+        912810RZ3,MARKET BASED BOND,0.0275,11/15/2047,,74.468750,74.406250,74.687500
+
+        912810SA7,MARKET BASED BOND,0.03,02/15/2048,,77.937500,77.875000,78.156250
+
+        912810SC3,MARKET BASED BOND,0.03125,05/15/2048,,79.656250,79.593750,79.906250
+
+        912810SD1,MARKET BASED BOND,0.03,08/15/2048,,77.750000,77.687500,77.968750
+
+        912810SE9,MARKET BASED BOND,0.03375,11/15/2048,,83.203125,83.156250,83.437500
+
+        912810SF6,MARKET BASED BOND,0.03,02/15/2049,,77.671875,77.625000,77.906250
+
+        912810SH2,MARKET BASED BOND,0.02875,05/15/2049,,75.734375,75.687500,75.968750
+
+        912810SJ8,MARKET BASED BOND,0.0225,08/15/2049,,66.390625,66.343750,66.625000
+
+        912810SK5,MARKET BASED BOND,0.02375,11/15/2049,,68.203125,68.156250,68.437500
+
+        912810SL3,MARKET BASED BOND,0.02,02/15/2050,,62.421875,62.375000,62.625000
+
+        912810SN9,MARKET BASED BOND,0.0125,05/15/2050,,51.109375,51.062500,51.281250
+
+        912810SP4,MARKET BASED BOND,0.01375,08/15/2050,,52.750000,52.687500,52.937500
+
+        912810SS8,MARKET BASED BOND,0.01625,11/15/2050,,56.359375,56.312500,56.562500
+
+        912810SU3,MARKET BASED BOND,0.01875,02/15/2051,,60.109375,60.062500,60.343750
+
+        912810SX7,MARKET BASED BOND,0.02375,05/15/2051,,67.671875,67.625000,67.937500
+
+        912810SZ2,MARKET BASED BOND,0.02,08/15/2051,,61.765625,61.718750,62.000000
+
+        912810TB4,MARKET BASED BOND,0.01875,11/15/2051,,59.765625,59.718750,60.000000
+
+        912810TD0,MARKET BASED BOND,0.0225,02/15/2052,,65.484375,65.437500,65.718750
+
+        912810TG3,MARKET BASED BOND,0.02875,05/15/2052,,75.281250,75.250000,75.531250
+
+        912810TJ7,MARKET BASED BOND,0.03,08/15/2052,,77.265625,77.218750,77.562500
+
+        912810TL2,MARKET BASED BOND,0.04,11/15/2052,,93.437500,93.406250,93.781250
+
+        912810TN8,MARKET BASED BOND,0.03625,02/15/2053,,87.296875,87.281250,87.656250
+
+        912810TR9,MARKET BASED BOND,0.03625,05/15/2053,,87.343750,87.312500,87.718750
+
+        912810TT5,MARKET BASED BOND,0.04125,08/15/2053,,95.546875,95.531250,95.906250
+
+        912810TV0,MARKET BASED BOND,0.0475,11/15/2053,,106.046875,106.031250,106.437500
+
+        912810TX6,MARKET BASED BOND,0.0425,02/15/2054,,97.671875,97.656250,98.062500
+
+        912810UA4,MARKET BASED BOND,0.04625,05/15/2054,,103.953125,103.937500,104.375000
+
+        912828WU0,TIPS,0.00125,07/15/2024,,0.000000,99.843750,99.843750
+
+        912828YL8,TIPS,0.00125,10/15/2024,,0.000000,98.968750,98.937500
+
+        912828H45,TIPS,0.0025,01/15/2025,,97.937500,97.906250,97.906250
+
+        912810FR4,TIPS,0.02375,01/15/2025,,99.093750,99.062500,99.062500
+
+        912828ZJ2,TIPS,0.00125,04/15/2025,,97.250000,97.218750,97.218750
+
+        912828XL9,TIPS,0.00375,07/15/2025,,97.453125,97.437500,97.406250
+
+        91282CAQ4,TIPS,0.00125,10/15/2025,,96.656250,96.625000,96.625000
+
+        912828N71,TIPS,0.00625,01/15/2026,,96.671875,96.656250,96.687500
+
+        912810FS2,TIPS,0.02,01/15/2026,,98.718750,98.687500,98.687500
+
+        91282CCA7,TIPS,0.00125,04/15/2026,,95.437500,95.406250,95.437500
+
+        912828S50,TIPS,0.00125,07/15/2026,,95.468750,95.437500,95.468750
+
+        91282CDC2,TIPS,0.00125,10/15/2026,,95.062500,95.031250,95.062500
+
+        912828V49,TIPS,0.00375,01/15/2027,,94.953125,94.937500,94.968750
+
+        912810PS1,TIPS,0.02375,01/15/2027,,99.875000,99.843750,99.875000
+
+        91282CEJ6,TIPS,0.00125,04/15/2027,,93.937500,93.906250,93.937500
+
+        9128282L3,TIPS,0.00375,07/15/2027,,94.750000,94.718750,94.750000
+
+        91282CFR7,TIPS,0.01625,10/15/2027,,98.265625,98.250000,98.281250
+
+        9128283R9,TIPS,0.005,01/15/2028,,94.125000,94.093750,94.125000
+
+        912810PV4,TIPS,0.0175,01/15/2028,,98.312500,98.281250,98.312500
+
+        912810FD5,TIPS,0.03625,04/15/2028,,105.046875,105.000000,105.031250
+
+        91282CGW5,TIPS,0.0125,04/15/2028,,96.484375,96.468750,96.500000
+
+        912828Y38,TIPS,0.0075,07/15/2028,,94.937500,94.906250,94.968750
+
+        91282CJH5,TIPS,0.02375,10/15/2028,,101.265625,101.250000,101.281250
+
+        9128285W6,TIPS,0.00875,01/15/2029,,94.687500,94.656250,94.718750
+
+        912810PZ5,TIPS,0.025,01/15/2029,,101.734375,101.687500,101.750000
+
+        912810FH6,TIPS,0.03875,04/15/2029,,108.000000,107.937500,108.000000
+
+        91282CKL4,TIPS,0.02125,04/15/2029,,100.109375,100.093750,100.156250
+
+        9128287D6,TIPS,0.0025,07/15/2029,,91.781250,91.750000,91.812500
+
+        912828Z37,TIPS,0.00125,01/15/2030,,90.062500,90.031250,90.093750
+
+        912828ZZ6,TIPS,0.00125,07/15/2030,,89.687500,89.656250,89.718750
+
+        91282CBF7,TIPS,0.00125,01/15/2031,,88.562500,88.531250,88.625000
+
+        91282CCM1,TIPS,0.00125,07/15/2031,,88.109375,88.093750,88.187500
+
+        91282CDX6,TIPS,0.00125,01/15/2032,,86.875000,86.843750,86.968750
+
+        912810FQ6,TIPS,0.03375,04/15/2032,,109.562500,109.500000,109.625000
+
+        91282CEZ0,TIPS,0.00625,07/15/2032,,90.046875,90.031250,90.156250
+
+        91282CGK1,TIPS,0.01125,01/15/2033,,92.937500,92.906250,93.062500
+
+        91282CHP9,TIPS,0.01375,07/15/2033,,94.921875,94.906250,95.062500
+
+        91282CJY8,TIPS,0.0175,01/15/2034,,97.578125,97.562500,97.718750
+
+        912810QF8,TIPS,0.02125,02/15/2040,,100.328125,100.218750,100.593750
+
+        912810QP6,TIPS,0.02125,02/15/2041,,100.562500,100.437500,100.875000
+
+        912810QV3,TIPS,0.0075,02/15/2042,,79.484375,79.375000,79.750000
+
+        912810RA8,TIPS,0.00625,02/15/2043,,76.515625,76.406250,76.781250
+
+        912810RF7,TIPS,0.01375,02/15/2044,,87.265625,87.156250,87.593750
+
+        912810RL4,TIPS,0.0075,02/15/2045,,76.437500,76.343750,76.750000
+
+        912810RR1,TIPS,0.01,02/15/2046,,79.656250,79.562500,79.968750
+
+        912810RW0,TIPS,0.00875,02/15/2047,,76.750000,76.656250,77.093750
+
+        912810SB5,TIPS,0.01,02/15/2048,,78.296875,78.187500,78.656250
+
+        912810SG4,TIPS,0.01,02/15/2049,,77.750000,77.656250,78.093750
+
+        912810SM1,TIPS,0.0025,02/15/2050,,62.687500,62.593750,63.031250
+
+        912810SV1,TIPS,0.00125,02/15/2051,,59.500000,59.406250,59.843750
+
+        912810TE8,TIPS,0.00125,02/15/2052,,58.468750,58.375000,58.812500
+
+        912810TP3,TIPS,0.015,02/15/2053,,86.156250,86.093750,86.625000
+
+        912810TY4,TIPS,0.02125,02/15/2054,,99.640625,99.593750,100.156250
+
+        91282CFD8,MARKET BASED FRN,0.05431240164,07/31/2024,,0.000000,99.993862,99.993618
+
+        91282CFS5,MARKET BASED FRN,0.055359567900000003,10/31/2024,,100.033769,100.021572,100.025057
+
+        91282CGF2,MARKET BASED FRN,0.05596956546,01/31/2025,,100.081733,100.069811,100.071301
+
+        91282CGY1,MARKET BASED FRN,0.0556543992,04/30/2025,,100.081921,100.063192,100.065273
+
+        91282CHS3,MARKET BASED FRN,0.05520706668,07/31/2025,,100.049118,100.006196,100.008877
+
+        91282CJD4,MARKET BASED FRN,0.05566456668,10/31/2025,,100.092022,100.051060,100.057611
+
+        91282CJU6,MARKET BASED FRN,0.05642706546,01/31/2026,,100.174742,100.161219,100.161219
+
+        91282CKM2,MARKET BASED FRN,0.05546123538,04/30/2026,,99.986598,99.977764,99.982180
+
+        '
     headers:
       Cache-Control:
       - max-age=0
-      Connection:
-      - keep-alive
       Content-Disposition:
       - attachment; filename="securityprice.csv"
       Content-Language:
       - en-CA
+      Content-Security-Policy:
+      - default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none';
+        img-src 'self' data:; font-src 'self'; script-src 'self'; style-src 'self';
+        upgrade-insecure-requests
       Content-Type:
       - application/csv;charset=ISO-8859-1
       Date:
-      - Thu, 27 Jun 2024 10:13:46 GMT
-      Keep-Alive:
-      - timeout=60
+      - Wed, 18 Nov 2026 15:03:19 GMT
+      Feature-Policy:
+      - geolocation 'none'; midi 'none'; notifications 'none'; microphone 'none';
+        camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; vibrate
+        'none'; payment 'none'; push 'none'; sync-xhr 'none'
       Pragma:
       - public
-      Set-Cookie:
-      - JSESSIONID=E9BA8B7D50B76E45E63D1DA142E68C46; Path=/GA-FI/FedInvest; Secure;
-        HttpOnly
-      - BIGipServerNjX9I6SwKq5Y/SybSV6zIw=!cxFDBx0GNEvcOG3MS03ZPgUnhMa4yhLGf3Ogq1ft/nX3kZnZCIX/O8jN4CIe/K3N+Y+M7iH69utLRQ==;
-        path=/; Httponly; Secure
-      - TS0101dd89=01f6e3b1e9a24b7dc98ff1d522c159ea8f52634786f09e5d28cc2300ffcab043a90b77d95a547f3690bae59b70db815292e33644a0c87cf57647d9febb5ae56c5584b9e83f;
-        Path=/
-      - TS01c73873=01f6e3b1e9eb3d3a296f6c0b957f478f0c20d93deff09e5d28cc2300ffcab043a90b77d95a5aa1071b4c6f078737fd7e2d0916f13a44f5f39d9e74985876406623e0970e1c;
-        path=/GA-FI/FedInvest
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
       Strict-Transport-Security:
       - max-age=31536000; includeSubDomains
       Transfer-Encoding:
       - chunked
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
     status:
       code: 200
-      message: ''
+      message: OK
 version: 1
