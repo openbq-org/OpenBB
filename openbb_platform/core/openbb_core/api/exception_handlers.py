@@ -66,10 +66,8 @@ class ExceptionHandlers:
         """Exception handler for ValidationError."""
         # Some validation is performed at Fetcher level.
         # So we check if the validation error comes from a QueryParams class.
-        # And that it is in the request query params.
         # If yes, we update the error location with query.
         # If not, we handle it as a base Exception error.
-        query_params = dict(request.query_params)
         if isinstance(error, ResponseValidationError):
             detail = [
                 {
@@ -91,12 +89,13 @@ class ExceptionHandlers:
             )
         except Exception:
             errors = error.errors if hasattr(error, "errors") else error
-        all_in_query = all(
-            loc in query_params
+        query_params = request.query_params
+        query_errors = all(
+            loc in query_params or err.get("type") == "missing"
             for err in errors  # ty: ignore[not-iterable]
             for loc in err.get("loc", ())
         )
-        if "QueryParams" in error.title and all_in_query:
+        if "QueryParams" in error.title and not await request.body() and query_errors:
             detail = [
                 {
                     **{k: v for k, v in err.items() if k != "ctx"},
