@@ -12,7 +12,7 @@ from pydantic import Field
 
 URL = (
     "https://www.atlantafed.org/-/media/Project/Atlanta/FRBA/Documents"
-    "/datafiles/chcs/wage-growth-tracker/wage-growth-data.xlsx"
+    "/research-and-data/data/wage-growth-tracker/wage-growth-data.xlsx"
 )
 
 _CUTS: dict[str, str] = {

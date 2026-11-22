@@ -12,7 +12,7 @@ from pydantic import Field
 
 URL = (
     "https://www.atlantafed.org/-/media/Project/Atlanta/FRBA/Documents"
-    "/datafiles/cqer/research/taylor-rule/taylor-rule-data.xlsx"
+    "/research-and-data/data/taylor-rule/taylor-rule-data.xlsx"
 )
 
 _NA_VALUES = ["#N/A", "#N/A N/A", "na", "."]
