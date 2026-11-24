@@ -298,18 +298,47 @@ class TestEconomicCalendar:
         assert len(rows) == 2
         assert rows[0].country in {"United States", "Japan"}
 
-    def test_skips_weekends(self, monkeypatch):
-        """A window of only weekend days requests nothing and reports empty."""
+    def test_requests_weekends(self, monkeypatch):
+        """Weekend dates are requested, Saturday carries Friday's releases."""
         seen: list[str] = []
-        patch_data(monkeypatch, {"rows": []}, seen)
+        patch_data(
+            monkeypatch,
+            lambda path: (
+                {
+                    "rows": [
+                        {
+                            "gmt": "10:00",
+                            "country": "United States",
+                            "eventName": "Michigan Consumer Sentiment",
+                        }
+                    ]
+                }
+                if path.endswith("2026-07-25")
+                else None
+            ),
+            seen,
+        )
+        query = NasdaqEconomicCalendarFetcher.transform_query(
+            {"start_date": date(2026, 7, 24), "end_date": date(2026, 7, 26)}
+        )
+        raw = asyncio.run(NasdaqEconomicCalendarFetcher.aextract_data(query, None))
+
+        assert sorted(seen) == [
+            "calendar/economicevents?date=2026-07-24",
+            "calendar/economicevents?date=2026-07-25",
+            "calendar/economicevents?date=2026-07-26",
+        ]
+        assert [r["eventName"] for r in raw] == ["Michigan Consumer Sentiment"]
+
+    def test_weekend_only_window_reports_empty(self, monkeypatch):
+        """A weekend window with nothing published reports empty."""
+        patch_data(monkeypatch, None)
         query = NasdaqEconomicCalendarFetcher.transform_query(
             {"start_date": date(2026, 7, 25), "end_date": date(2026, 7, 26)}
         )
 
         with pytest.raises(OpenBBError, match="returned empty"):
             asyncio.run(NasdaqEconomicCalendarFetcher.aextract_data(query, None))
-
-        assert seen == []
 
     def test_filters_by_country(self, monkeypatch):
         """The country filter narrows the published events."""
