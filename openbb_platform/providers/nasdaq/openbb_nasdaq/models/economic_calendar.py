@@ -123,10 +123,10 @@ class NasdaqEconomicCalendarFetcher(
         from openbb_nasdaq.utils.helpers import date_range, get_nasdaq_data
 
         data: list[dict] = []
+        # Weekends are kept, Nasdaq lists Friday's releases under Saturday's date.
         dates = [
             date.strftime("%Y-%m-%d")
             for date in date_range(query.start_date, query.end_date)
-            if date.weekday() < 5  # Exclude weekends
         ]
 
         async def get_calendar_data(date: str):
