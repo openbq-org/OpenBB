@@ -1,4 +1,5 @@
 import asyncio
+from datetime import UTC
 
 import pytest
 from openbb_core.app.model.abstract.error import OpenBBError
@@ -249,9 +250,9 @@ def test_get_slice_downloads_and_caches(monkeypatch, manifest, slice_bytes):
 
 
 def _todays_manifest():
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     today_str = today.isoformat()
     name = f"CFTC_CUMULATIVE_RATES_{today.year}_{today.month:02d}_{today.day:02d}.zip"
 
@@ -483,9 +484,9 @@ def test_get_rates_slice_for_raises_without_the_currency_ois(monkeypatch):
 
 
 def test_get_rates_slice_for_appends_todays_realtime_prints(monkeypatch):
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     yesterday = (today - timedelta(days=1)).isoformat()
     _patch_dates_and_slices(
         monkeypatch,
@@ -512,9 +513,9 @@ def test_get_rates_slice_for_appends_todays_realtime_prints(monkeypatch):
 
 
 def test_get_rates_slice_for_survives_a_search_outage(monkeypatch):
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     yesterday = (today - timedelta(days=1)).isoformat()
     _patch_dates_and_slices(
         monkeypatch,
@@ -696,9 +697,9 @@ def test_get_rates_slice_for_past_date_skips_the_realtime_append(monkeypatch):
 
 
 def test_get_rates_slice_for_todays_published_file_needs_no_append(monkeypatch):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     _patch_dates_and_slices(
         monkeypatch, ["2026-01-01", today], {today: [{"UPI FISN": "NA/Swap OIS USD"}]}
     )
@@ -713,9 +714,9 @@ def test_get_rates_slice_for_todays_published_file_needs_no_append(monkeypatch):
 
 
 def test_get_rates_slice_for_empty_currencies_skips_the_append(monkeypatch):
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     yesterday = (today - timedelta(days=1)).isoformat()
     _patch_dates_and_slices(
         monkeypatch,

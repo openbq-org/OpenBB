@@ -1,7 +1,10 @@
 """DTCC FX Forward Curve Model."""
 
 from collections.abc import Iterable
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 from typing import Any, Literal
 
 from openbb_core.provider.abstract.annotated_result import AnnotatedResult
@@ -218,7 +221,7 @@ class CftcFxForwardCurveFetcher(
         **kwargs: Any,
     ) -> tuple[Iterable[dict], str | None]:
         """Fetch the FX forwards and FX swaps the curve is built from."""
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
         from openbb_cftc.utils.constants import FX_PAIRS
         from openbb_cftc.utils.dtcc import get_latest_viable_slice, get_slice
@@ -244,7 +247,7 @@ class CftcFxForwardCurveFetcher(
 
             return records, report_date
 
-        end_date = query.date or datetime.now(timezone.utc).date()
+        end_date = query.date or datetime.now(UTC).date()
         start_date = end_date - timedelta(days=query.lookback_days - 1)
         records: list[dict] = []
 

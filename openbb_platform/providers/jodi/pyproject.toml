@@ -33,7 +33,7 @@ packages = ["openbb_jodi"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py311"
 fix = true
 
 [tool.ruff.lint]
@@ -63,14 +63,14 @@ convention = "numpy"
 
 [tool.ty]
 [tool.ty.environment]
-python-version = "3.10"
+python-version = "3.11"
 
 [tool.ty.src]
 include = ["openbb_jodi"]
 exclude = ["tests"]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"
 # The platform-gated stdlib lock modules (msvcrt/fcntl) each need their
 # ty ignores on one platform, which read as unused on the other.
 unused-ignore-comment = "ignore"

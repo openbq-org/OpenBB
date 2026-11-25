@@ -1,5 +1,7 @@
 """On-disk cache for DTCC PPD data, built on ``diskcache``."""
 
+from datetime import UTC
+
 SEARCH_INTRADAY_TTL_SECONDS = 300
 
 _CACHES: dict = {}
@@ -78,7 +80,7 @@ def put_slice(
     last_modified: str | None = None,
 ) -> None:
     """Store a slice file's validators."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     cache = _cache("blobs")
 
@@ -90,7 +92,7 @@ def put_slice(
         {
             "etag": etag,
             "last_modified": last_modified,
-            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "fetched_at": datetime.now(UTC).isoformat(),
         },
     )
 
@@ -163,14 +165,14 @@ def get_search_days(cache_key: str, dates: list[str]) -> dict[str, list]:
 
 def put_search_days(cache_key: str, days: dict[str, list]) -> None:
     """Store a search's records, partitioned by dissemination date."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     cache = _cache("queries")
 
     if cache is None or not days:
         return
 
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
 
     with cache.transact():
         for day, rows in days.items():
@@ -236,7 +238,7 @@ def get_manifest(jurisdiction: str, asset_class: str) -> dict | None:
 
 def put_manifest(jurisdiction: str, asset_class: str, payload) -> None:
     """Store a manifest response, stamped with when it was fetched."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     cache = _cache("manifests")
 
@@ -247,7 +249,7 @@ def put_manifest(jurisdiction: str, asset_class: str, payload) -> None:
         (jurisdiction, asset_class),
         {
             "payload": payload,
-            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "fetched_at": datetime.now(UTC).isoformat(),
         },
     )
 

@@ -1,6 +1,9 @@
 """Overnight index fixing histories from their administrators."""
 
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 
 NYFED_API_URL = "https://markets.newyorkfed.org/api/rates"
 BOE_IADB_URL = (
@@ -798,7 +801,7 @@ async def _fetch_fbil(window: str, start: str, end: str) -> dict[str, float]:
 
 async def _fetch_banrep(series: str, start: str, end: str) -> dict[str, float]:
     """Fetch Banco de la Republica's IBR series."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from openbb_core.app.model.abstract.error import OpenBBError
     from openbb_core.provider.utils.helpers import amake_request
@@ -819,7 +822,7 @@ async def _fetch_banrep(series: str, start: str, end: str) -> dict[str, float]:
 
     for point in points:
         millis, value = point
-        day = datetime.fromtimestamp(millis / 1000, tz=timezone.utc).date().isoformat()
+        day = datetime.fromtimestamp(millis / 1000, tz=UTC).date().isoformat()
 
         if start <= day <= end:
             fixings[day] = float(value) / 100.0
@@ -1774,7 +1777,7 @@ async def get_fixings(
     index: str, start_date: dateType, end_date: dateType, use_cache: bool = True
 ) -> dict[dateType, float]:
     """Return an index's published fixings over a window, as decimals by effective date."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     from openbb_core.app.model.abstract.error import OpenBBError
 
@@ -1786,7 +1789,7 @@ async def get_fixings(
         (start_date + timedelta(days=offset)).isoformat()
         for offset in range((end_date - start_date).days + 1)
     ]
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     cached = store.get_search_days(key, days) if use_cache else {}
     missing = [day for day in days if day not in cached]
     by_day: dict[str, list] = dict(cached)

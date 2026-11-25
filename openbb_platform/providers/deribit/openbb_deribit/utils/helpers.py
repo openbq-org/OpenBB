@@ -1,5 +1,6 @@
 """Shared accessors for the Deribit public API."""
 
+from datetime import UTC
 from typing import Any
 
 MAX_CHART_WINDOWS = 15
@@ -518,12 +519,12 @@ async def get_futures_curve_by_hours_ago(symbol: str, hours: int) -> list[dict]:
         the exchange published no candle for is left out, because a curve that
         carries the current price under a past label is not a past curve.
     """
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     from openbb_deribit.utils.client import gather
 
     symbols = await get_futures_curve_symbols(symbol)
-    now = datetime.now(timezone.utc).replace(microsecond=0, second=0, minute=0)
+    now = datetime.now(UTC).replace(microsecond=0, second=0, minute=0)
     target = to_timestamp(now - timedelta(hours=hours))
     start = to_timestamp(now - timedelta(hours=hours + CURVE_LOOKBACK_HOURS))
     results = await gather(

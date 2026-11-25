@@ -118,4 +118,4 @@ include = ["openbb_platform_api"]
 exclude = ["openbb_platform_api/assets", "tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "warn"
+import-not-found = "warn"

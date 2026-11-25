@@ -1,6 +1,6 @@
 """EIA RSS feed registry, item building, and HTML-widget rendering."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from time import struct_time
 from typing import TYPE_CHECKING
@@ -196,8 +196,8 @@ def clean_excerpt(summary: str, limit: int = 320) -> str:
 def struct_time_to_iso(value: "struct_time | None") -> str:
     """Convert a feedparser ``struct_time`` to an ISO 8601 string."""
     if value is None:
-        return datetime.now(timezone.utc).isoformat()
-    return datetime(*value[:6], tzinfo=timezone.utc).isoformat()
+        return datetime.now(UTC).isoformat()
+    return datetime(*value[:6], tzinfo=UTC).isoformat()
 
 
 async def fetch_feed(session: "ClientSession", url: str, retries: int = 3):

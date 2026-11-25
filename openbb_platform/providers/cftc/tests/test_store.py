@@ -1,3 +1,5 @@
+from datetime import UTC
+
 from openbb_cftc.utils import store
 
 
@@ -204,18 +206,18 @@ def test_response_round_trip_and_ttl(monkeypatch):
 
 
 def test_search_todays_partition_serves_within_its_ttl():
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     store.put_search_days("sig", {today: [{"n": 1}]})
 
     assert store.get_search_days("sig", [today]) == {today: [{"n": 1}]}
 
 
 def test_search_todays_partition_expires_while_a_closed_day_persists(monkeypatch):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     monkeypatch.setattr(store, "SEARCH_INTRADAY_TTL_SECONDS", -1)
     store.put_search_days("sig", {today: [{"n": 1}], "2026-07-15": [{"n": 2}]})
 

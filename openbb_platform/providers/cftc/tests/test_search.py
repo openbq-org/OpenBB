@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date, timedelta
+from datetime import UTC, date, timedelta
 
 import pytest
 from openbb_core.app.model.abstract.error import OpenBBError
@@ -458,9 +458,9 @@ def test_search_trades_rejects_an_inverted_window():
 
 
 def test_search_trades_clamps_the_window_to_the_one_year_horizon(monkeypatch):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     horizon = today - timedelta(days=search.SEARCH_MAX_RETENTION_DAYS - 1)
     lows: list = []
 
@@ -482,9 +482,9 @@ def test_search_trades_clamps_the_window_to_the_one_year_horizon(monkeypatch):
 
 
 def test_search_trades_rejects_a_window_wholly_before_the_horizon():
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
 
     with pytest.raises(OpenBBError, match="predates the .* horizon"):
         asyncio.run(
@@ -533,9 +533,9 @@ def test_contiguous_runs_handles_a_single_day():
 
 
 def test_search_trades_chains_sub_windows_over_180_days(monkeypatch):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     end = today - timedelta(days=1)
     start = end - timedelta(days=250)
     calls: list = []
@@ -565,9 +565,9 @@ def test_search_trades_chains_sub_windows_over_180_days(monkeypatch):
 
 
 def test_search_trades_fetches_only_the_missing_runs(monkeypatch):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     days = [today - timedelta(days=6 - offset) for offset in range(5)]
     calls: list = []
 
@@ -597,9 +597,9 @@ def test_search_trades_fetches_only_the_missing_runs(monkeypatch):
 
 
 def test_search_trades_dedupes_a_straggler_across_chunks(monkeypatch):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     end = today - timedelta(days=1)
     start = end - timedelta(days=200)
     straggler = start + timedelta(days=185)
@@ -668,11 +668,11 @@ def test_search_trades_indexes_records_by_identifier(monkeypatch):
 
 
 def test_search_trades_caches_closed_days_and_todays_within_its_ttl(monkeypatch):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from openbb_cftc.utils import store
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     yesterday = today - timedelta(days=1)
     calls: list = []
 

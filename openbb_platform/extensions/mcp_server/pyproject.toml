@@ -123,7 +123,7 @@ include = ["openbb_mcp_server"]
 exclude = ["openbb_mcp_server/skills", "tests", "integration"]
 
 [tool.ty.rules]
-unresolved-import = "ignore"
+import-not-found = "ignore"
 
 [tool.coverage.run]
 branch = true

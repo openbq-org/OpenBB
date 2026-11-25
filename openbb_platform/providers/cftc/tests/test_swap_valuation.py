@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date, timedelta
+from datetime import UTC, date, timedelta
 from math import exp
 
 import pytest
@@ -321,9 +321,9 @@ def test_swap_valuation_aextract_scans_slices_for_the_exact_identifier(monkeypat
 def test_swap_valuation_aextract_falls_back_to_search_when_not_yet_in_any_slice(
     monkeypatch,
 ):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     fresh_print = {
         "Dissemination Identifier": "FRESH1",
         "UPI FISN": "NA/Swap OIS USD",

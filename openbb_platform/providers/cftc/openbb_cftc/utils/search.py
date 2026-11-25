@@ -1,6 +1,9 @@
 """DTCC Public Price Dissemination search client."""
 
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 from typing import Any
 
 SEARCH_ROW_CAP = 10000
@@ -336,7 +339,7 @@ async def search_trades(
     use_cache: bool = True,
 ) -> list[dict]:
     """Return a dissemination window's records, mapped onto the slice's CSV headers."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     from openbb_core.app.model.abstract.error import OpenBBError
 
@@ -347,7 +350,7 @@ async def search_trades(
             f"The search window ends before it starts: {start_date} to {end_date}."
         )
 
-    today_date = datetime.now(timezone.utc).date()
+    today_date = datetime.now(UTC).date()
     horizon = today_date - timedelta(days=SEARCH_MAX_RETENTION_DAYS - 1)
 
     start_date = max(start_date, horizon)

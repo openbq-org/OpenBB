@@ -463,14 +463,13 @@ async def get_form_4(
     use_cache: bool = True,
 ) -> list[dict]:
     """Get the Form 4 data by ticker symbol or CIK number."""
-    import asyncio
 
     try:
         urls = await get_form_4_urls(symbol, start_date, end_date, use_cache)
         if limit is not None:
             urls = urls[:limit]
         data = await download_data(urls, use_cache)
-    except asyncio.TimeoutError as e:
+    except TimeoutError as e:
         raise OpenBBError(
             "A timeout error occurred while downloading the data. Please try again."
         ) from e

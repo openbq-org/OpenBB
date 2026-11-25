@@ -4,6 +4,7 @@ import re
 import threading
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from datetime import UTC
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -1295,10 +1296,10 @@ def _intl_row_label(product: str, activity: str, labels: dict) -> str:
 
 def _epoch_period(stamp, frequency: str) -> str:
     """Render an epoch-millisecond timestamp as the EIA period code for a frequency."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     try:
-        moment = datetime.fromtimestamp(int(stamp) / 1000, tz=timezone.utc)
+        moment = datetime.fromtimestamp(int(stamp) / 1000, tz=UTC)
     except (TypeError, ValueError, OSError, OverflowError):
         return ""
     if frequency == "M":

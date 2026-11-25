@@ -71,7 +71,7 @@ async def subscribe_tickers(symbols: list[str], messages: set) -> dict[str, dict
                     _collect(websocket, set(symbols), received, messages),
                     timeout=SUBSCRIBE_TIMEOUT,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 missing = len(symbols) - len(received)
                 messages.add(
                     f"Deribit did not publish {missing} of {len(symbols)} contracts"

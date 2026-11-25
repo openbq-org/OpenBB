@@ -1,7 +1,10 @@
 """DTCC FX Forward Points Model."""
 
 from collections.abc import Iterable
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 from typing import Any, Literal
 
 from openbb_core.provider.abstract.annotated_result import AnnotatedResult
@@ -265,7 +268,7 @@ class CftcFxForwardPointsFetcher(
         **kwargs: Any,
     ) -> tuple[Iterable[dict], Iterable[dict], str | None, str]:
         """Fetch the FX transactions and the rates slice that prices CIP fair value."""
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
         from openbb_cftc.utils.constants import FX_PAIRS, OIS_INDICES
         from openbb_cftc.utils.dtcc import (
@@ -302,7 +305,7 @@ class CftcFxForwardPointsFetcher(
 
             return records, rates, report_date, rates_date
 
-        end_date = query.date or datetime.now(timezone.utc).date()
+        end_date = query.date or datetime.now(UTC).date()
         start_date = end_date - timedelta(days=query.lookback_days - 1)
 
         for fisn in fisns:

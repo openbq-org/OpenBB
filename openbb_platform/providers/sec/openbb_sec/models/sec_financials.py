@@ -154,9 +154,13 @@ class FinancialStatements(Filing):
                     num = item_match.group(1)
                     suffix = item_match.group(2) or ""
                     item_num = f"{num}{suffix}".upper()
-                elif text and not re.match(r"^\d+$", text):
-                    if title is None and len(text) > 5:
-                        title = text
+                elif (
+                    text
+                    and not re.match(r"^\d+$", text)
+                    and title is None
+                    and len(text) > 5
+                ):
+                    title = text
 
             if item_num and title and item_num not in toc_dict:
                 toc_dict[item_num] = title

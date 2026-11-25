@@ -1,6 +1,7 @@
 """TMX TradingView UDF sub-router."""
 
 import logging
+from datetime import UTC
 from typing import Annotated, Any
 
 from fastapi import Query as FastAPIQuery
@@ -512,7 +513,7 @@ async def history(
     ),
 ) -> dict:
     """Return OHLCV bars in the UDF envelope."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from openbb_tmx.utils.helpers import (
         get_intraday_price_history,
@@ -524,7 +525,7 @@ async def history(
     countback = countback if isinstance(countback, int) else None
     resolved = normalize_symbol(symbol)
     kind, unit = _parse_resolution(resolution)
-    end = datetime.now(tz=timezone.utc).date()
+    end = datetime.now(tz=UTC).date()
 
     try:
         if kind == "intraday":
@@ -558,7 +559,7 @@ async def history(
         moment = datetime.fromisoformat(str(stamp))
 
         if moment.tzinfo is None:
-            moment = moment.replace(tzinfo=timezone.utc)
+            moment = moment.replace(tzinfo=UTC)
 
         envelope["t"].append(int(moment.timestamp()))
         envelope["o"].append(bar.get("open"))
@@ -580,6 +581,6 @@ async def history(
 @router.api_router.get("/time", include_in_schema=False)
 async def time() -> int:
     """Return the server time, as a Unix timestamp."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    return int(datetime.now(tz=timezone.utc).timestamp())
+    return int(datetime.now(tz=UTC).timestamp())

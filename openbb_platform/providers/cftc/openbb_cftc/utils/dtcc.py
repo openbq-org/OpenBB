@@ -1,7 +1,10 @@
 """DTCC Public Price Dissemination client."""
 
 from collections.abc import Callable, Iterable, Iterator
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -49,7 +52,7 @@ def qualified_keys(record: dict) -> dict:
 
 async def get_manifest(asset_class: str) -> list[dict]:
     """Fetch the cumulative-slice manifest for an asset class, caching it briefly."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from openbb_core.app.model.abstract.error import OpenBBError
     from openbb_core.provider.utils.helpers import amake_request
@@ -63,7 +66,7 @@ async def get_manifest(asset_class: str) -> list[dict]:
 
     if cached is not None:
         fetched_at = datetime.fromisoformat(cached["fetched_at"])
-        age = (datetime.now(timezone.utc) - fetched_at).total_seconds()
+        age = (datetime.now(UTC) - fetched_at).total_seconds()
 
         if age < MANIFEST_TTL_SECONDS:
             return cached["payload"]
@@ -206,7 +209,7 @@ async def get_slice(
     use_cache: bool = True,
 ) -> "SliceRecords | list[dict]":
     """Return one report date's slice records, revalidating any cached copy."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from openbb_core.app.model.abstract.error import OpenBBError
 
@@ -217,7 +220,7 @@ async def get_slice(
     asset = normalize_asset_class(asset_class)
     cached = store.get_slice(juris, asset, report_date) if use_cache else None
     view = store.slice_records(asset, report_date) if use_cache else None
-    is_closed = report_date < datetime.now(timezone.utc).date().isoformat()
+    is_closed = report_date < datetime.now(UTC).date().isoformat()
     is_final = bool(cached) and (cached.get("fetched_at") or "")[:10] > report_date
 
     if view is not None and is_closed and is_final:
@@ -311,13 +314,13 @@ async def _append_todays_rates(
     use_cache: bool,
 ) -> tuple[Iterable[dict], str]:
     """Append today's not-yet-published OIS prints from search to a published slice."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     from openbb_cftc.utils.constants import ois_fisn
     from openbb_cftc.utils.search import search_trades
     from openbb_cftc.utils.store import RecordChain
 
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
 
     if not currencies or report_date < today or rates_date >= today:
         return records, rates_date

@@ -1,7 +1,10 @@
 """Published inflation index histories and zero-coupon inflation curves."""
 
 from collections.abc import Iterable
-from datetime import date as dateType
+from datetime import (
+    UTC,
+    date as dateType,
+)
 
 BLS_TIMESERIES_URL = "https://api.bls.gov/publicAPI/v2/timeseries/data"
 
@@ -308,7 +311,7 @@ async def get_inflation_index(
     index: str, use_cache: bool = True
 ) -> dict[dateType, float]:
     """Return a published index's monthly levels, by the first of each month."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from openbb_core.app.model.abstract.error import OpenBBError
 
@@ -319,7 +322,7 @@ async def get_inflation_index(
     if spec is None:
         raise OpenBBError(f"No published source is configured for '{index}'.")
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     key = f"inflation-{index}-{_month_start(today).isoformat()}"
     cached = store.get_document(key) if use_cache else None
 
