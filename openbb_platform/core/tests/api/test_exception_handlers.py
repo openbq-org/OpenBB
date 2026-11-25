@@ -98,6 +98,28 @@ async def test_validation_handler_query_params_routed_to_query_loc(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_validation_handler_query_params_missing_field_returns_422(monkeypatch):
+    monkeypatch.setattr(
+        "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
+    )
+
+    class BlsSearchQueryParams(BaseModel):
+        category: str
+
+    try:
+        BlsSearchQueryParams.model_validate({"query": ""})
+    except ValidationError as ve:
+        err = ve
+
+    req = _make_request({"query": ""})
+    resp = await ExceptionHandlers.validation(req, err)
+    assert resp.status_code == 422
+    detail = json.loads(resp.body)["detail"]
+    assert detail[0]["loc"] == ["query", "category"]
+    assert detail[0]["type"] == "missing"
+
+
+@pytest.mark.asyncio
 async def test_validation_handler_response_validation_error(monkeypatch):
     monkeypatch.setattr(
         "openbb_core.api.exception_handlers.Env", type("E", (), {"DEBUG_MODE": False})
