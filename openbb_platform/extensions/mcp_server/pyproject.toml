@@ -5,7 +5,7 @@ description = "OpenBB Platform MCP Server: Model-Context-Protocol bridge for the
 authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
 license = { text = "Apache-2.0" }
 readme = "README.md"
-requires-python = ">=3.11,<4"
+requires-python = ">=3.11.5,<4"
 dependencies = [
     "openbb-core>=2.0.1",
     "fastapi>=0.138.2",
