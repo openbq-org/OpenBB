@@ -49,7 +49,9 @@ class EiaApiQueryParams(QueryParams):
         default=None,
         gt=0,
         description="Maximum number of rows to return."
-        " The default returns all rows, paginating requests as needed.",
+        " The default returns all rows, paginating requests as needed."
+        f" A request matching more than {MAX_AUTO_ROWS:,} rows returns the"
+        f" newest {PAGE_SIZE:,} unless a limit is set.",
     )
 
     @property
@@ -267,7 +269,8 @@ async def paginate(
     dict
         Mapping with 'rows', 'total', and 'date_format' keys.
     """
-    from openbb_core.app.model.abstract.error import OpenBBError
+    from warnings import warn
+
     from openbb_core.provider.utils.errors import EmptyDataError
 
     first_length = PAGE_SIZE if limit is None else min(limit, PAGE_SIZE)
@@ -285,10 +288,17 @@ async def paginate(
 
     target = total if limit is None else min(limit, total)
     if limit is None and total > MAX_AUTO_ROWS:
-        raise OpenBBError(
+        # Too many rows to page through: serve the newest page instead of failing.
+        if request.get("sort", "desc") != "desc":
+            url = build_url({**request, "sort": "desc"}, offset=0, length=PAGE_SIZE)
+            response = await amake_request(url, response_callback=response_callback)
+            rows = list(response.get("response", {}).get("data", []))  # type: ignore[union-attr]
+        target = len(rows)
+        warn(
             f"The unfiltered request matches {total} rows, above the automatic"
-            f" pagination ceiling of {MAX_AUTO_ROWS}. Narrow the request with"
-            " facet filters or dates, or set an explicit limit."
+            f" pagination ceiling of {MAX_AUTO_ROWS}. Returning the newest {target}"
+            " rows. Narrow the request with facet filters or dates, or set an"
+            " explicit limit, to get more."
         )
 
     if len(rows) < target:
