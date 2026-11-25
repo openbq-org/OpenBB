@@ -87,3 +87,5 @@ def test_strangle_cost_uses_selected_expiration_strikes(
     assert result["Strike 1"] == 110.0
     assert result["Strike 2"] == 90.0
     assert result["Cost"] == pytest.approx(expected_cost)
+    assert result["Breakeven Upper"] == pytest.approx(110.0 + abs(expected_cost))
+    assert result["Breakeven Lower"] == pytest.approx(90.0 - abs(expected_cost))
