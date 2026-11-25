@@ -55,13 +55,8 @@ def resolve_explicit_config_path(
 
 def _validate_explicit_toml(explicit_path: str) -> None:
     """Pre-parse the user-supplied config so malformed TOML fails loudly."""
-    import sys as _sys
+    import tomllib
     from pathlib import Path
-
-    if _sys.version_info >= (3, 11):  # pragma: no cover
-        import tomllib
-    else:  # pragma: no cover
-        import tomli as tomllib
 
     p = Path(explicit_path)
     if not p.is_file():

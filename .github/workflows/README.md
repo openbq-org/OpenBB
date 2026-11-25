@@ -71,7 +71,7 @@ It consists of two jobs: `code-linting` and `markdown-link-check`.
 The first job, `code-linting`, runs on an Ubuntu machine and performs several linting tasks on the code in the repository, including:
 
 - Checking out the code from the repository
-- Setting up Python 3.10
+- Setting up Python 3.11
 - Installing a number of Python packages necessary for the linting tasks
 - Running `codespell` to check the spelling of comments, strings, and variable names
 - Running `black` to check the code formatting

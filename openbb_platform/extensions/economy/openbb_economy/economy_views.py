@@ -567,9 +567,9 @@ class EconomyViews:
             or getattr(kwargs["charting_settings"], "chart_style", "dark")
         )
         data = (
-            kwargs.pop("data", None)
+            kwargs.pop("data")
             if "data" in kwargs and kwargs["data"] is not None
-            else kwargs.get("obbject_item")
+            else kwargs["obbject_item"]
         )
         fig = plot_chokepoint_annual_avg_vessels(data, theme=theme)
         fig.update_layout(
@@ -601,9 +601,9 @@ class EconomyViews:
             raise RuntimeError("Unable to import the required module.") from e
 
         data = (
-            kwargs.pop("data", None)
+            kwargs.pop("data")
             if "data" in kwargs and kwargs["data"] is not None
-            else kwargs.get("obbject_item")
+            else kwargs["obbject_item"]
         )
         fig = plot_port_info_map(data)
         fig.update_layout(

@@ -11,6 +11,7 @@ from typing import (
     Literal,
     TypeVar,
     Union,
+    cast,
 )
 from warnings import warn
 
@@ -325,7 +326,9 @@ class OpenBBFigure(go.Figure):
                 if forecast:  # pragma: no cover - darts forecast path (darts is an optional dependency)
                     components = list(dataset.components[:4])  # ty: ignore[unresolved-attribute]
                     values = (
-                        dataset[components].all_values(copy=False).flatten(order="F")
+                        cast("TimeSeries", dataset)[components]
+                        .all_values(copy=False)
+                        .flatten(order="F")
                     )
                     n_components = len(components)
                     n_entries = len(values) // n_components

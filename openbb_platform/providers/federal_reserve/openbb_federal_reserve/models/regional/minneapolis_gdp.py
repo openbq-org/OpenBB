@@ -88,12 +88,12 @@ class FederalReserveMinneapolisGdpFetcher(
         """Parse the quarter labels and return one column per geography."""
         from io import StringIO
 
-        from pandas import PeriodIndex, isna, read_csv, to_numeric
+        from pandas import PeriodIndex, Series, isna, read_csv, to_numeric
 
         frame = read_csv(StringIO(data[0]["_raw"]))
         period = frame["Period"].str.replace(r"Q(\d)\s+(\d{4})", r"\2Q\1", regex=True)
         date_index = PeriodIndex(period, freq="Q").to_timestamp()
-        frame["date"] = date_index.date  # ty: ignore[unresolved-attribute]
+        frame["date"] = Series(date_index, index=frame.index).dt.date
         value_columns = [c for c in _GEOGRAPHIES if c in frame.columns]
         for column in value_columns:
             frame[column] = to_numeric(frame[column], errors="coerce")

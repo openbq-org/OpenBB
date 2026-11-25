@@ -37,15 +37,14 @@ jobs:
       matrix:
         include:
           # Linux: full sweep across every supported Python.
-          - { os: ubuntu-latest, python_version: "3.10" }
           - { os: ubuntu-latest, python_version: "3.11" }
           - { os: ubuntu-latest, python_version: "3.12" }
           - { os: ubuntu-latest, python_version: "3.13" }
           - { os: ubuntu-latest, python_version: "3.14" }
           # macOS and Windows: min and max supported.
-          - { os: macos-latest, python_version: "3.10" }
+          - { os: macos-latest, python_version: "3.11" }
           - { os: macos-latest, python_version: "3.14" }
-          - { os: windows-latest, python_version: "3.10" }
+          - { os: windows-latest, python_version: "3.11" }
           - { os: windows-latest, python_version: "3.14" }
     steps:
       - name: Checkout code

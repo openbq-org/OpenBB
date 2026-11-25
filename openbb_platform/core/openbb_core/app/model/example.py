@@ -18,7 +18,7 @@ QUOTE_TYPES = {str, date}
 class Example(BaseModel):
     """Example model."""
 
-    scope: str
+    scope: str = Field(frozen=True)
 
     model_config = ConfigDict(validate_assignment=True)
 

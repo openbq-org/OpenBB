@@ -36,7 +36,7 @@ async def bhcpr_report_download(params: Annotated[dict, Body()]) -> list:
 
     from openbb_federal_reserve.utils.ffiec import download_bhcpr_pdf
 
-    urls = params.get("url", [])
+    urls = params.get("url") or []
     results: list = []
 
     for url in urls:
@@ -134,7 +134,7 @@ async def financial_report_pdf_download(params: Annotated[dict, Body()]) -> list
 
     from openbb_federal_reserve.utils.ffiec import download_financial_report_pdf
 
-    urls = params.get("url", [])
+    urls = params.get("url") or []
     results: list = []
 
     for url in urls:

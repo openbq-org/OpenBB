@@ -162,7 +162,8 @@ class FredBalanceOfPaymentsFetcher(
             .sort_index(ascending=False)
         )
         df = df.rename(columns=col_map)
-        records = df.reset_index().fillna("N/A").replace("N/A", None).to_dict("records")
+        out = df.reset_index()
+        records = out.astype(object).where(out.notna(), None).to_dict("records")
 
         return AnnotatedResult(
             result=[FredBalanceOfPaymentsData.model_validate(r) for r in records],

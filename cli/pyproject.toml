@@ -5,7 +5,7 @@ description = "Investment Research for Everyone, Anywhere."
 authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
 license = { text = "Apache-2.0" }
 readme = "README.md"
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 dependencies = [
     "openbb-core[pandas]>=2.0.1",
     "prompt-toolkit>=3.0.50,<4.0.0",
@@ -14,7 +14,6 @@ dependencies = [
     "openpyxl>=3.1.5,<4.0.0",
     "httpx>=0.28.0,<1.0.0",
     "pyyaml>=6.0",
-    "tomli>=2.0;python_version<'3.11'",
 ]
 
 [project.optional-dependencies]
@@ -50,7 +49,7 @@ include = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py311"
 fix = true
 
 [tool.ruff.lint]
@@ -125,7 +124,7 @@ convention = "numpy"
 
 [tool.ty]
 [tool.ty.environment]
-python-version = "3.10"
+python-version = "3.11"
 
 [tool.ty.src]
 include = ["openbb_cli"]

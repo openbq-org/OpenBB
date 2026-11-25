@@ -10,7 +10,7 @@ constructed from executed transactions.
 
 ## Installation
 
-Install into a Python environment (3.10 - 3.14) from PyPI with:
+Install into a Python environment (3.11 - 3.14) from PyPI with:
 
 ```sh
 pip install openbb-cftc

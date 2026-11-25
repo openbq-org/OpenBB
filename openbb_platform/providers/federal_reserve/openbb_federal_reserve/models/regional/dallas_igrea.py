@@ -84,9 +84,15 @@ class FederalReserveDallasIgreaFetcher(
         """Parse the index series and apply the date filters."""
         from io import BytesIO
 
-        from pandas import isna, read_excel, to_datetime
+        from pandas import ExcelFile, isna, read_excel, to_datetime
 
-        frame = read_excel(BytesIO(data[0]["_raw"]), sheet_name="IGREA")
+        # The workbook's sheet was renamed upstream: old name, new name, then the only sheet.
+        sheets = ExcelFile(BytesIO(data[0]["_raw"])).sheet_names
+        sheet = next(
+            (s for s in ("IGREA", "Kilian Index") if s in sheets),
+            sheets[0] if len(sheets) == 1 else "IGREA",
+        )
+        frame = read_excel(BytesIO(data[0]["_raw"]), sheet_name=sheet)
         frame = frame.rename(
             columns={frame.columns[0]: "date", frame.columns[1]: "value"}
         )

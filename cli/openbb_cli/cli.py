@@ -415,6 +415,8 @@ def _generate_spec(
     headers: dict[str, str] | None = None,
     query_params: dict[str, str] | None = None,
     socrata_story: str | None = None,
+    api_prefix: str | None = None,
+    overlays: list[str] | None = None,
 ) -> int:
     """Build a precomputed .spec file from one of the supported sources."""
     from openbb_cli.dispatchers.spec import write_spec
@@ -444,8 +446,27 @@ def _generate_spec(
     from openbb_cli.dispatchers.spec import build_spec_document
 
     openapi = fetch_openapi(
-        server_url, path=openapi_path, headers=headers, query_params=query_params
+        server_url,
+        path=openapi_path,
+        headers=headers,
+        query_params=query_params,
+        normalize=not overlays,
     )
+    if overlays:
+        from openbb_cli.dispatchers.openapi_schema import expand_type_arrays
+        from openbb_cli.dispatchers.overlay import apply_overlay, load_overlay
+
+        for overlay_path in overlays:
+            try:
+                openapi, unmatched = apply_overlay(openapi, load_overlay(overlay_path))
+            except (OSError, ValueError) as exc:
+                sys.stderr.write(f"--overlay {overlay_path}: {exc}\n")
+                return 2
+            for target in unmatched:
+                sys.stderr.write(
+                    f"--overlay {overlay_path}: target matched nothing: {target}\n"
+                )
+        openapi = expand_type_arrays(openapi)
     if openapi_path and (
         openapi_path.startswith("http://") or openapi_path.startswith("https://")
     ):
@@ -454,7 +475,23 @@ def _generate_spec(
         source_url = server_url.rstrip("/") + openapi_path
     else:
         source_url = server_url.rstrip("/") + "/openapi.json"
-    spec_doc = build_spec_document(openapi, base_url=server_url, source_url=source_url)
+    spec_doc = build_spec_document(
+        openapi,
+        base_url=server_url,
+        api_prefix=api_prefix,
+        source_url=source_url,
+        headers=headers,
+    )
+    if api_prefix is not None:
+        from openbb_cli.dispatchers.spec import unnamed_paths
+
+        skipped = unnamed_paths(openapi, api_prefix=api_prefix)
+        if skipped:
+            sys.stderr.write(
+                f"--api-prefix {api_prefix}: no command name is left for "
+                f"{', '.join(skipped)}; these paths are skipped. Use a shorter "
+                "prefix to keep them.\n"
+            )
     if not spec_doc["commands"]:
         sys.stderr.write(
             f"generated 0 commands from {source_url} — the document exposes no "
@@ -813,6 +850,8 @@ def main(argv: list[str] | None = None) -> int:  # noqa: PLR0911
             headers,
             query_params,
             socrata_story=getattr(args, "socrata_story", None),
+            api_prefix=getattr(args, "api_prefix", None),
+            overlays=getattr(args, "overlay", None),
         )
 
     if getattr(args, "generate_extension", False):

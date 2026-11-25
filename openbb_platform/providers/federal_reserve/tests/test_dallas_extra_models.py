@@ -93,6 +93,17 @@ class TestIgrea:
         assert all(isinstance(r, FederalReserveDallasIgreaData) for r in result)
         assert [(r.date, r.value) for r in result] == [(date(2026, 5, 1), -4.2)]
 
+    def test_reads_the_renamed_sheet(self, monkeypatch):
+        """The Dallas Fed renamed the sheet to ``Kilian Index``."""
+        _patch(
+            monkeypatch,
+            _save({"Kilian Index": [["Date", None], [datetime(2026, 4, 1), -5.1]]}),
+        )
+        query = FederalReserveDallasIgreaFetcher.transform_query({})
+        rows = FederalReserveDallasIgreaFetcher.extract_data(query, None)
+        result = FederalReserveDallasIgreaFetcher.transform_data(query, rows)
+        assert [(r.date, r.value) for r in result] == [(date(2026, 4, 1), -5.1)]
+
     def test_empty_raises(self, monkeypatch):
         """An empty response raises ``EmptyDataError``."""
         _patch(monkeypatch, b"")

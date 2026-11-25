@@ -5,7 +5,7 @@ description = "Unofficial TMX data provider extension for the OpenBB Platform - 
 authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
 license = { text = "Apache-2.0" }
 readme = "README.md"
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 dependencies = [
     "openbb-core[pandas]>=2.0.0",
     "aiohttp-client-cache>=0.11",
@@ -90,6 +90,13 @@ exclude = ["tests", "integration"]
 
 [tool.ty.rules]
 unresolved-import = "warn"
+
+[[tool.ty.overrides]]
+include = ["openbb_tmx/models/**"]
+
+[tool.ty.overrides.rules]
+invalid-attribute-override = "ignore"
+invalid-mutable-override = "ignore"
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError", "@overload"]

@@ -9,7 +9,7 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -1029,7 +1029,7 @@ def build_socrata_spec(
 
     return {
         "version": SPEC_VERSION,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "generator": _generator_identifier(),
         "source_url": story_source,
         "api_version": "socrata-soda-2.1",

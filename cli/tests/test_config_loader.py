@@ -213,10 +213,8 @@ def test_render_config_template_returns_valid_toml():
     rendered = loader.render_config_template()
     # Strip the all-comment lines so tomllib has something to parse — even
     # an empty result is fine; the assertion is "no parse error".
-    if loader.sys.version_info >= (3, 11):
-        import tomllib
-    else:  # pragma: no cover
-        import tomli as tomllib
+    import tomllib
+
     tomllib.loads(rendered)
 
 

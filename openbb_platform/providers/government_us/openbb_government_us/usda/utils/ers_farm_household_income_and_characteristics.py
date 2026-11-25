@@ -170,7 +170,7 @@ def parse_year(column: str) -> int:
     int
         The four-digit year as an integer.
     """
-    return int(column.rstrip("F"))
+    return int(column.rstrip("FP"))
 
 
 def year_sort_key(column: str) -> tuple[int, bool]:
@@ -187,7 +187,7 @@ def year_sort_key(column: str) -> tuple[int, bool]:
         The integer year and whether the header is a forecast, so a forecast
         year sorts after a non-forecast year of the same value.
     """
-    return (parse_year(column), column.endswith("F"))
+    return (parse_year(column), column.endswith(("F", "P")))
 
 
 def parse_table(text: str, table: str) -> list[dict]:

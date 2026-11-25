@@ -359,12 +359,11 @@ def yang_zhang(
     log_oc = (data["open"] / data["close"].shift(1)).apply(log)
     log_oc_sq = log_oc**2
 
-    log_cc = (data["close"] / data["close"].shift(1)).apply(log)
-    log_cc_sq = log_cc**2
+    log_co_sq = log_co**2
 
     rs = log_ho * (log_ho - log_co) + log_lo * (log_lo - log_co)
 
-    close_vol = log_cc_sq.rolling(window=window, center=False).sum() * (
+    close_vol = log_co_sq.rolling(window=window, center=False).sum() * (
         1.0 / (window - 1.0)
     )
     open_vol = log_oc_sq.rolling(window=window, center=False).sum() * (

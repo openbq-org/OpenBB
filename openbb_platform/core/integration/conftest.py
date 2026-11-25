@@ -44,7 +44,7 @@ PYPROJECT = """\
 [project]
 name = "{ext_name}"
 version = "0.0.1"
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 dependencies = ["openbb-core"]
 
 [project.entry-points."openbb_core_extension"]

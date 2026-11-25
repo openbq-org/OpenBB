@@ -14,7 +14,7 @@ from openbb_jodi.utils.constants import (
 
 if TYPE_CHECKING:
     import asyncio  # noqa
-    from collections.abc import Iterator, Mapping  # noqa
+    from collections.abc import Generator, Mapping  # noqa
     from datetime import date as dateType  # noqa
     from pathlib import Path  # noqa
     from typing import IO  # noqa
@@ -361,7 +361,7 @@ def bump_checked_at(table: str, snapshot: dict) -> dict:
 
 
 @contextmanager
-def open_archive_csv(path: "Path") -> "Iterator":
+def open_archive_csv(path: "Path") -> "Generator":
     """Open the CSV stream inside a raw source file, unzipping when needed."""
     import zipfile
 

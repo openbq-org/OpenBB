@@ -5,7 +5,7 @@ description = "Extensions template for the OpenBB Python Package."
 authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
 license = { text = "Apache-2.0" }
 readme = "README.md"
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 dependencies = [
     "cookiecutter>=2.6.0",
     "rich>=13.0.0",
@@ -46,7 +46,7 @@ include = ["openbb_cookiecutter", "tests", "README.md", "pyproject.toml"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py311"
 fix = true
 extend-exclude = ["openbb_cookiecutter/template"]
 
@@ -74,7 +74,7 @@ convention = "numpy"
 
 [tool.ty]
 [tool.ty.environment]
-python-version = "3.10"
+python-version = "3.11"
 
 [tool.ty.src]
 include = ["openbb_cookiecutter"]

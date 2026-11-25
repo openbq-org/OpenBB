@@ -136,6 +136,7 @@ class EiaPetroleumStatusReportFetcher(
         import concurrent.futures
         import re
         from functools import lru_cache
+        from threading import Lock
         from warnings import warn
 
         from numpy import nan
@@ -161,6 +162,7 @@ class EiaPetroleumStatusReportFetcher(
             )
 
         dfs: list = []
+        excel_lock = Lock()
 
         def replace_data_strings(text):
             """Replace the table strings with sortable numbers."""
@@ -176,15 +178,16 @@ class EiaPetroleumStatusReportFetcher(
         def read_excel_file(file, category, table):
             """Read the ExcelFile for the sheet name and flatten the table."""
             sheet_name = WpsrTableMap[category][table]
-            table_name = read_excel(file, sheet_name, header=None, nrows=1).iloc[0, 1]
-            table_name = replace_data_strings(table_name)
-            df = read_excel(file, sheet_name, header=[1, 2], nrows=3)
-            symbols = df.columns.get_level_values(0).tolist()
+            with excel_lock:
+                banner = read_excel(file, sheet_name, header=None, nrows=1)
+                header = read_excel(file, sheet_name, header=[1, 2], nrows=3)
+                df = read_excel(file, sheet_name, header=None, skiprows=3)
+            table_name = replace_data_strings(banner.iloc[0, 1])
+            symbols = header.columns.get_level_values(0).tolist()
             titles = [
-                d.replace(".1", "") for d in df.columns.get_level_values(1).tolist()
+                d.replace(".1", "") for d in header.columns.get_level_values(1).tolist()
             ]
             title_map = dict(zip(symbols, titles))
-            df = read_excel(file, sheet_name, header=None, skiprows=3)
             df.columns = [d.replace("Sourcekey", "date") for d in symbols]
             df = df.melt(
                 id_vars="date",

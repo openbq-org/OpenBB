@@ -118,7 +118,7 @@ class TestErsLivestockAndMeatDomesticDataUtils:
         meatstats = [
             key
             for key, config in LIVESTOCK_AND_MEAT_FILES.items()
-            if config["member"] == "MeatStats.csv"
+            if config["member"] == ("Meat-Statistics.csv", "MeatStats.csv")
         ]
         assert len(meatstats) == 4
         for config in LIVESTOCK_AND_MEAT_FILES.values():
@@ -233,12 +233,13 @@ class TestErsLivestockAndMeatDomesticDataUtils:
         assert marketing["period_sort"] == 2
         assert any(r["column"].startswith("OK City ") for r in records)
 
-    def test_afetch_table(self, monkeypatch):
-        """afetch_table fetches the zip once and reads the requested member."""
+    @pytest.mark.parametrize("member", ["Meat-Supply-Disappearance.csv", "MeatSD.csv"])
+    def test_afetch_table(self, monkeypatch, member):
+        """afetch_table reads the renamed member, or the old one."""
         calls = []
         buffer = BytesIO()
         with zipfile.ZipFile(buffer, "w") as archive:
-            archive.writestr(f"{ZIP_DIR}/MeatSD.csv", MEATSD_CSV)
+            archive.writestr(f"{ZIP_DIR}/{member}", MEATSD_CSV)
             archive.writestr(f"{ZIP_DIR}/_Read_Me.txt", "readme")
         content = buffer.getvalue()
 
@@ -257,6 +258,30 @@ class TestErsLivestockAndMeatDomesticDataUtils:
         )
         assert calls == [(ZIP_MEDIA, PRODUCT_PAGE)]
         assert any(r["column"] == "Total Production (Million pounds)" for r in records)
+
+    def test_afetch_table_string_member(self, monkeypatch):
+        """afetch_table reads a catalog member configured as a string."""
+        calls = []
+        buffer = BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            archive.writestr(f"{ZIP_DIR}/LivestockPrices.csv", LIVESTOCK_PRICES_CSV)
+        content = buffer.getvalue()
+
+        async def fake_afetch_ers_file(media_path, product=None, ttl=None):
+            calls.append((media_path, product))
+            return content
+
+        monkeypatch.setattr(
+            "openbb_government_us.usda.utils.ers_client.afetch_ers_file",
+            fake_afetch_ers_file,
+        )
+        records = asyncio.run(
+            ers_livestock_and_meat_domestic_data.afetch_table("livestock_prices")
+        )
+
+        assert calls == [(ZIP_MEDIA, PRODUCT_PAGE)]
+        assert len(records) == 3
+        assert {record["period"] for record in records} == {"January", "February"}
 
 
 class TestLivestockAndMeatDomesticData:

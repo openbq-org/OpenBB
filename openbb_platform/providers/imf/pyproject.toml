@@ -5,7 +5,7 @@ description = "IMF provider extension for OpenBB Platform."
 authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
 license = { text = "Apache-2.0" }
 readme = "README.md"
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 dependencies = [
     "openbb-core[pandas]>=2.0.0",
     "requests>=2.31",
@@ -109,6 +109,13 @@ exclude = ["tests", "integration", "openbb_imf/utils/generate_cache.py"]
 
 [tool.ty.rules]
 unresolved-import = "ignore"
+
+[[tool.ty.overrides]]
+include = ["openbb_imf/models/**"]
+
+[tool.ty.overrides.rules]
+invalid-attribute-override = "ignore"
+invalid-mutable-override = "ignore"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

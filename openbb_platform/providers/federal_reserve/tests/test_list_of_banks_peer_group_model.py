@@ -179,6 +179,17 @@ class TestTransformData:
         assert result[-1].average_assets is None
         assert result[-1].net_income is None
 
+    def test_fractional_thousands_round_to_whole_dollars(self, monkeypatch):
+        """FFIEC reports some amounts in fractional thousands; the fields are int."""
+        roster = [{"name": "A", "average_assets": 1234.5678, "net_income": -0.5}]
+        _patch(monkeypatch, roster=roster)
+        query = FederalReserveListOfBanksPeerGroupFetcher.transform_query(
+            {"peer_group": "1"}
+        )
+        rows = FederalReserveListOfBanksPeerGroupFetcher.extract_data(query, None)
+        result = FederalReserveListOfBanksPeerGroupFetcher.transform_data(query, rows)
+        assert (result[0].average_assets, result[0].net_income) == (1234568, -500)
+
 
 class TestCassetteIntegration:
     """Run the full fetcher against a recorded FFIEC router cassette."""

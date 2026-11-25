@@ -361,7 +361,9 @@ class SecManagementDiscussionAnalysisFetcher(
                     target_filing = _matches[0]
 
             elif calendar_year and calendar_period:
-                start = to_datetime(f"{calendar_year}Q{calendar_period}")
+                start = to_datetime(
+                    f"{calendar_year}-{3 * int(calendar_period) - 2:02d}-01"
+                )
                 start_date = (
                     start - offsets.QuarterBegin(1) + offsets.MonthBegin(1)
                 ).date()
@@ -405,7 +407,9 @@ class SecManagementDiscussionAnalysisFetcher(
                 }
             )
             if _6k_filings:
-                start = to_datetime(f"{calendar_year}Q{calendar_period}")
+                start = to_datetime(
+                    f"{calendar_year}-{3 * int(calendar_period) - 2:02d}-01"
+                )
                 _6k_start_date = (
                     start - offsets.QuarterBegin(1) + offsets.MonthBegin(1)
                 ).date()
@@ -494,7 +498,9 @@ class SecManagementDiscussionAnalysisFetcher(
                 }
             )
             if _8k_filings:
-                start = to_datetime(f"{calendar_year}Q{calendar_period}")
+                start = to_datetime(
+                    f"{calendar_year}-{3 * int(calendar_period) - 2:02d}-01"
+                )
                 _8k_start_date = (
                     start - offsets.QuarterBegin(1) + offsets.MonthBegin(1)
                 ).date()

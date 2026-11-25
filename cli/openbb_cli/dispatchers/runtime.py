@@ -416,6 +416,31 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--api-prefix",
+        metavar="PREFIX",
+        default=None,
+        help=(
+            "URL path prefix stripped from each path when --generate-spec names "
+            "commands, e.g. ``--api-prefix /api/v3`` turns ``/api/v3/klines`` "
+            "into ``klines``. Paths outside the prefix keep their full name; "
+            "request URLs are unaffected. A path the prefix strips to nothing "
+            "is skipped, and listed in a warning. Default: the longest prefix "
+            "the paths share, leaving out each path's last segment."
+        ),
+    )
+    parser.add_argument(
+        "--overlay",
+        metavar="PATH",
+        action="append",
+        default=None,
+        help=(
+            "OpenAPI Overlay 1.0 document (YAML or JSON) applied to the fetched "
+            "OpenAPI description before --generate-spec builds the spec. Use it "
+            "to correct upstream schema errors without editing the generated "
+            "code. Repeatable; overlays apply in order."
+        ),
+    )
+    parser.add_argument(
         "--socrata-story",
         metavar="URL_OR_PATH",
         default=None,

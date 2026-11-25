@@ -22,8 +22,11 @@ openbb-build
 The package also ships a precomputed IMF SDMX metadata catalog at
 `openbb_imf/assets/imf_cache.json.xz`. Released wheels and sdists
 carry it verbatim — it is materialized from `api.imf.org/external/sdmx/3.0`
-by a Hatchling build hook (`hatch_build.py`) at packaging time. End
-users have nothing to do; developers can refresh it with either:
+by a Hatchling build hook (`hatch_build.py`) at packaging time. If the
+IMF API is unreachable, the hook copies the catalog from the latest
+`openbb-imf` wheel on PyPI instead, unless `OPENBB_IMF_FORCE_CACHE_REBUILD=1`
+is set, in which case the build fails. End users have nothing to do;
+developers can refresh it with either:
 
 ```sh
 generate-imf-cache                                  # standalone script

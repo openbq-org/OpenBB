@@ -70,7 +70,7 @@ export const PythonVersionSelector = ({
 			<p className="body-md-medium text-theme-primary mb-3">Select Python Version</p>
 			<div className="flex-1 items-center justify-between">
 				<div className="flex flex-row gap-8">
-					{["3.10", "3.11", "3.12", "3.13", "3.14"].map((version) => (
+					{["3.11", "3.12", "3.13", "3.14"].map((version) => (
 						<label
 							key={version}
 							className="flex items-center gap-2 cursor-pointer body-xs-regular text-theme-primary"

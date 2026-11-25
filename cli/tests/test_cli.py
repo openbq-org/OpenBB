@@ -985,6 +985,202 @@ def test_generate_spec_errors_when_zero_commands(tmp_path, capsys):
     assert not (tmp_path / "x.spec").exists()
 
 
+def test_main_generate_spec_passes_api_prefix_and_overlays():
+    with patch("openbb_cli.cli._generate_spec", return_value=0) as gen:
+        rc = cli.main(
+            [
+                "--server",
+                "http://x",
+                "--generate-spec",
+                "--api-prefix",
+                "/api/v3",
+                "--overlay",
+                "a.yaml",
+                "--overlay",
+                "b.yaml",
+            ]
+        )
+    assert rc == 0
+    _, kwargs = gen.call_args
+    assert kwargs["api_prefix"] == "/api/v3"
+    assert kwargs["overlays"] == ["a.yaml", "b.yaml"]
+
+
+_PREFIXED_OPENAPI = {
+    "openapi": "3.0.2",
+    "paths": {
+        "/api/v3/aggTrades": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {"$ref": "#/components/schemas/aggTrade"},
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/sapi/v1/system/status": {"get": {"responses": {}}},
+    },
+    "components": {
+        "schemas": {
+            "aggTrade": {
+                "type": "object",
+                "properties": {"T": {"type": "boolean"}},
+            }
+        }
+    },
+}
+
+
+def test_generate_spec_applies_overlay_and_api_prefix(tmp_path):
+    from openbb_cli.dispatchers.spec import load_spec
+
+    overlay = tmp_path / "fix.overlay.yaml"
+    overlay.write_text(
+        "overlay: 1.0.0\n"
+        "info: {title: fix, version: '1'}\n"
+        "actions:\n"
+        "  - target: $.components.schemas.aggTrade.properties.T\n"
+        "    update: {type: integer}\n"
+    )
+    out = tmp_path / "x.spec"
+    with patch(
+        "openbb_cli.dispatchers.openapi_schema.fetch_openapi",
+        return_value=_PREFIXED_OPENAPI,
+    ):
+        rc = cli._generate_spec(
+            "http://localhost:8000",
+            str(out),
+            "/openapi.yaml",
+            api_prefix="/api/v3",
+            overlays=[str(overlay)],
+        )
+    assert rc == 0
+    spec = load_spec(out)
+    assert set(spec["commands"]) == {"aggTrades", "sapi.v1.system.status"}
+    row = spec["commands"]["aggTrades"]["response_schema"]["items"]
+    assert row["properties"]["T"]["type"] == "integer"
+
+
+def test_generate_spec_warns_on_overlay_target_that_matches_nothing(tmp_path, capsys):
+    overlay = tmp_path / "fix.overlay.yaml"
+    overlay.write_text(
+        "overlay: 1.0.0\nactions:\n  - target: $.components.nope\n    update: {}\n"
+    )
+    with patch(
+        "openbb_cli.dispatchers.openapi_schema.fetch_openapi",
+        return_value=_PREFIXED_OPENAPI,
+    ):
+        rc = cli._generate_spec(
+            "http://localhost:8000",
+            str(tmp_path / "x.spec"),
+            "/openapi.yaml",
+            overlays=[str(overlay)],
+        )
+    assert rc == 0
+    assert "target matched nothing: $.components.nope" in capsys.readouterr().err
+
+
+def test_generate_spec_rejects_invalid_overlay(tmp_path, capsys):
+    overlay = tmp_path / "not-an-overlay.yaml"
+    overlay.write_text("openapi: 3.0.0\n")
+    with patch(
+        "openbb_cli.dispatchers.openapi_schema.fetch_openapi",
+        return_value=_PREFIXED_OPENAPI,
+    ):
+        rc = cli._generate_spec(
+            "http://localhost:8000",
+            str(tmp_path / "x.spec"),
+            "/openapi.yaml",
+            overlays=[str(overlay), str(tmp_path / "missing.yaml")],
+        )
+    assert rc == 2
+    assert "missing 'overlay' field" in capsys.readouterr().err
+    assert not (tmp_path / "x.spec").exists()
+
+
+def test_generate_spec_applies_overlay_before_type_arrays_are_rewritten(tmp_path):
+    from openbb_cli.dispatchers.spec import load_spec
+
+    openapi = {
+        "openapi": "3.1.0",
+        "paths": {
+            "/x": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "in": "query",
+                            "schema": {"type": ["string", "null"]},
+                        }
+                    ],
+                    "responses": {},
+                }
+            }
+        },
+    }
+    overlay = tmp_path / "fix.overlay.yaml"
+    overlay.write_text(
+        "overlay: 1.0.0\n"
+        "actions:\n"
+        "  - target: $.paths['/x'].get.parameters[0].schema\n"
+        "    update: {type: [integer, 'null']}\n"
+    )
+    out = tmp_path / "x.spec"
+    with patch(
+        "openbb_cli.dispatchers.openapi_schema.fetch_openapi", return_value=openapi
+    ) as fetch:
+        rc = cli._generate_spec(
+            "http://localhost:8000", str(out), "/openapi.json", overlays=[str(overlay)]
+        )
+    assert rc == 0
+    assert fetch.call_args.kwargs["normalize"] is False
+    (param,) = load_spec(out)["commands"]["x"]["parameters"]
+    assert param["type"] == "integer"
+
+
+def test_generate_spec_reports_invalid_overlay_yaml(tmp_path, capsys):
+    overlay = tmp_path / "bad.yaml"
+    overlay.write_text("overlay: 1.0.0\nactions: [\n")
+    with patch(
+        "openbb_cli.dispatchers.openapi_schema.fetch_openapi",
+        return_value=_PREFIXED_OPENAPI,
+    ):
+        rc = cli._generate_spec(
+            "http://localhost:8000",
+            str(tmp_path / "x.spec"),
+            "/openapi.yaml",
+            overlays=[str(overlay)],
+        )
+    assert rc == 2
+    assert f"--overlay {overlay}: not valid YAML or JSON" in capsys.readouterr().err
+
+
+def test_generate_spec_warns_about_paths_the_api_prefix_leaves_unnamed(
+    tmp_path, capsys
+):
+    with patch(
+        "openbb_cli.dispatchers.openapi_schema.fetch_openapi",
+        return_value=_PREFIXED_OPENAPI,
+    ):
+        rc = cli._generate_spec(
+            "http://localhost:8000",
+            str(tmp_path / "x.spec"),
+            "/openapi.yaml",
+            api_prefix="/api/v3/aggTrades",
+        )
+    assert rc == 0
+    err = capsys.readouterr().err
+    assert "--api-prefix /api/v3/aggTrades: no command name is left for" in err
+    assert "/api/v3/aggTrades;" in err
+
+
 def test_generate_extension_aborts_when_spec_has_zero_commands(tmp_path, capsys):
     """An empty spec never reaches codegen — no zero-command skeleton package."""
     from openbb_cli.dispatchers.spec import SPEC_VERSION, write_spec

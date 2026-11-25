@@ -74,7 +74,7 @@ build-backend = "hatchling.build"
 name = "{project_name}"
 version = "{version}"
 description = {description!r}
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 license = {{ text = "Apache-2.0" }}
 dependencies = [
     "openbb-core>=2.0.0",
@@ -100,7 +100,7 @@ select = ["E", "F", "W", "I", "B", "UP", "D"]
 ignore = [
     "D100", "D101", "D102", "D103", "D104", "D105", "D107",
     "D200", "D205", "D212", "D401", "D415",
-    "E501", "B008",
+    "E501", "E741", "B008",
 ]
 
 [tool.ruff.lint.pydocstyle]

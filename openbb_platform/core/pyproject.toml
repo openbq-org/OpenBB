@@ -5,7 +5,7 @@ description = "OpenBB package with core functionality."
 authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
 license = { text = "Apache-2.0" }
 readme = "README.md"
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 dependencies = [
     "uvicorn>=0.48.0",
     "websockets>=15.0",
@@ -19,7 +19,6 @@ dependencies = [
     "aiohttp>=3.14.2",
     "ruff>=0.15",
     "pyjwt>=2.13.0",
-    "tomli>=2.0.0; python_version<'3.11'",
 ]
 
 [project.optional-dependencies]
@@ -57,7 +56,7 @@ include = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py311"
 fix = true
 extend-exclude = [
     "openbb/package",
@@ -132,7 +131,7 @@ convention = "numpy"
 
 [tool.ty]
 [tool.ty.environment]
-python-version = "3.10"
+python-version = "3.11"
 
 [tool.ty.src]
 include = ["openbb_core", "openbb"]

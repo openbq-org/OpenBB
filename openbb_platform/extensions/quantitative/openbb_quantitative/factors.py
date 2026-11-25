@@ -1,5 +1,7 @@
 """Quantitative factor-regression commands."""
 
+from typing import TYPE_CHECKING, cast
+
 from openbb_core.app.model.example import APIEx
 from openbb_core.app.model.obbject import OBBject
 from openbb_core.app.router import Router
@@ -12,6 +14,9 @@ from openbb_quantitative._factor_helpers import (
     align_inputs,
     period_start,
 )
+
+if TYPE_CHECKING:
+    from pandas import Timestamp
 
 router = Router(prefix="", description="Quantitative factor-regression commands.")
 
@@ -111,7 +116,7 @@ def factors(
         risk_free_column=params.risk_free_column,
     )
     aligned = factor_matrix.assign(**{params.target: target_series})
-    max_date = aligned.index.max()
+    max_date = cast("Timestamp", aligned.index.max())
     out: list[FactorRegressionData] = []
 
     for period in params.periods:

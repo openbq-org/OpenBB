@@ -31,7 +31,12 @@ from pathlib import Path
 
 import pytest
 
-OPENBB_DIR = Path(importlib.util.find_spec("openbb").origin).parent
+_OPENBB_SPEC = importlib.util.find_spec("openbb")
+if _OPENBB_SPEC is None or _OPENBB_SPEC.origin is None:
+    raise ImportError(
+        "The openbb package must be installed to run the openbb-cli tests."
+    )
+OPENBB_DIR = Path(_OPENBB_SPEC.origin).parent
 PACKAGE_DIR = OPENBB_DIR / "package"
 ASSETS_DIR = OPENBB_DIR / "assets"
 
@@ -43,7 +48,7 @@ PYPROJECT = """\
 [project]
 name = "{ext_name}"
 version = "0.0.1"
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 dependencies = ["openbb-core"]
 
 [project.entry-points."openbb_core_extension"]

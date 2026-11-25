@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import time
+import tomllib
 from importlib.util import find_spec
 from pathlib import Path
 
@@ -94,15 +95,6 @@ def load_toml(path: Path) -> dict:
     dict
         The parsed document.
     """
-    if sys.version_info >= (3, 11):
-        import tomllib
-    else:
-        if find_spec("tomli") is None:
-            subprocess.run(
-                [*get_uv(), "pip", "install", "--python", sys.executable, "tomli>=2"],
-                check=True,
-            )
-        import tomli as tomllib
     return tomllib.loads(path.read_text(encoding="utf-8"))
 
 

@@ -5,7 +5,7 @@ description = "ECB provider extension for OpenBB Platform."
 authors = [{ name = "OpenBB Team", email = "hello@openbb.co" }]
 license = { text = "Apache-2.0" }
 readme = "README.md"
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 dependencies = [
     "openbb-core[pandas]>=2.0.0",
     "requests>=2.31",

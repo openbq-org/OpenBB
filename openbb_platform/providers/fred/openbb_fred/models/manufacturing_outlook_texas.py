@@ -432,7 +432,7 @@ class FredManufacturingOutlookTexasFetcher(
             categories=topic_categories,
             ordered=True,
         )
-        df.sort_values(["date", "topic"], inplace=True)
+        df = df.sort_values(["date", "topic"])
 
         for col in df.columns:
             if col in [

@@ -189,6 +189,10 @@ class TestStats:
         assert output.chart.content["data"]
 
 
+# pandas warns that way when a frame that is a view of another is written to. The
+# class it uses is not in every version, so it is matched by what it says, and the
+# message starts on a new line, hence the flag that lets ``.`` match one.
+@pytest.mark.filterwarnings("error:(?s).*trying to be set on a copy of a slice")
 class TestSurface:
     """3-D surface builder."""
 

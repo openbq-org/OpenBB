@@ -36,19 +36,19 @@ jobs:
       - name: Fetch base branch
         run: git fetch --no-tags --depth=20 origin ${{ github.base_ref }}
 
-      - name: Setup Python 3.10
+      - name: Setup Python 3.11
         uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           architecture: x64
 
       - name: Cache uv (built wheels)
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/.uv-cache
-          key: uv-${{ runner.os }}-py3.10-lint-${{ hashFiles('cli/pyproject.toml', 'cli/uv.lock', 'openbb_platform/core/pyproject.toml', 'openbb_platform/obbject_extensions/charting/pyproject.toml', 'openbb_platform/extensions/devtools/pyproject.toml') }}
+          key: uv-${{ runner.os }}-py3.11-lint-${{ hashFiles('cli/pyproject.toml', 'cli/uv.lock', 'openbb_platform/core/pyproject.toml', 'openbb_platform/obbject_extensions/charting/pyproject.toml', 'openbb_platform/extensions/devtools/pyproject.toml') }}
           restore-keys: |
-            uv-${{ runner.os }}-py3.10-lint-
+            uv-${{ runner.os }}-py3.11-lint-
 
       - name: Get changed CLI files for PR
         if: github.event_name == 'pull_request'

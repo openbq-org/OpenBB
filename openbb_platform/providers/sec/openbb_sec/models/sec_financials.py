@@ -2143,8 +2143,8 @@ class FinancialStatements(Filing):
                 {nan: None}
             )
 
-        output_statement.reset_index(drop=False, inplace=True)
-        output_statement.rename(columns={"index": "order"}, inplace=True)
+        output_statement = output_statement.reset_index(drop=False)
+        output_statement = output_statement.rename(columns={"index": "order"})
         output_statement["order"] = output_statement.order.apply(lambda x: x + 1)
         output_statement["tag"] = output_statement.apply(
             lambda row: apply_label(row["label"]),
@@ -2715,7 +2715,7 @@ class FinancialStatements(Filing):
         if not df2.empty:
             for data in [df1, df2]:
                 statement, item_map = _process_statement(self, data)
-                statement.set_index(statement.columns[0], inplace=True)
+                statement = statement.set_index(statement.columns[0])
                 merged_df = (
                     concat([merged_df, statement], axis=1)
                     if not merged_df.empty

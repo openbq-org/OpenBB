@@ -955,13 +955,13 @@ pub async fn create_environment_from_requirements_impl<F: FileSystem, E: EnvSyst
         log::debug!("Detected Python version: {python_version}");
     }
 
-    // Validate Python version is between 3.10 and 3.12 inclusive
+    // Validate Python version is between 3.11 and 3.14 inclusive
     let python_major_minor: Vec<&str> = python_version.split('.').collect();
     if python_major_minor.len() >= 2 {
         let major: i32 = python_major_minor[0].parse().unwrap_or(3);
         let minor: i32 = python_major_minor[1].parse().unwrap_or(11);
 
-        if major != 3 || !(10..=13).contains(&minor) {
+        if major != 3 || !(11..=14).contains(&minor) {
             log::debug!("Python version {python_version} not supported. Using Python 3.12 instead");
             python_version = "3.12".to_string();
         }

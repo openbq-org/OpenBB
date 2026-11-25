@@ -1941,3 +1941,85 @@ def test_literal_choices_reads_bare_optional_and_non_literal_types():
     assert _literal_choices(Literal["a", "b"]) == ["a", "b"]
     assert _literal_choices(Literal["a", "b"] | None) == ["a", "b"]
     assert _literal_choices(int | None) == []
+
+
+# --- _format_type_string -----------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        # the regressions: a wrapped generic holding a union
+        ("typing.Optional[list[typing.Union[A, B, C]]]", "list[A | B | C] | None"),
+        ("Optional[list[Union[A, B]]]", "list[A | B] | None"),
+        ("Optional[dict[str, list[Union[A, B]]]]", "dict[str, list[A | B]] | None"),
+        # things that already worked
+        ("typing.Optional[str]", "str | None"),
+        ("Optional[list[str]]", "list[str] | None"),
+        ("typing.Union[str, int, NoneType]", "str | int | None"),
+        ("typing.Union[list[str], str]", "list[str] | str"),
+        ("list[typing.Optional[str]]", "list[str | None]"),
+        ("<class 'str'>", "str"),
+        ("datetime.date", "date"),
+        ("typing.Optional[str", "Optional[str"),
+        # Literal still collapses to str; duplicates still collapse
+        ("typing.Optional[typing.Literal['a', 'b']]", "str | None"),
+        ("typing.Union[typing.Literal['a'], typing.Literal['b']]", "str"),
+        ("str | str | None", "str | None"),
+        # a union inside brackets is not de-duplicated across the brackets
+        ("list[A | A] | None", "list[A | A] | None"),
+        ("list[A | B] | list[A | B] | None", "list[A | B] | None"),
+    ],
+)
+def test_format_type_string(raw, expected):
+    """Type strings are rewritten with brackets matched, never guessed."""
+    from openbb_core.app.static.package_builder.docstring_generator import (
+        _format_type_string,
+    )
+
+    assert _format_type_string(raw) == expected
+
+
+def test_format_type_string_never_produces_unbalanced_brackets():
+    """Every rewrite leaves the brackets balanced, including truncation."""
+    from openbb_core.app.static.package_builder.docstring_generator import (
+        _format_type_string,
+    )
+
+    raw = (
+        "typing.Optional[list[typing.Union["
+        + ", ".join(f"Item{i}" for i in range(12))
+        + "]]]"
+    )
+    full = _format_type_string(raw)
+    assert full.count("[") == full.count("]") and full.endswith("] | None")
+    cut = _format_type_string(raw, char_limit=40)
+    assert cut.count("[") == cut.count("]")
+
+
+def test_get_field_type_strips_every_module_path_in_a_container():
+    """``list[openbb_x.A | openbb_x.B | openbb_x.C]`` keeps all three names."""
+    from pydantic import BaseModel
+
+    from openbb_core.app.static.package_builder.docstring_generator import (
+        DocstringGenerator,
+        _format_type_string,
+        _strip_module_paths,
+    )
+
+    def render(annotation, required):
+        # the docs run ``get_field_type`` and then ``_format_type_string``
+        return _format_type_string(
+            DocstringGenerator.get_field_type(annotation, required)
+        )
+
+    def model(name):
+        return type(name, (BaseModel,), {"__module__": "openbb_fake.providers.models"})
+
+    a, b, c = model("ItemA"), model("ItemB"), model("ItemC")
+    assert render(list[a | b | c] | None, False) == "list[ItemA | ItemB | ItemC] | None"
+    assert render(list[a], True) == "list[ItemA]"
+    assert render(a | None, False) == "ItemA | None"
+    assert _strip_module_paths("dict[str, openbb_x.m.A]") == "dict[str, A]"
+    # quoted data in a Literal is not a module path
+    assert _strip_module_paths("Literal['a.b']") == "Literal['a.b']"

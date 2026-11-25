@@ -3,6 +3,7 @@
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -10,11 +11,6 @@ from cookiecutter.exceptions import FailedHookException
 from cookiecutter.main import cookiecutter
 
 from openbb_cookiecutter import get_template_path
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
 
 PACKAGE = "extension_template"
 

@@ -390,7 +390,7 @@ class OptionsChainsData(OptionsChainsProperties):
 
         row_fields: dict[str, Any] = {}
         for field_name, field_info in cls.model_fields.items():
-            annotation = field_info.annotation
+            annotation: Any = field_info.annotation
             inner = (
                 get_args(annotation)[0]
                 if get_origin(annotation) is list

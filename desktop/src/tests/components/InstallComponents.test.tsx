@@ -61,11 +61,11 @@ test('PythonVersionSelector renders and handles version selection', () => {
 
   expect(onSelectVersion).toHaveBeenCalledWith('3.13');
 
-  const python310Radio = screen.getByLabelText(/3.10/i);
-  fireEvent.click(python310Radio);
+  const python311Radio = screen.getByLabelText(/3.11/i);
+  fireEvent.click(python311Radio);
 
-  expect(onSelectVersion).toHaveBeenCalledWith('3.10');
-  expect(python310Radio).toBeChecked();
+  expect(onSelectVersion).toHaveBeenCalledWith('3.11');
+  expect(python311Radio).toBeChecked();
 });
 
 test('ExtensionSelector displays loading state initially', () => {

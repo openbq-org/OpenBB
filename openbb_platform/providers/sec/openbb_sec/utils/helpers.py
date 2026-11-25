@@ -74,7 +74,7 @@ async def get_all_ciks(use_cache: bool = True) -> DataFrame:
     delimiter = ":"
     for line in lines:
         row = line.split(delimiter)
-        data_list.append(row)
+        data_list.append((row + [None, None])[:2])
     df = DataFrame(data_list)
     df = df.iloc[:, 0:2]
     cols = ["Institution", "CIK Number"]

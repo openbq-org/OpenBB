@@ -364,7 +364,7 @@ class TestFredFixedIncomeFetchers:
         params = {
             "start_date": datetime.date(2024, 7, 17),
             "end_date": datetime.date(2024, 7, 17),
-            "maturity": "5",
+            "maturity": "10",
         }
 
         fetcher = FredTipsYieldsFetcher()

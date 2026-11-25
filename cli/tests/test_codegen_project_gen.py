@@ -109,3 +109,15 @@ def test_generate_pyproject_omits_provenance_block_when_empty():
         spec_provenance={"source_url": "", "api_version": ""},
     )
     assert "[tool.openbb-codegen]" not in out.source
+
+
+def test_generate_pyproject_ruff_config_ignores_ambiguous_field_names():
+    """Upstream schemas name fields ``l`` (low, last id); E741 would flag every one."""
+    out = pg.generate_pyproject(
+        project_name="openbb-codegen",
+        package_name="openbb_codegen",
+        providers=["fmp"],
+        routers=[],
+        description="Generated extension.",
+    )
+    assert '"E501", "E741", "B008",' in out.source

@@ -127,13 +127,8 @@ def _validate_explicit_toml(explicit_path: str) -> None:
     Missing files are tolerated (cascade behavior) — only
     parse failures escalate.
     """
-    import sys as _sys
+    import tomllib
     from pathlib import Path
-
-    if _sys.version_info >= (3, 11):  # pragma: no cover — version-conditional
-        import tomllib
-    else:  # pragma: no cover — exercised only on the 3.10 backport path
-        import tomli as tomllib  # ty: ignore[unresolved-import]
 
     p = Path(explicit_path)
     if not p.is_file():

@@ -127,7 +127,7 @@ class FederalReserveListOfBanksPeerGroupFetcher(
             for field in ("average_assets", "net_income"):
                 amount = row.get(field)
                 if amount is not None:
-                    row[field] = amount * 1000
+                    row[field] = round(amount * 1000)
         ordered = sorted(
             data,
             key=lambda r: (
