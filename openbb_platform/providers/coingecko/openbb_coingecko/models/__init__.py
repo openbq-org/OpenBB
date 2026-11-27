@@ -1,0 +1,1 @@
+"""CoinGecko provider models."""

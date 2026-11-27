@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "openbb-coingecko"
+version = "1.0.0"
+description = "CoinGecko Provider for OpenBB Platform - Real-time and historical cryptocurrency data"
+authors = ["OpenBB Team <hello@openbb.co>"]
+license = "AGPL-3.0-only"
+readme = "README.md"
+packages = [{ include = "openbb_coingecko" }]
+
+[tool.poetry.dependencies]
+python = ">=3.9.21,<3.13"
+openbb-core = "^1.4.8"
+requests = "^2.31.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."openbb_provider_extension"]
+coingecko = "openbb_coingecko:coingecko_provider"
